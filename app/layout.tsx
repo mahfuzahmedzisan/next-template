@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
+import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -44,7 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <AnimationProvider>
             <TooltipProvider>
               <SiteHeader />
-              {children}
+              <SectionErrorBoundary>{children}</SectionErrorBoundary>
               <SiteFooter />
               <Toaster
                 position="top-center"
