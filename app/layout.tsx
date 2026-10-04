@@ -3,7 +3,7 @@ import { Geist } from "next/font/google"
 import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
-import { JsonLd } from "@/components/site/json-ld"
+import { JsonLd } from "@/components/seo/json-ld"
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { site, siteDescription } from "@/content/site"
 import { siteOrigin } from "@/lib/site-url"
+import { siteStructuredData } from "@/lib/structured-data"
 
 import "./globals.css"
 
@@ -25,9 +26,28 @@ const origin = siteOrigin()
 
 export const metadata: Metadata = {
   metadataBase: origin ? new URL(origin) : undefined,
-  title: site.name,
+  title: {
+    default: site.name,
+    template: `%s · ${site.name}`,
+  },
   description,
+  applicationName: site.name,
+  authors: [{ name: site.name }],
+  creator: site.name,
+  ...(site.skills.length > 0 ? { keywords: [...site.skills] } : {}),
   alternates: origin ? { canonical: "/" } : undefined,
+  formatDetection: { telephone: false, address: false, email: false },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
     title: site.name,
     description,
@@ -41,10 +61,6 @@ export const metadata: Metadata = {
     title: site.name,
     description,
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -55,7 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <JsonLd />
+        <JsonLd data={siteStructuredData()} />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
