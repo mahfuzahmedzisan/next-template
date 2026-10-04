@@ -1,12 +1,13 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 
+import { AnimationProvider } from "@/components/animations"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 import "./globals.css"
-import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -37,21 +38,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            {children}
-            <Toaster
-              position="top-center"
-              duration={2000}
-              icons={
-                {
+          <AnimationProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster
+                position="top-center"
+                duration={2000}
+                icons={{
                   success: <CheckCircleIcon className="h-4 w-4" />,
                   error: <XCircleIcon className="h-4 w-4" />,
                   warning: <AlertCircleIcon className="h-4 w-4" />,
                   info: <InfoIcon className="h-4 w-4" />,
-                }
-              }
-            />
-          </TooltipProvider>
+                }}
+              />
+            </TooltipProvider>
+          </AnimationProvider>
         </ThemeProvider>
       </body>
     </html>

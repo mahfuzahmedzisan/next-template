@@ -13,6 +13,12 @@
         "-y",
         "next-devtools-mcp@latest"
       ]
+    },
+    "motion": {
+      "url": "https://mcp.motion.dev"
+    },
+    "motion-plus": {
+      "url": "https://mcp.motion.dev/plus"
     }
   }
 }
