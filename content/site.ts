@@ -17,6 +17,7 @@ export type Project = {
   liveUrl?: string
   sourceUrl?: string
   image?: ProjectImage
+  caseStudy?: string
 }
 
 export type SiteProfile = {

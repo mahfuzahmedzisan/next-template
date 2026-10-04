@@ -1,3 +1,4 @@
+import { ContactForm } from "@/components/site/contact-form"
 import { ContactLinks } from "@/components/site/contact-links"
 import { ProjectList } from "@/components/site/project-list"
 import { hasContact, site } from "@/content/site"
@@ -70,6 +71,7 @@ export default function Home() {
             Contact
           </h2>
           <ContactLinks />
+          {site.email ? <ContactForm email={site.email} /> : null}
         </section>
       ) : null}
     </main>

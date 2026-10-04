@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/card"
 import { site, type Project } from "@/content/site"
 
+import { ProjectCaseStudy } from "./project-case-study"
+
 const linkClass =
   "inline-flex min-h-11 items-center rounded-md text-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
 
@@ -89,6 +91,14 @@ export function ProjectList() {
               </CardContent>
             ) : null}
             <ProjectLinks project={project} />
+            {project.caseStudy ? (
+              <div className="px-(--card-spacing) pb-(--card-spacing)">
+                <ProjectCaseStudy
+                  title={project.title}
+                  caseStudy={project.caseStudy}
+                />
+              </div>
+            ) : null}
           </Card>
         </li>
       ))}
