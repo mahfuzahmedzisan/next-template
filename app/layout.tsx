@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
-
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
 import { JsonLd } from "@/components/seo/json-ld"
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
