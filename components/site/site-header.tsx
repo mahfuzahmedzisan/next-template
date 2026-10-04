@@ -13,6 +13,12 @@ export function SiteHeader() {
       id="top"
       className="sticky top-0 z-40 border-b border-border bg-background"
     >
+      <a
+        href="#content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-4 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-md focus:bg-background focus:px-3 focus:text-sm focus:font-medium focus:text-foreground focus:ring-3 focus:ring-ring/50 focus:outline-none"
+      >
+        Skip to content
+      </a>
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-3">
         <Link
           href="/"

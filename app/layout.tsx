@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist } from "next/font/google"
 import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
+import { JsonLd } from "@/components/site/json-ld"
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
@@ -10,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { site, siteDescription } from "@/content/site"
+import { siteOrigin } from "@/lib/site-url"
 
 import "./globals.css"
 
@@ -18,14 +20,31 @@ const geistSans = Geist({
   subsets: ["latin"],
 })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-})
+const description = siteDescription()
+const origin = siteOrigin()
 
 export const metadata: Metadata = {
+  metadataBase: origin ? new URL(origin) : undefined,
   title: site.name,
-  description: siteDescription(),
+  description,
+  alternates: origin ? { canonical: "/" } : undefined,
+  openGraph: {
+    title: site.name,
+    description,
+    type: "website",
+    locale: "en_US",
+    siteName: site.name,
+    ...(origin ? { url: "/" } : {}),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: site.name,
+    description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -33,9 +52,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <JsonLd />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -45,7 +65,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <AnimationProvider>
             <TooltipProvider>
               <SiteHeader />
-              <SectionErrorBoundary>{children}</SectionErrorBoundary>
+              <div id="content" tabIndex={-1} className="flex flex-1 flex-col outline-none">
+                <SectionErrorBoundary>{children}</SectionErrorBoundary>
+              </div>
               <SiteFooter />
               <Toaster
                 position="top-center"
