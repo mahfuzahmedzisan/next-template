@@ -1,7 +1,5 @@
 import Image from "next/image";
 
-import { AnimationSmokeTest } from "@/components/animations/dev/animation-smoke-test";
-
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
@@ -65,7 +63,6 @@ export default function Home() {
             Documentation
           </a>
         </div>
-        <AnimationSmokeTest />
       </main>
     </div>
   );
