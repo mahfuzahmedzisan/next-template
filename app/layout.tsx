@@ -85,8 +85,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </div>
               <SiteFooter />
               <Toaster
-                position="top-center"
+                position="top-right"
                 duration={2000}
+                richColors
+                closeButton
                 icons={{
                   success: <CheckCircleIcon className="h-4 w-4" />,
                   error: <XCircleIcon className="h-4 w-4" />,
