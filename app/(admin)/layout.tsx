@@ -3,9 +3,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import { logoutAction } from "@/app/(admin)/actions";
-import { AdminHeader } from "@/components/admin/admin-header";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { getSession } from "@/lib/auth/auth-cookies";
 import { logoutUrl } from "@/lib/auth/session-expired";
 
@@ -30,14 +28,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <SidebarProvider>
-      <AdminSidebar user={session.user} onLogout={logoutAction} />
-      <SidebarInset>
-        <AdminHeader />
-        <div className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <AdminShell user={session.user} onLogout={logoutAction}>
+      {children}
+    </AdminShell>
   );
 }

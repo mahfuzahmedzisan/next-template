@@ -62,6 +62,8 @@ export class SectionErrorBoundary extends Component<
       );
     }
 
-    return this.props.children;
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">{this.props.children}</div>
+    );
   }
 }

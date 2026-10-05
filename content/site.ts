@@ -26,7 +26,7 @@ export type SiteProfile = {
 }
 
 export const site = {
-  name: "Mahfuz Ahmed",
+  name: "Dashboard Layout",
   role: undefined as string | undefined,
   summary: undefined as string | undefined,
   about: [] as readonly string[],

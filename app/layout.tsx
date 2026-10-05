@@ -4,8 +4,6 @@ import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
 import { JsonLd } from "@/components/seo/json-ld"
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
-import { SiteFooter } from "@/components/site/site-footer"
-import { SiteHeader } from "@/components/site/site-header"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -69,7 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-svh flex-col">
         <JsonLd data={siteStructuredData()} />
         <ThemeProvider
           attribute="class"
@@ -79,11 +77,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           <AnimationProvider>
             <TooltipProvider>
-              <SiteHeader />
-              <div id="content" tabIndex={-1} className="flex flex-1 flex-col outline-none">
+              <div id="content" tabIndex={-1} className="flex min-h-svh flex-1 flex-col outline-none">
                 <SectionErrorBoundary>{children}</SectionErrorBoundary>
               </div>
-              <SiteFooter />
               <Toaster
                 position="top-right"
                 duration={2000}
