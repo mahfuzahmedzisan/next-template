@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { useCloseSidebar } from "@/components/nav/use-close-sidebar";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -23,6 +24,8 @@ export function SidebarPromo({
   action: string;
   icon: LucideIcon;
 }) {
+  const closeSidebar = useCloseSidebar();
+
   return (
     <>
       <div className="px-1 group-data-[collapsible=icon]:hidden">
@@ -32,7 +35,7 @@ export function SidebarPromo({
             {description}
           </p>
           <Button asChild size="sm" className="mt-3 w-full">
-            <Link href={href}>{action}</Link>
+            <Link href={href} onClick={closeSidebar}>{action}</Link>
           </Button>
         </div>
       </div>
@@ -44,7 +47,7 @@ export function SidebarPromo({
             tooltip={title}
             className="mx-auto size-8 justify-center p-2 [&>span]:hidden"
           >
-            <Link href={href}>
+            <Link href={href} onClick={closeSidebar}>
               <Icon />
               <span>{title}</span>
             </Link>

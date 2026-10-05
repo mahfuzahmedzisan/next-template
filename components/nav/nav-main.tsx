@@ -7,6 +7,7 @@ import { useRef, useState, useSyncExternalStore } from "react";
 
 import { menuPanelMotion } from "@/components/nav/menu-motion";
 import { NavIcon } from "@/components/nav/nav-icon";
+import { useCloseSidebar } from "@/components/nav/use-close-sidebar";
 import {
   Collapsible,
   CollapsibleContent,
@@ -69,6 +70,7 @@ function branchIsActive(pathname: string, hash: string, item: NavItem) {
 function NavLeaf({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const hash = useLocationHash();
+  const closeSidebar = useCloseSidebar();
   const active = isHrefActive(pathname, hash, item.href);
 
   return (
@@ -79,7 +81,7 @@ function NavLeaf({ item }: { item: NavItem }) {
         tooltip={item.title}
         className={iconFit}
       >
-        <Link href={item.href ?? "#"}>
+        <Link href={item.href ?? "#"} onClick={closeSidebar}>
           <NavIcon icon={item.icon} />
           <span>{item.title}</span>
         </Link>
@@ -91,6 +93,7 @@ function NavLeaf({ item }: { item: NavItem }) {
 function CollapsedBranch({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const hash = useLocationHash();
+  const closeSidebar = useCloseSidebar();
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const active = branchIsActive(pathname, hash, item);
@@ -137,7 +140,7 @@ function CollapsedBranch({ item }: { item: NavItem }) {
               asChild
               className="gap-2 px-2 py-1.5"
             >
-              <Link href={child.href ?? "#"}>
+              <Link href={child.href ?? "#"} onClick={closeSidebar}>
                 <NavIcon icon={child.icon} />
                 {child.title}
               </Link>
@@ -152,6 +155,7 @@ function CollapsedBranch({ item }: { item: NavItem }) {
 function ExpandedBranch({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const hash = useLocationHash();
+  const closeSidebar = useCloseSidebar();
   const active = branchIsActive(pathname, hash, item);
 
   return (
@@ -175,7 +179,7 @@ function ExpandedBranch({ item }: { item: NavItem }) {
               return (
                 <SidebarMenuSubItem key={child.href ?? child.title}>
                   <SidebarMenuSubButton asChild isActive={childActive}>
-                    <Link href={child.href ?? "#"}>
+                    <Link href={child.href ?? "#"} onClick={closeSidebar}>
                       <NavIcon icon={child.icon} />
                       <span>{child.title}</span>
                     </Link>

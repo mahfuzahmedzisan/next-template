@@ -6,6 +6,7 @@ import Link from "next/link";
 import { NavMain } from "@/components/nav/nav-main";
 import { NavUser } from "@/components/nav/nav-user";
 import { ThemeSwitch } from "@/components/nav/theme-switch";
+import { useCloseSidebar } from "@/components/nav/use-close-sidebar";
 import {
   Sidebar,
   SidebarContent,
@@ -34,6 +35,8 @@ export function AppSidebar({
   user: UserSummary;
   menu: UserMenuGroup[];
 }) {
+  const closeSidebar = useCloseSidebar();
+
   return (
     <Sidebar
       collapsible="icon"
@@ -44,7 +47,7 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={brand.label} className={iconFit}>
-              <Link href={brand.href}>
+              <Link href={brand.href} onClick={closeSidebar}>
                 <span className="flex size-4 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   {brand.icon}
                 </span>

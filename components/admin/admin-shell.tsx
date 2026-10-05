@@ -28,10 +28,12 @@ function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
 export function AdminShell({
   user,
   onLogout,
+  defaultOpen = true,
   children,
 }: {
   user: UserSummary;
   onLogout: () => void | Promise<void>;
+  defaultOpen?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -63,7 +65,7 @@ export function AdminShell({
   );
 
   return (
-    <AppShell>
+    <AppShell defaultOpen={defaultOpen}>
       <AppSidebar
         brand={{
           href: "/admin",

@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { NavIcon } from "@/components/nav/nav-icon";
+import { useCloseSidebar } from "@/components/nav/use-close-sidebar";
 import { UserInfo } from "@/components/user-info";
 import {
   DropdownMenuGroup,
@@ -19,6 +20,8 @@ export function UserMenuContent({
   user: UserSummary;
   groups: UserMenuGroup[];
 }) {
+  const closeSidebar = useCloseSidebar();
+
   return (
     <>
       <div className="flex items-center gap-2 px-1.5 py-2">
@@ -32,7 +35,7 @@ export function UserMenuContent({
             {group.items.map((item) =>
               item.href ? (
                 <DropdownMenuItem key={item.title} asChild>
-                  <Link href={item.href}>
+                  <Link href={item.href} onClick={closeSidebar}>
                     {item.icon ? <NavIcon icon={item.icon} /> : null}
                     {item.title}
                   </Link>

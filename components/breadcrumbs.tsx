@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Fragment } from "react";
+
+import { useCloseSidebar } from "@/components/nav/use-close-sidebar";
 
 import {
   Breadcrumb,
@@ -12,6 +16,8 @@ import {
 import type { BreadcrumbItem as Crumb } from "@/lib/nav";
 
 export function Breadcrumbs({ breadcrumbs }: { breadcrumbs: Crumb[] }) {
+  const closeSidebar = useCloseSidebar();
+
   if (breadcrumbs.length === 0) return null;
 
   return (
@@ -27,7 +33,7 @@ export function Breadcrumbs({ breadcrumbs }: { breadcrumbs: Crumb[] }) {
                   <BreadcrumbPage>{item.title}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link href={item.href}>{item.title}</Link>
+                    <Link href={item.href} onClick={closeSidebar}>{item.title}</Link>
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>

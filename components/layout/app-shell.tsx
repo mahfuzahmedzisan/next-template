@@ -4,9 +4,18 @@ import type { ReactNode } from "react";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  defaultOpen = true,
+}: {
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
   return (
-    <SidebarProvider className="h-svh min-h-0 overflow-hidden bg-muted/50">
+    <SidebarProvider
+      defaultOpen={defaultOpen}
+      className="h-svh min-h-0 overflow-hidden bg-muted/50"
+    >
       {children}
     </SidebarProvider>
   );

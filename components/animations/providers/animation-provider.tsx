@@ -37,12 +37,14 @@ export function AnimationProvider({
   const { ready, prefersReducedMotion } = usePrefersReducedMotion()
 
   const envDisabled = process.env.NEXT_PUBLIC_SMOOTH_SCROLL === "false"
-  const smoothScroll = shouldEnableSmoothScroll({
-    enabled,
-    envDisabled,
-    preferenceReady: ready,
-    prefersReducedMotion,
-  })
+  const isAppShell = pathname.startsWith("/admin")
+  const smoothScroll =
+    shouldEnableSmoothScroll({
+      enabled,
+      envDisabled,
+      preferenceReady: ready,
+      prefersReducedMotion,
+    }) && !isAppShell
 
   // Sync registration (once-guarded) so plugins exist before child useGSAP layout effects.
   registerGsapPlugins()
