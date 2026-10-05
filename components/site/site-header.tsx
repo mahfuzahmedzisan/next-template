@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { site, siteNav } from "@/content/site"
 import { ModeToggle } from "@/components/mode-toggle"
+import { Button } from "@/components/ui/button"
 
 import { NavLinks } from "./nav-links"
 
@@ -11,7 +12,7 @@ export function SiteHeader() {
   return (
     <header
       id="top"
-      className="sticky top-0 z-40 border-b border-border bg-background"
+      className="sticky top-0 z-40 border-b border-border/70 bg-background/75 backdrop-blur-md"
     >
       <a
         href="#content"
@@ -19,10 +20,10 @@ export function SiteHeader() {
       >
         Skip to content
       </a>
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 py-3">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
         <Link
           href="/"
-          className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold tracking-tight text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {site.name}
         </Link>
@@ -38,7 +39,7 @@ export function SiteHeader() {
                 </summary>
                 <nav
                   aria-label="Primary"
-                  className="absolute right-0 z-50 mt-2 min-w-40 rounded-lg border border-border bg-background p-2"
+                  className="absolute right-0 z-50 mt-2 min-w-40 rounded-xl border border-border/70 bg-background/95 p-2 shadow-sm backdrop-blur-md"
                 >
                   <NavLinks listClassName="flex-col" />
                 </nav>
@@ -46,6 +47,9 @@ export function SiteHeader() {
             </>
           ) : null}
           <ModeToggle />
+          <Button asChild size="sm" className="min-h-11 sm:min-h-8">
+            <Link href="/login">Sign in</Link>
+          </Button>
         </div>
       </div>
     </header>
