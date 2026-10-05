@@ -7,7 +7,6 @@ import { ApiError } from "@/lib/auth/api-error";
 import {
   confirmTwoFactor,
   deleteAccount,
-  deleteAvatar,
   disableTwoFactor,
   enableTwoFactor,
   getTwoFactorStatus,
@@ -15,7 +14,6 @@ import {
   updatePassword,
   updatePreferences,
   updateProfile,
-  uploadAvatar,
 } from "@/lib/auth/profile";
 import {
   updateSession,
@@ -58,46 +56,6 @@ export async function updateProfileAction(
     return { ok: true, message: "Profile updated successfully." };
   } catch (error) {
     return toResult(error, "Unable to update profile.");
-  }
-}
-
-export async function uploadAvatarAction(
-  _prev: ActionResult | null,
-  formData: FormData,
-): Promise<ActionResult> {
-  try {
-    const file = formData.get("avatar");
-    if (!(file instanceof File) || file.size === 0) {
-      return { ok: false, message: "Choose an image file." };
-    }
-    if (!file.type.startsWith("image/")) {
-      return { ok: false, message: "Choose an image file." };
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      return { ok: false, message: "Keep the image under 2 MB." };
-    }
-
-    const result = await uploadAvatar(file, file.name || "avatar.jpg");
-    await syncSessionUser(result.user);
-
-    revalidatePath("/admin", "layout");
-    revalidatePath("/admin/profile");
-    return { ok: true, message: "Avatar updated successfully." };
-  } catch (error) {
-    return toResult(error, "Unable to upload avatar.");
-  }
-}
-
-export async function deleteAvatarAction(): Promise<ActionResult> {
-  try {
-    const result = await deleteAvatar();
-    await syncSessionUser(result.user);
-
-    revalidatePath("/admin", "layout");
-    revalidatePath("/admin/profile");
-    return { ok: true, message: "Avatar removed successfully." };
-  } catch (error) {
-    return toResult(error, "Unable to remove avatar.");
   }
 }
 
