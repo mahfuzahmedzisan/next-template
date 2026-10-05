@@ -1,13 +1,17 @@
 import Link from "next/link"
 
-import { site, siteNav } from "@/content/site"
+import { logoutAction } from "@/app/(admin)/actions"
 import { ModeToggle } from "@/components/mode-toggle"
+import { SiteHeaderAccount } from "@/components/site/site-header-account"
 import { Button } from "@/components/ui/button"
+import { site, siteNav } from "@/content/site"
+import { getSession } from "@/lib/auth/auth-cookies"
 
 import { NavLinks } from "./nav-links"
 
-export function SiteHeader() {
+export async function SiteHeader() {
   const items = siteNav()
+  const session = await getSession()
 
   return (
     <header
@@ -47,9 +51,13 @@ export function SiteHeader() {
             </>
           ) : null}
           <ModeToggle />
-          <Button asChild size="sm" className="min-h-11 sm:min-h-8">
-            <Link href="/login">Sign in</Link>
-          </Button>
+          {session ? (
+            <SiteHeaderAccount user={session.user} onLogout={logoutAction} />
+          ) : (
+            <Button asChild size="sm" className="min-h-11 sm:min-h-8">
+              <Link href="/login">Sign in</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

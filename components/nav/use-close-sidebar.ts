@@ -1,12 +1,12 @@
 "use client";
 
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebarOptional } from "@/components/ui/sidebar";
 
-/** Close the mobile drawer after a navigation. No-op on desktop. */
+/** Close the mobile drawer after a navigation. No-op on desktop or outside the shell. */
 export function useCloseSidebar() {
-  const { isMobile, setOpenMobile } = useSidebar();
+  const sidebar = useSidebarOptional();
 
   return () => {
-    if (isMobile) setOpenMobile(false);
+    if (sidebar?.isMobile) sidebar.setOpenMobile(false);
   };
 }
