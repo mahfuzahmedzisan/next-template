@@ -2,7 +2,7 @@
 
 import { Globe, LogOut, Settings, Shield, ShieldCheck, UserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { AppContent } from "@/components/layout/app-content";
 import { AppHeader } from "@/components/layout/app-header";
@@ -35,29 +35,32 @@ export function AdminShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const menu: UserMenuGroup[] = [
-    {
-      label: "Account",
-      items: [
-        { title: "Profile", href: "/admin/profile", icon: UserRound },
-        { title: "Security", href: "/admin/profile#security", icon: Shield },
-        { title: "Settings", href: "/admin/profile#settings", icon: Settings },
-      ],
-    },
-    {
-      label: "Session",
-      items: [
-        {
-          title: "Log out",
-          icon: LogOut,
-          variant: "destructive",
-          onSelect: () => {
-            void onLogout();
+  const menu = useMemo<UserMenuGroup[]>(
+    () => [
+      {
+        label: "Account",
+        items: [
+          { title: "Profile", href: "/admin/profile", icon: UserRound },
+          { title: "Security", href: "/admin/profile#security", icon: Shield },
+          { title: "Settings", href: "/admin/profile#settings", icon: Settings },
+        ],
+      },
+      {
+        label: "Session",
+        items: [
+          {
+            title: "Log out",
+            icon: LogOut,
+            variant: "destructive",
+            onSelect: () => {
+              void onLogout();
+            },
           },
-        },
-      ],
-    },
-  ];
+        ],
+      },
+    ],
+    [onLogout],
+  );
 
   return (
     <AppShell>

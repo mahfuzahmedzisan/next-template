@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { NavMain } from "@/components/nav/nav-main";
 import { NavUser } from "@/components/nav/nav-user";
+import { ThemeSwitch } from "@/components/nav/theme-switch";
 import {
   Sidebar,
   SidebarContent,
@@ -60,6 +61,7 @@ export function AppSidebar({
 
       <SidebarFooter>
         {promo}
+        <ThemeSwitch />
         <NavUser user={user} groups={menu} />
       </SidebarFooter>
       <SidebarRail />
