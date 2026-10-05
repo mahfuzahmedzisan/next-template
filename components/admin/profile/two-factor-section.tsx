@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   confirmTwoFactorAction,
@@ -9,7 +10,6 @@ import {
   regenerateRecoveryCodesAction,
   type TwoFactorEnrollment,
 } from "@/app/(admin)/admin/profile/actions";
-import AlertError from "@/components/forms/alert-error";
 import PasswordInput from "@/components/forms/password-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { useActionToast } from "@/hooks/use-action-toast";
 
 function RecoveryCodesList({ codes }: { codes: string[] }) {
   return (
@@ -42,6 +43,7 @@ function EnableTwoFactorFlow({ onEnabled }: { onEnabled: () => void }) {
       const result = await enableTwoFactorAction(prev, formData);
       if (result.ok && "secret" in result) {
         setEnrollment(result);
+        toast.success("Scan the QR code and confirm to finish setup.");
       }
       return result;
     },
@@ -52,6 +54,13 @@ function EnableTwoFactorFlow({ onEnabled }: { onEnabled: () => void }) {
     null,
   );
 
+  useActionToast(
+    enableState && !enableState.ok
+      ? { ok: false, message: enableState.message }
+      : null,
+  );
+  useActionToast(confirmState);
+
   useEffect(() => {
     if (confirmState?.ok) {
       onEnabled();
@@ -59,19 +68,12 @@ function EnableTwoFactorFlow({ onEnabled }: { onEnabled: () => void }) {
   }, [confirmState, onEnabled]);
 
   if (confirmState?.ok) {
-    return (
-      <p className="rounded-lg border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-        {confirmState.message}
-      </p>
-    );
+    return null;
   }
 
   if (!enrollment) {
     return (
       <form action={enableFormAction} className="space-y-4">
-        {enableState && !enableState.ok ? (
-          <AlertError errors={[enableState.message]} />
-        ) : null}
         <div className="space-y-2">
           <Label htmlFor="enable_current_password">Confirm your password</Label>
           <PasswordInput
@@ -113,9 +115,6 @@ function EnableTwoFactorFlow({ onEnabled }: { onEnabled: () => void }) {
 
       <form action={confirmFormAction} className="space-y-4">
         <p className="text-sm font-medium">3. Confirm the code from your app</p>
-        {confirmState && !confirmState.ok ? (
-          <AlertError errors={[confirmState.message]} />
-        ) : null}
         <InputOTP maxLength={6} name="code">
           <InputOTPGroup>
             <InputOTPSlot index={0} />
@@ -144,6 +143,9 @@ function DisableTwoFactor({ onDisabled }: { onDisabled: () => void }) {
     null,
   );
 
+  useActionToast(state);
+  useActionToast(recoveryState);
+
   useEffect(() => {
     if (state?.ok) {
       onDisabled();
@@ -158,9 +160,6 @@ function DisableTwoFactor({ onDisabled }: { onDisabled: () => void }) {
 
       <form action={regenerateAction} className="space-y-3">
         <p className="text-sm font-medium">Regenerate recovery codes</p>
-        {recoveryState && !recoveryState.ok ? (
-          <AlertError errors={[recoveryState.message]} />
-        ) : null}
         {recoveryState?.ok && recoveryState.recovery_codes ? (
           <RecoveryCodesList codes={recoveryState.recovery_codes} />
         ) : null}
@@ -180,7 +179,6 @@ function DisableTwoFactor({ onDisabled }: { onDisabled: () => void }) {
 
       <form action={formAction} className="space-y-3 border-t pt-5">
         <p className="text-sm font-medium">Disable two-factor authentication</p>
-        {state && !state.ok ? <AlertError errors={[state.message]} /> : null}
         <div className="space-y-2">
           <Label htmlFor="disable_current_password">
             Confirm your password

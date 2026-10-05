@@ -3,7 +3,6 @@
 import { useActionState, useState } from "react";
 
 import { deleteAccountAction } from "@/app/(admin)/admin/profile/actions";
-import AlertError from "@/components/forms/alert-error";
 import PasswordInput from "@/components/forms/password-input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useActionToast } from "@/hooks/use-action-toast";
 
 export function DangerZone() {
   const [open, setOpen] = useState(false);
@@ -23,6 +23,8 @@ export function DangerZone() {
     deleteAccountAction,
     null,
   );
+
+  useActionToast(state);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -39,8 +41,6 @@ export function DangerZone() {
         </DialogHeader>
 
         <form action={formAction} className="space-y-4">
-          {state && !state.ok ? <AlertError errors={[state.message]} /> : null}
-
           <div className="space-y-2">
             <Label htmlFor="delete_current_password">Password</Label>
             <PasswordInput

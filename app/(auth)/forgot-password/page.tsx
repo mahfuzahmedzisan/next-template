@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import TextLink from "@/components/forms/text-link";
@@ -47,6 +48,10 @@ export default function ForgotPasswordPage() {
     // responds identically either way so account existence is never leaked.
     await postAuthApi("/api/auth/forgot-password", values);
     setSent(true);
+    toast.success(
+      "If an account exists for that email, a password reset link has been sent.",
+      { duration: 4000 },
+    );
   }
 
   return (
@@ -59,9 +64,8 @@ export default function ForgotPasswordPage() {
       </CardHeader>
       <CardContent className="space-y-5">
         {sent ? (
-          <p className="rounded-lg border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-            If an account exists for that email, a password reset link has been
-            sent.
+          <p className="text-center text-sm text-muted-foreground">
+            Check your inbox for the reset link.
           </p>
         ) : (
           <Form {...form}>

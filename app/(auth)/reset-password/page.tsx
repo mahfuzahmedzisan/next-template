@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import AlertError from "@/components/forms/alert-error";
 import PasswordInput from "@/components/forms/password-input";
 import TextLink from "@/components/forms/text-link";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,6 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const email = searchParams.get("email") ?? "";
-  const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -52,8 +51,6 @@ function ResetPasswordForm() {
   });
 
   async function onSubmit(values: Values) {
-    setFormError(null);
-
     const result = await postAuthApi<{ message: string }>(
       "/api/auth/reset-password",
       {
@@ -64,10 +61,11 @@ function ResetPasswordForm() {
     );
 
     if (!result.ok) {
-      setFormError(firstAuthErrorMessage(result.error));
+      toast.error(firstAuthErrorMessage(result.error), { duration: 4000 });
       return;
     }
 
+    toast.success("Password updated. You can sign in now.");
     router.push("/login");
   }
 
@@ -95,8 +93,6 @@ function ResetPasswordForm() {
         <CardDescription>Choose a new password for {email}.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {formError ? <AlertError errors={[formError]} /> : null}
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField

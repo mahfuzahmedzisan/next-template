@@ -2,12 +2,12 @@
 
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import AlertError from "@/components/forms/alert-error";
 import PasswordInput from "@/components/forms/password-input";
 import TextLink from "@/components/forms/text-link";
 import { Button } from "@/components/ui/button";
@@ -53,22 +53,30 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const sessionExpired = searchParams.get("reason") === SESSION_EXPIRED_REASON;
   const next = safeNext(searchParams.get("next"));
-  const [formError, setFormError] = useState<string | null>(null);
+  const sessionToastShown = useRef(false);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  async function onSubmit(values: LoginValues) {
-    setFormError(null);
+  useEffect(() => {
+    if (sessionExpired && !sessionToastShown.current) {
+      sessionToastShown.current = true;
+      toast.info(
+        "Your session ended. Sign in again to pick up where you left off.",
+        { duration: 4000 },
+      );
+    }
+  }, [sessionExpired]);
 
+  async function onSubmit(values: LoginValues) {
     const result = await postAuthApi<
       { user: unknown } | TwoFactorChallengeResponse
     >("/api/auth/login", values);
 
     if (!result.ok) {
-      setFormError(firstAuthErrorMessage(result.error));
+      toast.error(firstAuthErrorMessage(result.error), { duration: 4000 });
       return;
     }
 
@@ -79,6 +87,7 @@ function LoginForm() {
       return;
     }
 
+    toast.success("Signed in");
     router.push(next);
     router.refresh();
   }
@@ -90,15 +99,6 @@ function LoginForm() {
         <CardDescription>Sign in to your account to continue.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {sessionExpired && !formError ? (
-          <p className="rounded-lg border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-            Your session ended, so you have been signed out. Sign in again to
-            pick up where you left off.
-          </p>
-        ) : null}
-
-        {formError ? <AlertError errors={[formError]} /> : null}
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField

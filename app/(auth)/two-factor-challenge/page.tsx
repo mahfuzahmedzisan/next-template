@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import AlertError from "@/components/forms/alert-error";
 import TextLink from "@/components/forms/text-link";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +51,6 @@ export default function TwoFactorChallengePage() {
       : sessionStorage.getItem("challenge_token"),
   );
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!challengeToken) {
@@ -70,15 +69,13 @@ export default function TwoFactorChallengePage() {
   });
 
   async function completeChallenge(body: Record<string, string>) {
-    setFormError(null);
-
     const result = await postAuthApi<{ user: unknown }>(
       "/api/auth/two-factor-challenge",
       { challenge_token: challengeToken, ...body },
     );
 
     if (!result.ok) {
-      setFormError(firstAuthErrorMessage(result.error));
+      toast.error(firstAuthErrorMessage(result.error), { duration: 4000 });
       return;
     }
 
@@ -87,6 +84,7 @@ export default function TwoFactorChallengePage() {
     sessionStorage.removeItem("challenge_token");
     sessionStorage.removeItem("challenge_next");
 
+    toast.success("Verified");
     router.push(next);
     router.refresh();
   }
@@ -106,8 +104,6 @@ export default function TwoFactorChallengePage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {formError ? <AlertError errors={[formError]} /> : null}
-
         {useRecoveryCode ? (
           <Form {...recoveryForm}>
             <form

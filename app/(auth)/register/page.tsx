@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import AlertError from "@/components/forms/alert-error";
 import PasswordInput from "@/components/forms/password-input";
 import TextLink from "@/components/forms/text-link";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
@@ -60,18 +58,17 @@ export default function RegisterPage() {
   });
 
   async function onSubmit(values: RegisterValues) {
-    setFormError(null);
-
     const result = await postAuthApi<{ user: unknown }>(
       "/api/auth/register",
       values,
     );
 
     if (!result.ok) {
-      setFormError(firstAuthErrorMessage(result.error));
+      toast.error(firstAuthErrorMessage(result.error), { duration: 4000 });
       return;
     }
 
+    toast.success("Account created");
     router.push("/admin");
     router.refresh();
   }
@@ -83,8 +80,6 @@ export default function RegisterPage() {
         <CardDescription>It only takes a minute.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        {formError ? <AlertError errors={[formError]} /> : null}
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
@@ -148,9 +143,7 @@ export default function RegisterPage() {
               className="w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting
-                ? "Creating account…"
-                : "Create account"}
+              {form.formState.isSubmitting ? "Creating…" : "Create account"}
             </Button>
           </form>
         </Form>
