@@ -2,6 +2,7 @@ import "server-only";
 
 import axios, { AxiosError } from "axios";
 import { ApiError } from "@/lib/auth/api-error";
+import { resolveFrontendOrigin } from "@/lib/auth/frontend-origin";
 
 function getApiBaseUrl(): string {
   const base = process.env.LARAVEL_API_URL;
@@ -22,6 +23,18 @@ export const laravelHttp = axios.create({
   headers: { Accept: "application/json" },
   timeout: 10_000,
   validateStatus: () => true, // We inspect status ourselves; never throw on non-2xx here.
+});
+
+laravelHttp.interceptors.request.use(async (config) => {
+  const secret = process.env.BFF_SECRET;
+  if (!secret) {
+    throw new Error("BFF_SECRET environment variable is not set");
+  }
+
+  config.headers.set("X-BFF-Secret", secret);
+  config.headers.set("X-Frontend-Origin", await resolveFrontendOrigin());
+
+  return config;
 });
 
 export { getApiBaseUrl };

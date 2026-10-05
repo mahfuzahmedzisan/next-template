@@ -7,6 +7,7 @@ import {
   sessionLooksAuthenticated,
 } from "@/lib/auth/session";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
+import { runWithFrontendOrigin } from "@/lib/auth/frontend-origin-store";
 import {
   buildRefreshedSession,
   encryptSessionCookie,
@@ -34,6 +35,13 @@ function nextWithRequest(request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
+  const origin =
+    request.headers.get("origin") ?? request.nextUrl.origin;
+
+  return runWithFrontendOrigin(origin, () => handleProxy(request));
+}
+
+async function handleProxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAuthOnlyPage = AUTH_ONLY_PATHS.includes(pathname);
