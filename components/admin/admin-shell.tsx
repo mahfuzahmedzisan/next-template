@@ -21,6 +21,18 @@ function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
       { title: "Profile" },
     ];
   }
+  if (pathname.startsWith("/admin/security")) {
+    return [
+      { title: "Dashboard", href: "/admin" },
+      { title: "Security" },
+    ];
+  }
+  if (pathname.startsWith("/admin/settings")) {
+    return [
+      { title: "Dashboard", href: "/admin" },
+      { title: "Settings" },
+    ];
+  }
 
   return [{ title: "Dashboard" }];
 }
@@ -43,8 +55,8 @@ export function AdminShell({
         label: "Account",
         items: [
           { title: "Profile", href: "/admin/profile", icon: UserRound },
-          { title: "Security", href: "/admin/profile#security", icon: Shield },
-          { title: "Settings", href: "/admin/profile#settings", icon: Settings },
+          { title: "Security", href: "/admin/security", icon: Shield },
+          { title: "Settings", href: "/admin/settings", icon: Settings },
         ],
       },
       {

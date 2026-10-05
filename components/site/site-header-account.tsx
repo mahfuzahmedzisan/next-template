@@ -26,16 +26,8 @@ export function SiteHeaderAccount({
         items: [
           { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
           { title: "Profile", href: "/admin/profile", icon: UserRound },
-          {
-            title: "Security",
-            href: "/admin/profile#security",
-            icon: Shield,
-          },
-          {
-            title: "Settings",
-            href: "/admin/profile#settings",
-            icon: Settings,
-          },
+          { title: "Security", href: "/admin/security", icon: Shield },
+          { title: "Settings", href: "/admin/settings", icon: Settings },
         ],
       },
       {

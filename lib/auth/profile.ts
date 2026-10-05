@@ -1,7 +1,7 @@
 import "server-only";
 
 import { authedRequest } from "@/lib/auth/api";
-import type { User } from "@/types/auth";
+import type { ThemePreference, User } from "@/types/auth";
 
 export function updateProfile(input: { name: string; email: string }) {
   return authedRequest<{ user: User }>("put", "/profile", input);
@@ -13,6 +13,24 @@ export function updatePassword(input: {
   password_confirmation: string;
 }) {
   return authedRequest<null>("put", "/profile/password", input);
+}
+
+export function updatePreferences(input: {
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  theme?: ThemePreference;
+}) {
+  return authedRequest<{ user: User }>("put", "/profile/preferences", input);
+}
+
+export function uploadAvatar(file: Blob, filename = "avatar.jpg") {
+  const body = new FormData();
+  body.append("avatar", file, filename);
+  return authedRequest<{ user: User }>("post", "/profile/avatar", body);
+}
+
+export function deleteAvatar() {
+  return authedRequest<{ user: User }>("delete", "/profile/avatar");
 }
 
 export function deleteAccount(input: { current_password: string }) {

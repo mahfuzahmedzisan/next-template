@@ -18,6 +18,7 @@ export type NavGroup = {
 export type MenuIcon = NavIcon;
 
 export type UserSummary = {
+  id?: string | number;
   name: string;
   email: string;
   avatar?: string | null;

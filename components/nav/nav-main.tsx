@@ -54,8 +54,9 @@ function isHrefActive(pathname: string, hash: string, href?: string) {
   if (!href) return false;
 
   const [path, fragment] = href.split("#");
+  if (path === "/admin") return pathname === "/admin";
   if (pathname !== path) return false;
-  if (!fragment) return hash === "" || hash === "#profile";
+  if (!fragment) return true;
   return hash === `#${fragment}`;
 }
 

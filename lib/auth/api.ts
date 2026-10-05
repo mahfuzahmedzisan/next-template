@@ -69,14 +69,19 @@ export async function authedRequest<T>(
     endSession(onSessionExpired);
   }
 
-  const send = (accessToken: string) =>
-    laravelHttp.request({
+  const send = (accessToken: string) => {
+    const isFormData =
+      typeof FormData !== "undefined" && body instanceof FormData;
+
+    return laravelHttp.request({
       method,
       url: path,
       data: body,
       headers: { Authorization: `Bearer ${accessToken}` },
+      // Let axios set multipart boundary for FormData; JSON stays default.
+      timeout: isFormData ? 30_000 : undefined,
     });
-
+  };
   let response = await send(session.accessToken);
 
   // A 401 here means the token was rejected outright rather than merely aged

@@ -1,5 +1,7 @@
 export type UserRole = "admin" | "user";
 
+export type ThemePreference = "light" | "dark" | "system";
+
 export type User = {
   id: string | number;
   name: string;
@@ -7,6 +9,9 @@ export type User = {
   avatar?: string | null;
   role: UserRole;
   two_factor_enabled: boolean;
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  theme?: ThemePreference;
 };
 
 /** Encrypted into the httpOnly session cookie. Never sent to the browser as JS-readable JSON. */

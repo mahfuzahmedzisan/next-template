@@ -7,12 +7,15 @@ import { ApiError } from "@/lib/auth/api-error";
 import {
   confirmTwoFactor,
   deleteAccount,
+  deleteAvatar,
   disableTwoFactor,
   enableTwoFactor,
   getTwoFactorStatus,
   regenerateRecoveryCodes,
   updatePassword,
+  updatePreferences,
   updateProfile,
+  uploadAvatar,
 } from "@/lib/auth/profile";
 import {
   updateSession,
@@ -20,6 +23,7 @@ import {
   deleteSession,
 } from "@/lib/auth/auth-cookies";
 import { revokeLaravelToken } from "@/lib/auth/api";
+import type { ThemePreference } from "@/types/auth";
 
 export type ActionResult =
   { ok: true; message: string } | { ok: false; message: string };
@@ -27,6 +31,15 @@ export type ActionResult =
 function toResult(error: unknown, fallback: string): ActionResult {
   const message = error instanceof ApiError ? error.message : fallback;
   return { ok: false, message };
+}
+
+async function syncSessionUser(
+  user: Awaited<ReturnType<typeof updateProfile>>["user"],
+) {
+  const session = await getSession();
+  if (session) {
+    await updateSession({ ...session, user });
+  }
 }
 
 export async function updateProfileAction(
@@ -38,16 +51,70 @@ export async function updateProfileAction(
     const email = String(formData.get("email") ?? "");
 
     const result = await updateProfile({ name, email });
-
-    const session = await getSession();
-    if (session) {
-      await updateSession({ ...session, user: result.user });
-    }
+    await syncSessionUser(result.user);
 
     revalidatePath("/admin", "layout");
+    revalidatePath("/admin/profile");
     return { ok: true, message: "Profile updated successfully." };
   } catch (error) {
     return toResult(error, "Unable to update profile.");
+  }
+}
+
+export async function uploadAvatarAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const file = formData.get("avatar");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, message: "Choose an image file." };
+    }
+    if (!file.type.startsWith("image/")) {
+      return { ok: false, message: "Choose an image file." };
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return { ok: false, message: "Keep the image under 2 MB." };
+    }
+
+    const result = await uploadAvatar(file, file.name || "avatar.jpg");
+    await syncSessionUser(result.user);
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/profile");
+    return { ok: true, message: "Avatar updated successfully." };
+  } catch (error) {
+    return toResult(error, "Unable to upload avatar.");
+  }
+}
+
+export async function deleteAvatarAction(): Promise<ActionResult> {
+  try {
+    const result = await deleteAvatar();
+    await syncSessionUser(result.user);
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/profile");
+    return { ok: true, message: "Avatar removed successfully." };
+  } catch (error) {
+    return toResult(error, "Unable to remove avatar.");
+  }
+}
+
+export async function updatePreferencesAction(input: {
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  theme?: ThemePreference;
+}): Promise<ActionResult> {
+  try {
+    const result = await updatePreferences(input);
+    await syncSessionUser(result.user);
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/admin/settings");
+    return { ok: true, message: "Preferences saved." };
+  } catch (error) {
+    return toResult(error, "Unable to save preferences.");
   }
 }
 

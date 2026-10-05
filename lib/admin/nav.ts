@@ -17,25 +17,19 @@ export const adminNav: NavGroup[] = [
     label: "Account",
     items: [
       {
-        title: "Account",
+        title: "Profile",
+        href: "/admin/profile",
         icon: UserRound,
-        children: [
-          {
-            title: "Profile",
-            href: "/admin/profile",
-            icon: UserRound,
-          },
-          {
-            title: "Security",
-            href: "/admin/profile#security",
-            icon: Shield,
-          },
-          {
-            title: "Settings",
-            href: "/admin/profile#settings",
-            icon: Settings,
-          },
-        ],
+      },
+      {
+        title: "Security",
+        href: "/admin/security",
+        icon: Shield,
+      },
+      {
+        title: "Settings",
+        href: "/admin/settings",
+        icon: Settings,
       },
     ],
   },
