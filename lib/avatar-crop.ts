@@ -19,7 +19,10 @@ function canvasToBlob(
   });
 }
 
-/** Exports the circular crop region as a square WebP (JPEG if WebP is unavailable). */
+/**
+ * Exports the circular crop as a square PNG. PNG is readable by PHP GD even
+ * when that build has no WebP support; the API encodes the stored WebP.
+ */
 export async function cropToSquareImage(
   imageSrc: string,
   pixelCrop: Area,
@@ -47,10 +50,10 @@ export async function cropToSquareImage(
     size,
   );
 
-  const webp = await canvasToBlob(canvas, "image/webp", 0.9);
-  if (webp) return webp;
+  const png = await canvasToBlob(canvas, "image/png", 0.92);
+  if (png) return png;
 
-  const jpeg = await canvasToBlob(canvas, "image/jpeg", 0.9);
+  const jpeg = await canvasToBlob(canvas, "image/jpeg", 0.92);
   if (jpeg) return jpeg;
 
   throw new Error("Unable to export this image.");

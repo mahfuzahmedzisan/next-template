@@ -13,7 +13,8 @@ export async function uploadAvatarWithProgress(options: {
   signal?: AbortSignal;
 }): Promise<User> {
   const body = new FormData();
-  body.append("avatar", options.file, "avatar.webp");
+  const filename = options.file.type === "image/jpeg" ? "avatar.jpg" : "avatar.png";
+  body.append("avatar", options.file, filename);
 
   try {
     const response = await axios.post<AvatarResponse>(
