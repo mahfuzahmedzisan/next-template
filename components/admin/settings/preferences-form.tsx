@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { updatePreferencesAction } from "@/app/(admin)/admin/profile/actions";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { applyThemePreference } from "@/lib/theme/persist-theme";
 import { cn } from "@/lib/utils";
 import type { ThemePreference, User } from "@/types/auth";
 
@@ -63,11 +64,11 @@ export function PreferencesForm({ user }: { user: User }) {
               <button
                 key={value}
                 type="button"
-                disabled={pending}
-                onClick={() => {
-                  setTheme(value);
-                  save({ theme: value });
-                }}
+                onClick={() =>
+                  applyThemePreference(setTheme, value, {
+                    persistAccount: true,
+                  })
+                }
                 className={cn(
                   "flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-sm transition-colors disabled:opacity-60",
                   selected

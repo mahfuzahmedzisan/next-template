@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
+import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";
+import type { User } from "@/types/auth";
 
 const registerSchema = z
   .object({
@@ -58,7 +60,7 @@ export default function RegisterPage() {
   });
 
   async function onSubmit(values: RegisterValues) {
-    const result = await postAuthApi<{ user: unknown }>(
+    const result = await postAuthApi<{ user: User }>(
       "/api/auth/register",
       values,
     );
@@ -68,6 +70,7 @@ export default function RegisterPage() {
       return;
     }
 
+    await syncStoredThemeToAccount(result.data.user.theme);
     toast.success("Account created");
     router.push("/admin");
     router.refresh();

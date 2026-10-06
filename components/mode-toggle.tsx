@@ -5,6 +5,8 @@ import { useTheme } from "next-themes"
 import { useSyncExternalStore } from "react"
 
 import { Button } from "@/components/ui/button"
+import { applyThemePreference } from "@/lib/theme/persist-theme"
+import type { ThemePreference } from "@/types/auth"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +14,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function ModeToggle() {
+export function ModeToggle({
+  persistAccount = false,
+}: {
+  persistAccount?: boolean
+}) {
   const { resolvedTheme, setTheme } = useTheme()
+
+  function selectTheme(value: ThemePreference) {
+    applyThemePreference(setTheme, value, { persistAccount })
+  }
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -38,13 +48,13 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
+        <DropdownMenuItem onClick={() => selectTheme("light")}>
           Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem onClick={() => selectTheme("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
+        <DropdownMenuItem onClick={() => selectTheme("system")}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

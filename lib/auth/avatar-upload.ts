@@ -23,9 +23,11 @@ export async function uploadAvatarWithProgress(options: {
       {
         signal: options.signal,
         onUploadProgress: (event) => {
-          if (!event.total) return;
+          const total =
+            event.total && event.total > 0 ? event.total : options.file.size;
+          if (!total) return;
           options.onProgress(
-            Math.min(100, Math.round((event.loaded / event.total) * 100)),
+            Math.min(100, Math.round((event.loaded / total) * 100)),
           );
         },
       },

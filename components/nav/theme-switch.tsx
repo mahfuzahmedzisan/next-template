@@ -6,6 +6,8 @@ import { useSyncExternalStore } from "react";
 
 import { menuPanelMotion } from "@/components/nav/menu-motion";
 import { Button } from "@/components/ui/button";
+import { applyThemePreference } from "@/lib/theme/persist-theme";
+import type { ThemePreference } from "@/types/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +31,11 @@ function useMounted() {
   );
 }
 
-function ThemeMenuItems({ onSelect }: { onSelect: (value: string) => void }) {
+function ThemeMenuItems({
+  onSelect,
+}: {
+  onSelect: (value: ThemePreference) => void;
+}) {
   return themes.map(({ value, label, icon: Icon }) => (
     <DropdownMenuItem key={value} onClick={() => onSelect(value)}>
       <Icon />
@@ -44,6 +50,10 @@ export function ThemeSwitch() {
   const { state, isMobile } = useSidebar();
   const iconMode = state === "collapsed" && !isMobile;
   const active = mounted ? theme : undefined;
+
+  function selectTheme(value: ThemePreference) {
+    applyThemePreference(setTheme, value, { persistAccount: true });
+  }
 
   if (iconMode) {
     const label =
@@ -72,7 +82,7 @@ export function ThemeSwitch() {
               "data-[state=open]:slide-in-from-left-2 data-[state=closed]:slide-out-to-left-2",
             )}
           >
-            <ThemeMenuItems onSelect={setTheme} />
+            <ThemeMenuItems onSelect={selectTheme} />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -94,7 +104,7 @@ export function ThemeSwitch() {
             type="button"
             aria-pressed={selected}
             title={label}
-            onClick={() => setTheme(value)}
+            onClick={() => selectTheme(value)}
             className={cn(
               "flex h-8 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors duration-200 hover:text-sidebar-foreground",
               selected && "bg-background text-foreground shadow-sm",

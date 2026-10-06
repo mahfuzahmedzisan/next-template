@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { logoutAction } from "@/app/(admin)/actions";
-import { AccountThemeSync } from "@/components/admin/account-theme-sync";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getSession } from "@/lib/auth/auth-cookies";
 import { logoutUrl } from "@/lib/auth/session-expired";
@@ -34,15 +33,12 @@ export default async function AdminLayout({
   const sidebar = (await cookies()).get(SIDEBAR_COOKIE_NAME)?.value;
 
   return (
-    <>
-      <AccountThemeSync theme={session.user.theme} />
-      <AdminShell
-        user={session.user}
-        onLogout={logoutAction}
-        defaultOpen={sidebar !== "false"}
-      >
-        {children}
-      </AdminShell>
-    </>
+    <AdminShell
+      user={session.user}
+      onLogout={logoutAction}
+      defaultOpen={sidebar !== "false"}
+    >
+      {children}
+    </AdminShell>
   );
 }

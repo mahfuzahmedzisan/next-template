@@ -30,20 +30,22 @@ export function AvatarCropDialog({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<Area | null>(null);
-  const [progress, setProgress] = useState<number | null>(null);
-  const [processing, setProcessing] = useState(false);
+  const [phase, setPhase] = useState<
+    "idle" | "preparing" | "uploading" | "processing"
+  >("idle");
+  const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     return () => URL.revokeObjectURL(imageUrl);
   }, [imageUrl]);
 
-  const busy = progress !== null || processing;
+  const busy = phase !== "idle";
 
   function resetUpload() {
     abortRef.current = null;
-    setProgress(null);
-    setProcessing(false);
+    setPhase("idle");
+    setProgress(0);
   }
 
   async function save() {
@@ -51,19 +53,23 @@ export function AvatarCropDialog({
 
     const controller = new AbortController();
     abortRef.current = controller;
-    setProcessing(false);
+    setPhase("preparing");
     setProgress(0);
 
     try {
       const blob = await cropToSquareImage(imageUrl, area);
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) {
+        resetUpload();
+        return;
+      }
 
+      setPhase("uploading");
       await uploadAvatarWithProgress({
         file: blob,
         signal: controller.signal,
         onProgress: (percent) => {
           setProgress(percent);
-          if (percent >= 100) setProcessing(true);
+          if (percent >= 100) setPhase("processing");
         },
       });
       toast.success("Avatar updated successfully.");
@@ -81,6 +87,22 @@ export function AvatarCropDialog({
       resetUpload();
     }
   }
+
+  const statusLabel =
+    phase === "preparing"
+      ? "Preparing…"
+      : phase === "processing"
+        ? "Processing…"
+        : `Uploading ${progress}%`;
+
+  const buttonLabel =
+    phase === "preparing"
+      ? "Preparing…"
+      : phase === "uploading"
+        ? "Uploading…"
+        : phase === "processing"
+          ? "Saving…"
+          : "Save photo";
 
   return (
     <Dialog
@@ -121,19 +143,15 @@ export function AvatarCropDialog({
             style={{}}
             classes={{}}
           />
-          {progress !== null ? (
+          {phase !== "idle" ? (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/55">
               <CircularProgress
                 value={progress}
-                indeterminate={processing && progress >= 100}
+                indeterminate={phase !== "uploading"}
                 size={72}
               />
-              <p className="text-xs font-medium text-white">
-                {processing && progress >= 100
-                  ? "Processing…"
-                  : `Uploading ${progress}%`}
-              </p>
-              {!processing ? (
+              <p className="text-xs font-medium text-white">{statusLabel}</p>
+              {phase === "preparing" || phase === "uploading" ? (
                 <Button
                   type="button"
                   size="sm"
@@ -176,7 +194,7 @@ export function AvatarCropDialog({
             disabled={busy || !area}
             onClick={() => void save()}
           >
-            {busy ? "Saving…" : "Save photo"}
+            {buttonLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

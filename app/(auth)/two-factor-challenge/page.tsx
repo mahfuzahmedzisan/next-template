@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
+import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";
+import type { User } from "@/types/auth";
 
 const codeSchema = z.object({
   code: z.string().length(6, "Enter the 6-digit code"),
@@ -69,7 +71,7 @@ export default function TwoFactorChallengePage() {
   });
 
   async function completeChallenge(body: Record<string, string>) {
-    const result = await postAuthApi<{ user: unknown }>(
+    const result = await postAuthApi<{ user: User }>(
       "/api/auth/two-factor-challenge",
       { challenge_token: challengeToken, ...body },
     );
@@ -84,6 +86,7 @@ export default function TwoFactorChallengePage() {
     sessionStorage.removeItem("challenge_token");
     sessionStorage.removeItem("challenge_next");
 
+    await syncStoredThemeToAccount(result.data.user.theme);
     toast.success("Verified");
     router.push(next);
     router.refresh();

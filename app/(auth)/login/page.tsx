@@ -29,7 +29,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
-import type { TwoFactorChallengeResponse } from "@/types/auth";
+import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";
+import type { TwoFactorChallengeResponse, User } from "@/types/auth";
 
 const loginSchema = z.object({
   email: z
@@ -72,7 +73,7 @@ function LoginForm() {
 
   async function onSubmit(values: LoginValues) {
     const result = await postAuthApi<
-      { user: unknown } | TwoFactorChallengeResponse
+      { user: User } | TwoFactorChallengeResponse
     >("/api/auth/login", values);
 
     if (!result.ok) {
@@ -87,6 +88,7 @@ function LoginForm() {
       return;
     }
 
+    await syncStoredThemeToAccount(result.data.user.theme);
     toast.success("Signed in");
     router.push(next);
     router.refresh();

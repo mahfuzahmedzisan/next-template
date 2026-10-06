@@ -104,7 +104,7 @@ export function AdminShell({
             actions={
               <>
                 <HeaderUser user={user} groups={menu} />
-                <ModeToggle />
+                <ModeToggle persistAccount />
               </>
             }
           />
