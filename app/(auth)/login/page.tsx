@@ -88,7 +88,9 @@ function LoginForm() {
       return;
     }
 
-    await syncStoredThemeToAccount(result.data.user.theme);
+    if ("user" in result.data) {
+      await syncStoredThemeToAccount(result.data.user.theme);
+    }
     toast.success("Signed in");
     router.push(next);
     router.refresh();
