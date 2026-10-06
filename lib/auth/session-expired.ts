@@ -1,7 +1,7 @@
 /**
  * Shared vocabulary for "this session is dead and the user must sign in again".
  *
- * Deliberately free of server-only imports: the proxy (Edge), route handlers,
+ * Deliberately free of server-only imports: the proxy, route handlers,
  * Server Components, and browser code all need to agree on these values.
  */
 

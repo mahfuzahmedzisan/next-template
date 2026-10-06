@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 import {
   SESSION_COOKIE,
+  SESSION_OVERRIDE_HEADER,
   decrypt,
   sessionLooksAuthenticated,
 } from "@/lib/auth/session";
@@ -26,10 +27,10 @@ import {
  */
 const AUTH_ONLY_PATHS = ["/login", "/register", "/forgot-password"];
 
-function nextWithRequest(request: NextRequest) {
+function nextWithRequest(request: NextRequest, requestHeaders: Headers) {
   return NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   });
 }
@@ -55,6 +56,10 @@ async function handleProxy(request: NextRequest) {
   let refreshedCookieValue: string | null = null;
   let clearedSession = false;
 
+  // Never trust a client-supplied override; only proxy may mint one.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete(SESSION_OVERRIDE_HEADER);
+
   // Persist silent refresh before RSC runs (cookie writes are illegal in RSC).
   if (session && needsAccessTokenRefresh(session)) {
     const outcome = await buildRefreshedSession(session);
@@ -62,6 +67,7 @@ async function handleProxy(request: NextRequest) {
     if (outcome.status === "refreshed") {
       refreshedCookieValue = await encryptSessionCookie(outcome.session);
       request.cookies.set(SESSION_COOKIE, refreshedCookieValue);
+      requestHeaders.set(SESSION_OVERRIDE_HEADER, refreshedCookieValue);
       session = outcome.session;
     } else if (outcome.status === "revoked") {
       request.cookies.delete(SESSION_COOKIE);
@@ -105,7 +111,7 @@ async function handleProxy(request: NextRequest) {
     return redirectResponse;
   }
 
-  const response = nextWithRequest(request);
+  const response = nextWithRequest(request, requestHeaders);
   if (refreshedCookieValue) {
     response.cookies.set(
       SESSION_COOKIE,

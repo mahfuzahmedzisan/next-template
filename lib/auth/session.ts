@@ -4,6 +4,12 @@ import type { SessionPayload } from "@/types/auth";
 
 export const SESSION_COOKIE = "session";
 
+/**
+ * Proxy → RSC handoff after a silent refresh. Never accepted from the browser:
+ * proxy strips any inbound value and only sets one it just minted.
+ */
+export const SESSION_OVERRIDE_HEADER = "x-mahfuz-session";
+
 /** Keep the httpOnly cookie alive longer than the access token so silent refresh can run. */
 export const SESSION_COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 

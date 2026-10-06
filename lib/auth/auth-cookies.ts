@@ -1,9 +1,13 @@
 import "server-only";
 
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
-import { decrypt, SESSION_COOKIE } from "@/lib/auth/session";
+import {
+  decrypt,
+  SESSION_COOKIE,
+  SESSION_OVERRIDE_HEADER,
+} from "@/lib/auth/session";
 import {
   buildRefreshedSession,
   encryptSessionCookie,
@@ -46,7 +50,11 @@ export async function createSession(payload: SessionPayload): Promise<void> {
 /** Per-request memoization so layout + page share one refresh. */
 export const getSession = cache(async (): Promise<SessionPayload | null> => {
   const cookieStore = await cookies();
-  const cookie = cookieStore.get(SESSION_COOKIE)?.value;
+  const headerStore = await headers();
+  // Prefer the JWE proxy just minted for this request over a stale Cookie.
+  const cookie =
+    headerStore.get(SESSION_OVERRIDE_HEADER) ??
+    cookieStore.get(SESSION_COOKIE)?.value;
   const session = await decrypt(cookie);
 
   if (!session) {
