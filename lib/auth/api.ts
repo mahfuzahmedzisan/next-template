@@ -82,7 +82,13 @@ export async function authedRequest<T>(
       timeout: isFormData ? 30_000 : undefined,
     });
   };
-  let response = await send(session.accessToken);
+
+  let response;
+  try {
+    response = await send(session.accessToken);
+  } catch (error) {
+    throw toApiError(error, "Unable to reach the API.");
+  }
 
   // A 401 here means the token was rejected outright rather than merely aged
   // out - the usual cause is the API's signing keys being replaced by a
@@ -94,7 +100,11 @@ export async function authedRequest<T>(
       endSession(onSessionExpired);
     }
 
-    response = await send(revived.accessToken);
+    try {
+      response = await send(revived.accessToken);
+    } catch (error) {
+      throw toApiError(error, "Unable to reach the API.");
+    }
 
     if (response.status === 401) {
       endSession(onSessionExpired);

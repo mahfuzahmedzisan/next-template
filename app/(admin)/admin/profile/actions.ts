@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 import { ApiError } from "@/lib/auth/api-error";
 import {
@@ -21,14 +22,27 @@ import {
   deleteSession,
 } from "@/lib/auth/auth-cookies";
 import { revokeLaravelToken } from "@/lib/auth/api";
+import { SessionExpiredError } from "@/lib/auth/session-expired";
 import type { ThemePreference } from "@/types/auth";
 
 export type ActionResult =
   { ok: true; message: string } | { ok: false; message: string };
 
 function toResult(error: unknown, fallback: string): ActionResult {
-  const message = error instanceof ApiError ? error.message : fallback;
-  return { ok: false, message };
+  // `redirect()` / session-expired navigation must not become a toast.
+  if (isRedirectError(error) || error instanceof SessionExpiredError) {
+    throw error;
+  }
+
+  if (error instanceof ApiError) {
+    return { ok: false, message: error.message || fallback };
+  }
+
+  if (error instanceof Error && error.message.trim() !== "") {
+    return { ok: false, message: error.message };
+  }
+
+  return { ok: false, message: fallback };
 }
 
 async function syncSessionUser(
