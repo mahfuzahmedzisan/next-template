@@ -21,7 +21,7 @@ export function UserInfo({
 }) {
   return (
     <>
-      <Avatar size="sm">
+      <Avatar>
         {user.avatar ? <AvatarImage src={user.avatar} alt="" /> : null}
         <AvatarFallback>{initials(user.name)}</AvatarFallback>
       </Avatar>
