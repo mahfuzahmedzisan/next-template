@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
-import Script from "next/script"
 import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
 import { JsonLd } from "@/components/seo/json-ld"
@@ -22,6 +21,7 @@ const geistSans = Geist({
 
 const description = siteDescription()
 const origin = siteOrigin()
+const splashBoot = `(function(){var root=document.documentElement;try{if(!sessionStorage.getItem("mahfuz:splash:v1")){root.setAttribute("data-splash-active","true");root.setAttribute("data-splash-started-at",String(performance.now()))}}catch(error){root.setAttribute("data-splash-active","true");root.setAttribute("data-splash-started-at",String(performance.now()))}window.setTimeout(function(){root.removeAttribute("data-splash-active")},5000)})()`
 
 export const metadata: Metadata = {
   metadataBase: origin ? new URL(origin) : undefined,
@@ -69,8 +69,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: splashBoot }} />
+      </head>
       <body className="flex min-h-svh flex-col">
-        <Script src="/splash-boot.js" strategy="beforeInteractive" />
         <JsonLd data={siteStructuredData()} />
         <ThemeProvider
           attribute="class"

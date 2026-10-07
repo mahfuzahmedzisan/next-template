@@ -116,6 +116,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
 
   const onRevealed = useCallback(() => {
     document.documentElement.removeAttribute("data-splash-active")
+    document.documentElement.removeAttribute("data-splash-started-at")
     if (state.requestId === 0) {
       try { sessionStorage.setItem(SPLASH_KEY, "shown") } catch {}
     }

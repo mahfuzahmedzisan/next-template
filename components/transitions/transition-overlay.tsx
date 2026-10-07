@@ -8,6 +8,8 @@ import { SvgAsset } from "@/components/svg/svg-asset"
 import { usePrefersReducedMotion } from "@/hooks/animations/use-prefers-reduced-motion"
 import type { TransitionPhase } from "@/lib/transitions/types"
 
+const MINIMUM_SPLASH_MS = 650
+
 export function TransitionOverlay({ phase, initial, onRevealed }: { phase: TransitionPhase; initial: boolean; onRevealed(): void }) {
   const layer = useRef<HTMLDivElement>(null)
   const splash = useRef<HTMLDivElement>(null)
@@ -15,6 +17,7 @@ export function TransitionOverlay({ phase, initial, onRevealed }: { phase: Trans
   const splashRule = useRef<HTMLSpanElement>(null)
   const navigation = useRef<HTMLDivElement>(null)
   const progress = useRef<HTMLSpanElement>(null)
+  const navigationLabel = useRef<HTMLSpanElement>(null)
   const { prefersReducedMotion } = usePrefersReducedMotion()
   const visible = phase !== "idle" && phase !== "booting"
 
@@ -32,12 +35,15 @@ export function TransitionOverlay({ phase, initial, onRevealed }: { phase: Trans
     }
 
     if (phase === "splashRevealing") {
-      gsap.to(splash.current, { opacity: 0, duration: prefersReducedMotion ? 0.06 : 0.2, ease: "power1.out", onComplete: onRevealed })
+      const startedAt = Number(document.documentElement.dataset.splashStartedAt ?? performance.now())
+      const remaining = Math.max(0, MINIMUM_SPLASH_MS - (performance.now() - startedAt)) / 1000
+      gsap.to(splash.current, { opacity: 0, delay: remaining, duration: prefersReducedMotion ? 0.06 : 0.2, ease: "power1.out", onComplete: onRevealed })
     }
 
     if (phase === "routeCovering" || phase === "navigationDispatched" || phase === "routeWaiting") {
       gsap.set(progress.current, { scaleX: 0.06 })
       gsap.to(navigation.current, { opacity: 1, duration: 0.12, delay: 0.12, ease: "linear" })
+      gsap.fromTo(navigationLabel.current, { opacity: 0, y: -5 }, { opacity: 1, y: 0, duration: 0.18, delay: 0.14, ease: "power2.out" })
       gsap.to(progress.current, { scaleX: 0.82, duration: 1.1, delay: 0.12, ease: "power1.out" })
     }
 
@@ -86,9 +92,9 @@ export function TransitionOverlay({ phase, initial, onRevealed }: { phase: Trans
         <span className="navigation-loader__track">
           <span ref={progress} className="navigation-loader__progress" />
         </span>
-        <span className="navigation-loader__label">
+        <span ref={navigationLabel} className="navigation-loader__label">
           <span className="navigation-loader__dot" />
-          Loading
+          Navigating
         </span>
       </div>
     </div>

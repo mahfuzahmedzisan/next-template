@@ -163,6 +163,12 @@
   pointer-events: none;
 }
 
+html[data-splash-active="true"] body {
+  visibility: hidden;
+  overflow: hidden;
+  background: var(--transition-panel);
+}
+
 html[data-splash-active="true"] .transition-layer[data-kind="splash"] {
   visibility: visible;
   pointer-events: auto;
@@ -171,6 +177,11 @@ html[data-splash-active="true"] .transition-layer[data-kind="splash"] {
 
 .transition-layer[data-visible="true"] {
   visibility: visible;
+}
+
+.transition-layer[data-kind="splash"] .navigation-loader,
+.transition-layer[data-kind="navigation"] .initial-splash {
+  display: none;
 }
 
 .initial-splash {
@@ -232,6 +243,7 @@ html[data-splash-active="true"] .transition-layer[data-kind="splash"] {
 
 .navigation-loader__progress,
 .route-fallback__progress {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
@@ -239,6 +251,15 @@ html[data-splash-active="true"] .transition-layer[data-kind="splash"] {
   transform-origin: left center;
   background: linear-gradient(90deg, var(--brand-cyan), var(--brand-indigo), var(--brand-purple));
   box-shadow: 0 0 10px color-mix(in oklab, var(--brand-indigo) 55%, transparent);
+}
+
+.navigation-loader__progress::after {
+  position: absolute;
+  inset: 0;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / .72), transparent);
+  content: "";
+  animation: navigation-sheen .72s linear infinite;
 }
 
 .navigation-loader__label {
@@ -270,6 +291,10 @@ html[data-splash-active="true"] .transition-layer[data-kind="splash"] {
 .route-fallback__progress { width: 38%; animation: route-fallback-progress 1.1s ease-in-out infinite; }
 
 @keyframes navigation-pulse { to { opacity: .35; transform: scale(.82); } }
+@keyframes navigation-sheen {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(460%); }
+}
 @keyframes route-fallback-progress {
   from { transform: translateX(-110%) scaleX(.6); }
   to { transform: translateX(310%) scaleX(1); }
