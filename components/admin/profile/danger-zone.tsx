@@ -16,10 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useActionToast } from "@/hooks/use-action-toast";
-import { useTransitionController } from "@/components/transitions/transition-provider";
 
 export function DangerZone() {
-  const { runTransitionAction } = useTransitionController();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     deleteAccountAction,
@@ -42,7 +40,7 @@ export function DangerZone() {
           </DialogDescription>
         </DialogHeader>
 
-        <form action={(formData) => runTransitionAction(() => formAction(formData))} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="delete_current_password">Password</Label>
             <PasswordInput

@@ -6,5 +6,5 @@
   } catch {
     root.setAttribute("data-splash-active", "true")
   }
-  window.setTimeout(function () { root.removeAttribute("data-splash-active") }, 12000)
+  window.setTimeout(function () { root.removeAttribute("data-splash-active") }, 5000)
 })()

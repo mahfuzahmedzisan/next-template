@@ -1,7 +1,10 @@
 export default function Loading() {
   return (
-    <p className="mx-auto w-full max-w-3xl px-6 py-16 text-base leading-7 text-muted-foreground">
-      Loading
-    </p>
+    <div className="route-fallback" role="status" aria-live="polite">
+      <span className="route-fallback__track">
+        <span className="route-fallback__progress" />
+      </span>
+      <span className="sr-only">Loading page</span>
+    </div>
   );
 }

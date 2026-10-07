@@ -12,6 +12,7 @@ import { TransitionOverlay } from "./transition-overlay"
 
 const SPLASH_KEY = "mahfuz:splash:v1"
 const DEADLINE_MS = 12_000
+const SPLASH_DEADLINE_MS = 5_000
 
 type NavigateOptions = { replace?: boolean; scroll?: boolean }
 type Outcome = "ready" | "error" | "not-found"
@@ -36,9 +37,9 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   const requestCounter = useRef(0)
   const booted = useRef(false)
   const readyRoutes = useRef(new Map<string, Outcome>())
-  const actionRef = useRef<(() => void | Promise<void>) | null>(null)
-  const layerRef = useRef<HTMLElement | null>(null)
+  const pendingActionRequest = useRef<number | null>(null)
   const active = state.phase !== "idle" && state.phase !== "booting"
+  const blockingSplash = state.requestId === 0 && active
 
   useEffect(() => {
     if (booted.current) return
@@ -59,6 +60,8 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       return
     }
     if (state.phase !== "routeWaiting" || state.requestId === 0) return
+    if (pendingActionRequest.current === state.requestId && pathname === state.from) return
+    if (pendingActionRequest.current === state.requestId && pathname !== state.from) pendingActionRequest.current = null
     if (pathname === state.from && routeKey(state.target ?? pathname) !== pathname) return
     dispatch({ type: "DESTINATION_COMMITTED", requestId: state.requestId, actualRouteKey: pathname })
     const outcome = readyRoutes.current.get(pathname)
@@ -67,22 +70,19 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   }, [pathname, state.from, state.phase, state.requestId, state.target])
 
   useEffect(() => {
-    if (!active) return
-    const releaseScroll = acquireScrollLock("route-transition")
+    if (!blockingSplash) return
+    const releaseScroll = acquireScrollLock("initial-splash")
     const layer = document.querySelector<HTMLElement>("[data-transition-layer]")
-    layerRef.current = layer
     const releaseShield = layer ? activateInteractionShield(layer) : () => {}
-    const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    if (focused && focused.closest("[inert]")) document.querySelector<HTMLElement>(".transition-status")?.focus({ preventScroll: true })
     return () => { releaseShield(); releaseScroll() }
-  }, [active, acquireScrollLock])
+  }, [acquireScrollLock, blockingSplash])
 
   useEffect(() => {
     if (!active) return
     const id = window.setTimeout(() => {
       performance.mark("route-transition-recovery")
       dispatch({ type: "EMERGENCY_RECOVERY", requestId: state.requestId, reason: "deadline" })
-    }, DEADLINE_MS)
+    }, state.requestId === 0 ? SPLASH_DEADLINE_MS : DEADLINE_MS)
     return () => window.clearTimeout(id)
   }, [active, state.requestId])
 
@@ -98,6 +98,10 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     const requestId = ++requestCounter.current
     readyRoutes.current.delete(url.pathname)
     dispatch({ type: "NAVIGATION_REQUESTED", requestId, from: pathname, to: `${url.pathname}${url.search}${url.hash}`, method: options.replace ? "replace" : "push" })
+    if (options.replace) router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: options.scroll })
+    else router.push(`${url.pathname}${url.search}${url.hash}`, { scroll: options.scroll })
+    dispatch({ type: "COVER_COMPLETED", requestId })
+    dispatch({ type: "NAVIGATION_DISPATCHED", requestId })
   }, [pathname, router])
 
   const markReady = useCallback((key: string, _registration: string, outcome: Outcome = "ready") => {
@@ -110,27 +114,12 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     return () => { if (readyRoutes.current.get(key) === outcome) readyRoutes.current.delete(key) }
   }, [pathname, state.actualRouteKey, state.phase, state.requestId, state.target])
 
-  const onCovered = useCallback(() => {
-    const requestId = state.requestId
-    dispatch({ type: "COVER_COMPLETED", requestId })
-    if (actionRef.current) {
-      const action = actionRef.current
-      actionRef.current = null
-      Promise.resolve(action()).finally(() => dispatch({ type: "NAVIGATION_DISPATCHED", requestId }))
-      return
-    }
-    if (!state.target) return
-    const options = { scroll: true }
-    if (state.method === "replace") router.replace(state.target, options)
-    else router.push(state.target, options)
-    dispatch({ type: "NAVIGATION_DISPATCHED", requestId })
-  }, [router, state.method, state.requestId, state.target])
-
   const onRevealed = useCallback(() => {
     document.documentElement.removeAttribute("data-splash-active")
     if (state.requestId === 0) {
       try { sessionStorage.setItem(SPLASH_KEY, "shown") } catch {}
     }
+    if (pendingActionRequest.current === state.requestId) pendingActionRequest.current = null
     dispatch({ type: "REVEAL_COMPLETED", requestId: state.requestId })
     requestAnimationFrame(() => {
       document.getElementById("content")?.focus({ preventScroll: true })
@@ -140,15 +129,18 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
 
   const runTransitionAction = useCallback(async (action: () => void | Promise<void>) => {
     const requestId = ++requestCounter.current
-    actionRef.current = action
+    pendingActionRequest.current = requestId
     dispatch({ type: "NAVIGATION_REQUESTED", requestId, from: pathname, to: pathname, method: "push" })
+    dispatch({ type: "COVER_COMPLETED", requestId })
+    dispatch({ type: "NAVIGATION_DISPATCHED", requestId })
+    await action()
   }, [pathname])
 
   const value = useMemo(() => ({ navigate, markReady, runTransitionAction, active }), [active, markReady, navigate, runTransitionAction])
   return (
     <TransitionContext.Provider value={value}>
       {children}
-      <TransitionOverlay initial={state.requestId === 0} phase={state.requestId === 0 && state.phase === "routeWaiting" ? "splashWaiting" : state.requestId === 0 && state.phase === "routeRevealing" ? "splashRevealing" : state.phase} onCovered={onCovered} onRevealed={onRevealed} />
+      <TransitionOverlay initial={state.requestId === 0} phase={state.requestId === 0 && state.phase === "routeWaiting" ? "splashWaiting" : state.requestId === 0 && state.phase === "routeRevealing" ? "splashRevealing" : state.phase} onRevealed={onRevealed} />
     </TransitionContext.Provider>
   )
 }

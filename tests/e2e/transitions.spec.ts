@@ -6,17 +6,21 @@ test.beforeEach(async ({ page }) => {
 
 test("initial splash settles, records the session, and never leaves content inert", async ({ page }) => {
   await page.goto("/")
+  await expect(page.locator("[data-transition-layer]")).toHaveAttribute("data-kind", "splash")
+  await expect(page.locator(".initial-splash__logo")).toHaveCount(1)
   await expect(page.locator("[data-transition-layer]")).toHaveAttribute("aria-hidden", "true")
   await expect.poll(() => page.evaluate(() => sessionStorage.getItem("mahfuz:splash:v1"))).toBe("shown")
   await expect(page.locator("#content")).not.toHaveAttribute("inert", "")
 })
 
-test("eligible internal links use the panel and focus destination content", async ({ page }) => {
+test("eligible internal links dispatch immediately and finish the non-blocking indicator", async ({ page }) => {
   await page.goto("/")
   await page.evaluate(() => sessionStorage.setItem("mahfuz:splash:v1", "shown"))
   const login = page.locator('a[href="/login"]').first()
   await login.click()
   await expect(page).toHaveURL(/\/login$/)
+  await expect(page.locator("[data-transition-layer]")).toHaveAttribute("data-kind", "navigation")
+  await expect(page.locator("[data-transition-layer]")).toHaveCSS("pointer-events", "none")
   await expect(page.locator("[data-transition-layer]")).toHaveAttribute("aria-hidden", "true")
   await expect(page.locator("#content")).toBeFocused()
 })
