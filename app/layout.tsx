@@ -1,27 +1,31 @@
-import type { Metadata } from "next"
-import { Geist } from "next/font/google"
-import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
-import { AnimationProvider } from "@/components/animations/providers/animation-provider"
-import { JsonLd } from "@/components/seo/json-ld"
-import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
-import { ThemeProvider } from "@/components/theme-provider"
-import { TransitionProvider } from "@/components/transitions/transition-provider"
-import { Toaster } from "@/components/ui/sonner"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { site, siteDescription } from "@/content/site"
-import { siteOrigin } from "@/lib/site-url"
-import { siteStructuredData } from "@/lib/structured-data"
+import type { Metadata } from "next";
+import { Geist } from "next/font/google";
+import {
+  AlertCircleIcon,
+  InfoIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+} from "lucide-react";
+import { AnimationProvider } from "@/components/animations/providers/animation-provider";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SectionErrorBoundary } from "@/components/site/section-error-boundary";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TransitionProvider } from "@/components/transitions/transition-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { site, siteDescription } from "@/content/site";
+import { siteOrigin } from "@/lib/site-url";
+import { siteStructuredData } from "@/lib/structured-data";
 
-import "./globals.css"
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
-})
+});
 
-const description = siteDescription()
-const origin = siteOrigin()
-const splashBoot = `(function(){var root=document.documentElement;try{if(!sessionStorage.getItem("mahfuz:splash:v1")){root.setAttribute("data-splash-active","true");root.setAttribute("data-splash-started-at",String(performance.now()))}}catch(error){root.setAttribute("data-splash-active","true");root.setAttribute("data-splash-started-at",String(performance.now()))}window.setTimeout(function(){root.removeAttribute("data-splash-active")},5000)})()`
+const description = siteDescription();
+const origin = siteOrigin();
 
 export const metadata: Metadata = {
   metadataBase: origin ? new URL(origin) : undefined,
@@ -60,7 +64,7 @@ export const metadata: Metadata = {
     title: site.name,
     description,
   },
-}
+};
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -69,9 +73,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: splashBoot }} />
-      </head>
       <body className="flex min-h-svh flex-col">
         <JsonLd data={siteStructuredData()} />
         <ThemeProvider
@@ -83,7 +84,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <AnimationProvider>
             <TransitionProvider>
               <TooltipProvider>
-                <div id="content" tabIndex={-1} className="flex min-h-svh flex-1 flex-col outline-none">
+                <div
+                  id="content"
+                  tabIndex={-1}
+                  className="flex min-h-svh flex-1 flex-col outline-none"
+                >
                   <SectionErrorBoundary>{children}</SectionErrorBoundary>
                 </div>
                 <Toaster
@@ -104,5 +109,5 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
