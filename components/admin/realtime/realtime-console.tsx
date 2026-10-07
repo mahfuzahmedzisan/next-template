@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   pingRealtimeAction,
@@ -18,6 +19,18 @@ import {
   isReverbConfigured,
   reverbPublicConfig,
 } from "@/lib/realtime/config";
+
+type PingPayload = {
+  message?: string;
+  triggered_at?: string;
+  source?: string;
+};
+
+type PrivatePayload = {
+  message?: string;
+  triggered_at?: string;
+  user_id?: number;
+};
 
 type LogLine = {
   at: string;
@@ -71,15 +84,24 @@ export function RealtimeConsole({ userId }: { userId: string | number }) {
 
     const publicChannel = echo.channel("reverb-ping");
     publicChannel.listen(".ping", (payload: unknown) => {
+      const data = (payload ?? {}) as PingPayload;
       pushEvent(`reverb-ping .ping ${JSON.stringify(payload)}`);
+      toast.success("Public signal received", {
+        description: data.message ?? "reverb-ping · ping",
+      });
     });
 
     const privateChannel = echo.private(`App.Models.User.${userId}`);
     privateChannel.listen(".realtime.test", (payload: unknown) => {
+      const data = (payload ?? {}) as PrivatePayload;
       pushEvent(`private .realtime.test ${JSON.stringify(payload)}`);
+      toast.success("Private signal received", {
+        description: data.message ?? `App.Models.User.${userId}`,
+      });
     });
     privateChannel.error((error: unknown) => {
       pushLog(`private auth error ${JSON.stringify(error)}`);
+      toast.error("Private channel auth failed");
     });
 
     return () => {
