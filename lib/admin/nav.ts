@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Shield, UserRound } from "lucide-react";
+import { LayoutDashboard, Radio, Settings, Shield, UserRound } from "lucide-react";
 
 import type { NavGroup } from "@/lib/nav";
 
@@ -10,6 +10,11 @@ export const adminNav: NavGroup[] = [
         title: "Dashboard",
         href: "/admin",
         icon: LayoutDashboard,
+      },
+      {
+        title: "Realtime",
+        href: "/admin/realtime",
+        icon: Radio,
       },
     ],
   },

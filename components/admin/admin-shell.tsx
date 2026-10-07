@@ -15,6 +15,12 @@ import { adminNav } from "@/lib/admin/nav";
 import type { BreadcrumbItem, UserMenuGroup, UserSummary } from "@/lib/nav";
 
 function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
+  if (pathname.startsWith("/admin/realtime")) {
+    return [
+      { title: "Dashboard", href: "/admin" },
+      { title: "Realtime" },
+    ];
+  }
   if (pathname.startsWith("/admin/profile")) {
     return [
       { title: "Dashboard", href: "/admin" },
