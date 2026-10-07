@@ -1,7 +1,7 @@
 "use client";
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
 
 import { Button } from "@/components/ui/button";
 import { reportError } from "@/lib/monitoring";

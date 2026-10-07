@@ -13,6 +13,7 @@ import { SidebarPromo } from "@/components/nav/sidebar-promo";
 import { ModeToggle } from "@/components/mode-toggle";
 import { adminNav } from "@/lib/admin/nav";
 import type { BreadcrumbItem, UserMenuGroup, UserSummary } from "@/lib/nav";
+import { useTransitionController } from "@/components/transitions/transition-provider";
 
 function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
   if (pathname.startsWith("/admin/realtime")) {
@@ -55,6 +56,7 @@ export function AdminShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const { runTransitionAction } = useTransitionController();
   const menu = useMemo<UserMenuGroup[]>(
     () => [
       {
@@ -73,13 +75,13 @@ export function AdminShell({
             icon: LogOut,
             variant: "destructive",
             onSelect: () => {
-              void onLogout();
+              void runTransitionAction(onLogout);
             },
           },
         ],
       },
     ],
-    [onLogout],
+    [onLogout, runTransitionAction],
   );
 
   return (

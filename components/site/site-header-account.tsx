@@ -11,6 +11,7 @@ import { useMemo } from "react";
 
 import { HeaderUser } from "@/components/nav/header-user";
 import type { UserMenuGroup, UserSummary } from "@/lib/nav";
+import { useTransitionController } from "@/components/transitions/transition-provider";
 
 export function SiteHeaderAccount({
   user,
@@ -19,6 +20,7 @@ export function SiteHeaderAccount({
   user: UserSummary;
   onLogout: () => void | Promise<void>;
 }) {
+  const { runTransitionAction } = useTransitionController();
   const menu = useMemo<UserMenuGroup[]>(
     () => [
       {
@@ -38,13 +40,13 @@ export function SiteHeaderAccount({
             icon: LogOut,
             variant: "destructive",
             onSelect: () => {
-              void onLogout();
+              void runTransitionAction(onLogout);
             },
           },
         ],
       },
     ],
-    [onLogout],
+    [onLogout, runTransitionAction],
   );
 
   return <HeaderUser user={user} groups={menu} avatarOnly />;

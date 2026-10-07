@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { TransitionLink as Link } from "@/components/transitions/transition-link"
 
 import { logoutAction } from "@/app/(admin)/actions"
 import { ModeToggle } from "@/components/mode-toggle"

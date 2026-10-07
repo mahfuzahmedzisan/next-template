@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
 import type { ReactNode } from "react";
 
 import { accountTabs, type AccountTab } from "@/lib/admin/account";

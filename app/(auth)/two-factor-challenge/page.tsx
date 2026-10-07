@@ -1,7 +1,7 @@
 "use client";
 
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
+import { useTransitionRouter } from "@/components/transitions/transition-provider";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import TextLink from "@/components/forms/text-link";
+import { RouteReady } from "@/components/transitions/route-ready";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,7 +47,7 @@ type CodeValues = z.infer<typeof codeSchema>;
 type RecoveryValues = z.infer<typeof recoverySchema>;
 
 export default function TwoFactorChallengePage() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const [challengeToken] = useState<string | null>(() =>
     typeof window === "undefined"
       ? null
@@ -98,6 +99,7 @@ export default function TwoFactorChallengePage() {
 
   return (
     <Card>
+      <RouteReady />
       <CardHeader>
         <CardTitle className="text-2xl">Two-factor verification</CardTitle>
         <CardDescription>

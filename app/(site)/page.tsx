@@ -1,5 +1,6 @@
 import { KeyRound, ShieldCheck, LayoutDashboard } from "lucide-react"
-import Link from "next/link"
+import { TransitionLink as Link } from "@/components/transitions/transition-link"
+import { RouteReady } from "@/components/transitions/route-ready"
 
 import { ContactForm } from "@/components/site/contact-form"
 import { ContactLinks } from "@/components/site/contact-links"
@@ -37,6 +38,7 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-20 px-6 py-16 md:py-24">
+      <RouteReady />
       <Reveal>
         <section aria-labelledby="home-heading" className="max-w-2xl">
           <p className="text-sm font-medium text-muted-foreground">{lead}</p>

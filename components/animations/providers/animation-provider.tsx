@@ -12,6 +12,7 @@ import {
 import { animationConfig } from "@/lib/animations/config"
 import { shouldEnableSmoothScroll } from "@/lib/animations/reduced-motion"
 import { usePrefersReducedMotion } from "@/hooks/animations/use-prefers-reduced-motion"
+import { ScrollLockProvider } from "./scroll-lock-provider"
 
 import { gsap, registerGsapPlugins, ScrollTrigger } from "../gsap"
 
@@ -103,28 +104,6 @@ export function AnimationProvider({
     }
   }, [smoothScroll])
 
-  // Pause smooth scroll when the tab is hidden
-  useEffect(() => {
-    if (!smoothScroll) {
-      return
-    }
-
-    const onVisibility = () => {
-      const lenis = lenisRef.current?.lenis
-      if (!lenis) {
-        return
-      }
-      if (document.hidden) {
-        lenis.stop()
-      } else {
-        lenis.start()
-      }
-    }
-
-    document.addEventListener("visibilitychange", onVisibility)
-    return () => document.removeEventListener("visibilitychange", onVisibility)
-  }, [smoothScroll])
-
   // Refresh ScrollTrigger after App Router navigations
   useEffect(() => {
     if (!smoothScroll) {
@@ -157,10 +136,10 @@ export function AnimationProvider({
             respectReducedMotion: true,
           }}
         >
-          {children}
+          <ScrollLockProvider lenisRef={lenisRef}>{children}</ScrollLockProvider>
         </ReactLenis>
       ) : (
-        children
+        <ScrollLockProvider lenisRef={lenisRef}>{children}</ScrollLockProvider>
       )}
     </MotionConfig>
   )

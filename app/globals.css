@@ -67,6 +67,11 @@
 }
 
 :root {
+  --brand-cyan: #22d3ee;
+  --brand-indigo: #6366f1;
+  --brand-purple: #8b5cf6;
+  --transition-panel: #eefcff;
+  --transition-panel-foreground: #171b35;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -102,6 +107,8 @@
 }
 
 .dark {
+  --transition-panel: #11142b;
+  --transition-panel-foreground: #ecfeff;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -144,7 +151,59 @@
   }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
   }
+}
+
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  visibility: hidden;
+  pointer-events: none;
+  touch-action: none;
+  overflow: hidden;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+html[data-splash-active="true"] .transition-overlay,
+.transition-overlay[data-visible="true"] {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.transition-panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  color: var(--transition-panel-foreground);
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--brand-cyan) 28%, transparent), transparent 32%),
+    linear-gradient(145deg, var(--transition-panel), color-mix(in oklab, var(--transition-panel) 78%, var(--brand-purple)));
+}
+
+.transition-brand { position: relative; display: grid; place-items: center; width: min(86vw, 42rem); }
+.transition-panel-art { position: absolute; inset: auto 0 0; width: 100%; height: 72%; opacity: .26; }
+.transition-logo { position: absolute; top: 4%; left: 8%; width: clamp(3.5rem, 8vw, 6rem); }
+.transition-robot { width: clamp(12rem, 33vw, 22rem); max-height: 72dvh; }
+.transition-geometry { position: absolute; opacity: .42; }
+.transition-ring { width: clamp(13rem, 38vw, 28rem); right: -8%; top: 8%; }
+.transition-spark { width: clamp(3rem, 8vw, 6rem); left: 12%; bottom: 12%; }
+.transition-status { position: absolute; bottom: max(1.5rem, env(safe-area-inset-bottom)); font-size: .875rem; opacity: 0; transition: opacity .15s linear .45s; outline: none; }
+.transition-overlay[data-visible="true"] .transition-status { opacity: .8; }
+
+@media (max-width: 47.99rem) {
+  .transition-ring { display: none; }
+  .transition-robot { width: clamp(12rem, 62vw, 18rem); }
+}
+
+@media (max-height: 31rem) and (orientation: landscape) {
+  .transition-robot { width: min(30vw, 11rem); }
+  .transition-geometry { display: none; }
 }
 
 /* SplitType guidance: prevents character shift on split/revert */

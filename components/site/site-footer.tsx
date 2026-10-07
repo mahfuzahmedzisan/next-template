@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { TransitionLink as Link } from "@/components/transitions/transition-link"
 
 import { site, siteNav } from "@/content/site"
 import { Button } from "@/components/ui/button"

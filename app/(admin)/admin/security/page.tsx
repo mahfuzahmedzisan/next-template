@@ -8,6 +8,7 @@ import { DangerZone } from "@/components/admin/profile/danger-zone";
 import { PasswordForm } from "@/components/admin/profile/password-form";
 import { TwoFactorSection } from "@/components/admin/profile/two-factor-section";
 import { getSession } from "@/lib/auth/auth-cookies";
+import { RouteReady } from "@/components/transitions/route-ready";
 
 export default async function SecurityPage() {
   const session = await getSession();
@@ -15,6 +16,7 @@ export default async function SecurityPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <RouteReady />
       <AccountPageHeader
         active="security"
         title="Security"

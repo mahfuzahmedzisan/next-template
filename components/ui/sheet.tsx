@@ -6,6 +6,7 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { ModalScrollLockBridge } from "@/components/animations/providers/scroll-lock-provider"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -67,6 +68,7 @@ function SheetContent({
         )}
         {...props}
       >
+        <ModalScrollLockBridge owner="sheet" />
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>

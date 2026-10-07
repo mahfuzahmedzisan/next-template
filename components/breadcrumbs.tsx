@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
 import { Fragment } from "react";
 
 import { useCloseSidebar } from "@/components/nav/use-close-sidebar";

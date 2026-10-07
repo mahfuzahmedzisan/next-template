@@ -1,10 +1,12 @@
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
+import Script from "next/script"
 import { AlertCircleIcon, InfoIcon, CheckCircleIcon, XCircleIcon } from "lucide-react"
 import { AnimationProvider } from "@/components/animations/providers/animation-provider"
 import { JsonLd } from "@/components/seo/json-ld"
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary"
 import { ThemeProvider } from "@/components/theme-provider"
+import { TransitionProvider } from "@/components/transitions/transition-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { site, siteDescription } from "@/content/site"
@@ -68,6 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-svh flex-col">
+        <Script src="/splash-boot.js" strategy="beforeInteractive" />
         <JsonLd data={siteStructuredData()} />
         <ThemeProvider
           attribute="class"
@@ -76,23 +79,25 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           disableTransitionOnChange
         >
           <AnimationProvider>
-            <TooltipProvider>
-              <div id="content" tabIndex={-1} className="flex min-h-svh flex-1 flex-col outline-none">
-                <SectionErrorBoundary>{children}</SectionErrorBoundary>
-              </div>
-              <Toaster
-                position="top-right"
-                duration={2000}
-                richColors
-                closeButton
-                icons={{
-                  success: <CheckCircleIcon className="h-4 w-4" />,
-                  error: <XCircleIcon className="h-4 w-4" />,
-                  warning: <AlertCircleIcon className="h-4 w-4" />,
-                  info: <InfoIcon className="h-4 w-4" />,
-                }}
-              />
-            </TooltipProvider>
+            <TransitionProvider>
+              <TooltipProvider>
+                <div id="content" tabIndex={-1} className="flex min-h-svh flex-1 flex-col outline-none">
+                  <SectionErrorBoundary>{children}</SectionErrorBoundary>
+                </div>
+                <Toaster
+                  position="top-right"
+                  duration={2000}
+                  richColors
+                  closeButton
+                  icons={{
+                    success: <CheckCircleIcon className="h-4 w-4" />,
+                    error: <XCircleIcon className="h-4 w-4" />,
+                    warning: <AlertCircleIcon className="h-4 w-4" />,
+                    info: <InfoIcon className="h-4 w-4" />,
+                  }}
+                />
+              </TooltipProvider>
+            </TransitionProvider>
           </AnimationProvider>
         </ThemeProvider>
       </body>

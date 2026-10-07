@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
+import { RouteReady } from "@/components/transitions/route-ready";
 
 import { Button } from "@/components/ui/button";
 import { reportError } from "@/lib/monitoring";
@@ -24,6 +25,7 @@ export default function Error({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-16">
+      <RouteReady outcome="error" />
       <h1 className="text-3xl font-semibold tracking-tight text-foreground">
         Something went wrong
       </h1>

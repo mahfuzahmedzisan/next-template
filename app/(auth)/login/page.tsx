@@ -1,7 +1,8 @@
 "use client";
 
 import type { Route } from "next";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTransitionRouter } from "@/components/transitions/transition-provider";
 import { Suspense, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,6 +11,7 @@ import { z } from "zod";
 
 import PasswordInput from "@/components/forms/password-input";
 import TextLink from "@/components/forms/text-link";
+import { RouteReady } from "@/components/transitions/route-ready";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,7 +52,7 @@ function safeNext(value: string | null): Route {
 }
 
 function LoginForm() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const searchParams = useSearchParams();
   const sessionExpired = searchParams.get("reason") === SESSION_EXPIRED_REASON;
   const next = safeNext(searchParams.get("next"));
@@ -98,6 +100,7 @@ function LoginForm() {
 
   return (
     <Card>
+      <RouteReady />
       <CardHeader>
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>Sign in to your account to continue.</CardDescription>

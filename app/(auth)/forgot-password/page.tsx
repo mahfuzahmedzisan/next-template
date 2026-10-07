@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import TextLink from "@/components/forms/text-link";
+import { RouteReady } from "@/components/transitions/route-ready";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,6 +57,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <Card>
+      <RouteReady />
       <CardHeader>
         <CardTitle className="text-2xl">Forgot your password?</CardTitle>
         <CardDescription>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTransitionRouter } from "@/components/transitions/transition-provider";
 import { Suspense } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,6 +10,7 @@ import { z } from "zod";
 
 import PasswordInput from "@/components/forms/password-input";
 import TextLink from "@/components/forms/text-link";
+import { RouteReady } from "@/components/transitions/route-ready";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,7 +42,7 @@ const schema = z
 type Values = z.infer<typeof schema>;
 
 function ResetPasswordForm() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const email = searchParams.get("email") ?? "";
@@ -88,6 +90,7 @@ function ResetPasswordForm() {
 
   return (
     <Card>
+      <RouteReady />
       <CardHeader>
         <CardTitle className="text-2xl">Reset your password</CardTitle>
         <CardDescription>Choose a new password for {email}.</CardDescription>

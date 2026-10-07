@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
 
 import { NavIcon } from "@/components/nav/nav-icon";
 import { useCloseSidebar } from "@/components/nav/use-close-sidebar";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTransitionRouter } from "@/components/transitions/transition-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import PasswordInput from "@/components/forms/password-input";
 import TextLink from "@/components/forms/text-link";
+import { RouteReady } from "@/components/transitions/route-ready";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,7 +48,7 @@ const registerSchema = z
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const router = useTransitionRouter();
 
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
@@ -78,6 +79,7 @@ export default function RegisterPage() {
 
   return (
     <Card>
+      <RouteReady />
       <CardHeader>
         <CardTitle className="text-2xl">Create an account</CardTitle>
         <CardDescription>It only takes a minute.</CardDescription>

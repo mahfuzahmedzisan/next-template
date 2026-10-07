@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
 import { usePathname } from "next/navigation";
 import { useRef, useState, useSyncExternalStore } from "react";
 
