@@ -150,24 +150,17 @@ function LoginForm() {
               name="remember"
               render={({ field }) => (
                 <FormItem>
-                  <label className="flex items-start gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-sm font-medium">
                     <input
                       type="checkbox"
-                      className="mt-0.5 size-4 accent-foreground"
+                      className="size-4 accent-foreground"
                       checked={field.value}
                       onChange={(event) => field.onChange(event.target.checked)}
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}
                     />
-                    <span>
-                      <span className="font-medium">Remember me</span>
-                      <span className="mt-1 block text-xs text-muted-foreground">
-                        Stay signed in on this browser for 30 days. After that
-                        you sign in again. Leaving this off ends the session
-                        after 12 hours. Idle time in between does not.
-                      </span>
-                    </span>
+                    Remember me
                   </label>
                 </FormItem>
               )}
