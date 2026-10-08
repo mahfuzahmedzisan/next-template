@@ -157,7 +157,13 @@ export function MediaLibrary({
   const listRequest = useRef(0);
   const rowsRef = useRef(rows);
   const toasted = useRef(new Set<string>());
+  const openItem = selected ? rows.find((row) => row.id === selected.id) ?? selected : null;
   const needsPoll = rows.some((row) => row.status === "uploaded" || row.status === "processing");
+  const watchId =
+    openItem &&
+    (openItem.status === "awaiting_upload" || openItem.status === "uploaded" || openItem.status === "processing")
+      ? openItem.id
+      : null;
 
   useEffect(() => {
     rowsRef.current = rows;
@@ -264,6 +270,28 @@ export function MediaLibrary({
     }, 4000);
     return () => window.clearInterval(timer);
   }, [needsPoll, q, kind, page, view]);
+
+  useEffect(() => {
+    if (watchId === null || needsPoll) return;
+    const timer = window.setInterval(() => {
+      void fetch(`/api/admin/media/${watchId}`, { credentials: "include" })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const body = await readJson<{ data?: { media?: MediaRecord } }>(response);
+          const media = body.data?.media;
+          if (!media) return;
+          setRows((current) =>
+            current.map((row) =>
+              row.id === media.id
+                ? { ...row, ...media, uploadPercent: media.status === "awaiting_upload" ? row.uploadPercent : null }
+                : row,
+            ),
+          );
+        })
+        .catch(() => undefined);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [watchId, needsPoll]);
 
   function selectKind(next: MediaTypeFilter) {
     if (next === kind) return;
@@ -434,6 +462,42 @@ export function MediaLibrary({
     setRows((current) => current.map((row) => (row.id === media.id ? { ...row, ...media } : row)));
     setSelected(media);
     toast.success("Saved");
+  }
+
+  function replaceRow(media: MediaRecord) {
+    setRows((current) =>
+      current.map((row) => (row.id === media.id ? { ...row, ...media, uploadPercent: null } : row)),
+    );
+  }
+
+  async function onRetry(id: number) {
+    const response = await fetch(`/api/admin/media/${id}/retry`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const body = await readJson<{ data?: { media?: MediaRecord }; message?: string }>(response);
+    if (!response.ok || !body.data?.media) {
+      toast.error(body.message ?? "Unable to retry the conversion.");
+      return;
+    }
+    replaceRow(body.data.media);
+  }
+
+  async function onThumbnail(id: number, file: File) {
+    const form = new FormData();
+    form.append("thumbnail", file);
+    const response = await fetch(`/api/admin/media/${id}/thumbnail`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    const body = await readJson<{ data?: { media?: MediaRecord }; message?: string }>(response);
+    if (!response.ok || !body.data?.media) {
+      toast.error(body.message ?? "Unable to update the thumbnail.");
+      return;
+    }
+    replaceRow(body.data.media);
+    toast.success("Thumbnail updated");
   }
 
   function pauseUpload(id: number) {
@@ -612,7 +676,13 @@ export function MediaLibrary({
         onPause={pauseUpload}
         onResume={resumeUpload}
       />
-      <MediaDetailSheet item={selected} onOpenChange={(open) => !open && setSelected(null)} onSave={onSave} />
+      <MediaDetailSheet
+        item={openItem}
+        onOpenChange={(open) => !open && setSelected(null)}
+        onSave={onSave}
+        onRetry={onRetry}
+        onThumbnail={onThumbnail}
+      />
     </div>
   );
 }

@@ -131,7 +131,6 @@ export function MediaUploadDialog({
   const [previews, setPreviews] = useState<Preview[]>([]);
   const [dragging, setDragging] = useState(false);
   const [name, setName] = useState("");
-  const [slugs, setSlugs] = useState<string[]>([]);
   const [limitNote, setLimitNote] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [alt, setAlt] = useState("");
@@ -162,25 +161,6 @@ export function MediaUploadDialog({
   );
 
   useEffect(() => {
-    const title = name.trim();
-    if (!open || title === "" || previews.length === 0) return;
-    const handle = window.setTimeout(() => {
-      const params = new URLSearchParams({
-        title,
-        count: String(Math.min(previews.length, MAX_UPLOAD_FILES)),
-      });
-      void fetch(`/api/admin/media/slug-preview?${params.toString()}`, { credentials: "include" })
-        .then(async (response) => {
-          if (!response.ok) return;
-          const body = (await response.json()) as { data?: { slugs?: string[] } };
-          setSlugs(body.data?.slugs ?? []);
-        })
-        .catch(() => undefined);
-    }, 250);
-    return () => window.clearTimeout(handle);
-  }, [open, name, previews.length]);
-
-  useEffect(() => {
     return () => {
       previewsRef.current.forEach((item) => URL.revokeObjectURL(item.url));
       if (sharedPreviewRef.current) URL.revokeObjectURL(sharedPreviewRef.current);
@@ -209,7 +189,6 @@ export function MediaUploadDialog({
     revokeAll();
     setPreviews([]);
     setName("");
-    setSlugs([]);
     setLimitNote(null);
     setLightboxIndex(null);
     setAlt("");
@@ -475,9 +454,6 @@ export function MediaUploadDialog({
                   />
                 </div>
               </div>
-              {name.trim() && slugs.length > 0 ? (
-                <p className="text-xs text-muted-foreground">{slugs.join(", ")}</p>
-              ) : null}
 
               {streamable.length > 0 ? (
                 <div className="flex flex-col gap-3 rounded-xl border p-3">

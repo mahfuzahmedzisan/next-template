@@ -460,8 +460,14 @@ function Thumb({
         </Badge>
       ) : null}
       {showUpload || encoding ? (
-        <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1">
-          <Progress value={showUpload ? row.uploadPercent ?? 0 : row.progress} className="h-1" />
+        <div className="absolute inset-x-0 bottom-0 bg-background/90 px-2 py-1.5">
+          <p className="mb-1 text-[10px] font-medium">
+            {showUpload ? `Uploading ${row.uploadPercent ?? 0}%` : row.status === "uploaded" ? "Converting" : `Converting ${row.progress}%`}
+          </p>
+          <Progress
+            value={showUpload ? row.uploadPercent ?? 0 : row.status === "uploaded" ? 8 : row.progress}
+            className="h-1"
+          />
         </div>
       ) : null}
     </div>
@@ -471,6 +477,7 @@ function Thumb({
 function metaLine(row: MediaViewRow) {
   const size = formatSize(row.size);
   if (row.uploadPercent !== null && row.status === "awaiting_upload") return `${size} · ${row.uploadPercent}%`;
+  if (row.status === "uploaded") return `${size} · Converting`;
   if (row.status === "processing") return `${size} · ${row.progress}%`;
   if (row.uploadError || (row.status === "failed" && row.error_message)) {
     return row.uploadError || row.error_message || size;

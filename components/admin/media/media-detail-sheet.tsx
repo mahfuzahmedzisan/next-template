@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/media/video-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Sheet,
   SheetContent,
@@ -23,10 +24,14 @@ export function MediaDetailSheet({
   item,
   onOpenChange,
   onSave,
+  onRetry,
+  onThumbnail,
 }: {
-  item: MediaRecord | null;
+  item: (MediaRecord & { uploadPercent?: number | null }) | null;
   onOpenChange: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
+  onRetry: (id: number) => Promise<void>;
+  onThumbnail: (id: number, file: File) => Promise<void>;
 }) {
   const url = toSameOriginStorageUrl(item?.url) ?? item?.url ?? "";
   const poster = toSameOriginStorageUrl(item?.poster_url) ?? item?.poster_url ?? undefined;
@@ -88,6 +93,8 @@ export function MediaDetailSheet({
             previewOpen={previewOpen}
             onPreview={setPreview}
             onSave={onSave}
+            onRetry={onRetry}
+            onThumbnail={onThumbnail}
           />
         ) : null}
       </SheetContent>
@@ -102,13 +109,17 @@ function MediaDetailForm({
   previewOpen,
   onPreview,
   onSave,
+  onRetry,
+  onThumbnail,
 }: {
-  item: MediaRecord;
+  item: MediaRecord & { uploadPercent?: number | null };
   url: string;
   poster: string | undefined;
   previewOpen: boolean;
   onPreview: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
+  onRetry: (id: number) => Promise<void>;
+  onThumbnail: (id: number, file: File) => Promise<void>;
 }) {
   const [title, setTitle] = useState(item.title);
   const [slug, setSlug] = useState(item.slug);
@@ -116,7 +127,11 @@ function MediaDetailForm({
   const [keywords, setKeywords] = useState(item.keywords.join(", "));
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
-  const canPreview = item.kind === "image" ? Boolean(url) : Boolean(item.stream_url);
+  const [retrying, setRetrying] = useState(false);
+  const [thumbBusy, setThumbBusy] = useState(false);
+  const streamable = item.kind === "video" || item.kind === "audio";
+  const converting = item.status === "uploaded" || item.status === "processing";
+  const canPreview = item.kind === "image" && Boolean(url);
 
   return (
     <>
@@ -130,19 +145,61 @@ function MediaDetailForm({
             </span>
           </button>
         ) : null}
-        {(item.kind === "video" || item.kind === "audio") && item.stream_url ? (
-          <div className="relative">
-            <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              className="absolute top-2 right-2 bg-background/90"
-              aria-label="Open preview"
-              onClick={() => onPreview(true)}
-            >
-              <Expand />
-            </Button>
+        {streamable && item.stream_url ? (
+          <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
+        ) : null}
+        {streamable && !item.stream_url ? (
+          <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-3">
+            {poster ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={poster} alt="" className="aspect-video w-full rounded-md object-contain" />
+            ) : null}
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium">{streamStatusTitle(item)}</p>
+              <p className="text-xs text-muted-foreground">{streamStatusDetail(item)}</p>
+            </div>
+            {item.status === "awaiting_upload" || converting ? (
+              <Progress
+                value={
+                  item.status === "awaiting_upload"
+                    ? item.uploadPercent ?? 8
+                    : item.status === "uploaded"
+                      ? 8
+                      : item.progress
+                }
+              />
+            ) : null}
+            {item.status === "failed" ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={retrying}
+                onClick={() => {
+                  setRetrying(true);
+                  void onRetry(item.id).finally(() => setRetrying(false));
+                }}
+              >
+                {retrying ? "Starting" : "Retry conversion"}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+        {streamable ? (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="detail-thumb">Thumbnail</Label>
+            <Input
+              id="detail-thumb"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={thumbBusy}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (!file) return;
+                setThumbBusy(true);
+                void onThumbnail(item.id, file).finally(() => setThumbBusy(false));
+              }}
+            />
           </div>
         ) : null}
         {item.kind === "pdf" && url ? (
@@ -171,6 +228,7 @@ function MediaDetailForm({
               id="detail-url"
               readOnly
               value={url}
+              placeholder={url ? undefined : "Available after conversion"}
               className="border-0 bg-transparent font-mono text-xs shadow-none focus-visible:ring-0"
             />
             <Button
@@ -229,12 +287,25 @@ function MediaDetailForm({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt={item.alt || item.title} className="max-h-[90vh] max-w-[min(96vw,1100px)] object-contain" />
         ) : null}
-        {(item.kind === "video" || item.kind === "audio") && item.stream_url ? (
-          <div className="w-[min(96vw,960px)]">
-            <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
-          </div>
-        ) : null}
       </MediaPreviewLightbox>
     </>
   );
+}
+
+function streamStatusTitle(item: MediaRecord & { uploadPercent?: number | null }) {
+  if (item.status === "failed") return "Conversion failed";
+  if (item.status === "awaiting_upload") return "Uploading the file";
+  if (item.status === "uploaded") return "Preparing the stream";
+  if (item.status === "processing") return `Converting · ${item.progress}%`;
+  return "Stream is not ready";
+}
+
+function streamStatusDetail(item: MediaRecord) {
+  if (item.status === "failed") {
+    return item.error_message || "The stream was not created. You can try the conversion again.";
+  }
+  if (item.status === "awaiting_upload") {
+    return "Playback and the link appear after the upload finishes and the stream is ready.";
+  }
+  return "This file is being converted for playback. The link appears when that finishes.";
 }

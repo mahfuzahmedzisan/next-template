@@ -67,6 +67,16 @@ export function deleteAdminMedia(id: number) {
   });
 }
 
+export async function retryAdminMedia(id: number) {
+  const data = await authedRequest<{ media: MediaRecord }>(
+    "post",
+    `/admin/media/${id}/retry`,
+    {},
+    { onSessionExpired: "throw" },
+  );
+  return toBrowserMedia(data);
+}
+
 export async function uploadAdminMediaThumbnail(id: number, thumbnail: File) {
   const body = new FormData();
   body.append("thumbnail", thumbnail);
