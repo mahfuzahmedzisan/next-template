@@ -16,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { site, siteDescription } from "@/content/site";
 import { siteOrigin } from "@/lib/site-url";
 import { siteStructuredData } from "@/lib/structured-data";
+import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css";
 
