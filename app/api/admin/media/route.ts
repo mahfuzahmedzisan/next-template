@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/auth/api-error";
 import { getSession } from "@/lib/auth/auth-cookies";
 import { SessionExpiredError } from "@/lib/auth/session-expired";
-import { createAdminVideo, listAdminVideos } from "@/lib/media/videos";
+import { createAdminMedia, listAdminMedia } from "@/lib/media/library";
 
 function jsonError(error: unknown, fallback: string) {
   if (error instanceof SessionExpiredError) {
@@ -20,17 +20,24 @@ function jsonError(error: unknown, fallback: string) {
   return NextResponse.json({ message: fallback }, { status: 500 });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
   }
 
+  const url = new URL(request.url);
+  const params = new URLSearchParams({ per_page: "50" });
+  const q = url.searchParams.get("q")?.trim();
+  const kind = url.searchParams.get("kind")?.trim();
+  if (q) params.set("filter[q]", q);
+  if (kind && kind !== "all") params.set("filter[kind]", kind);
+
   try {
-    const data = await listAdminVideos("throw");
+    const data = await listAdminMedia(params.toString(), "throw");
     return NextResponse.json({ data });
   } catch (error) {
-    return jsonError(error, "Unable to load videos.");
+    return jsonError(error, "Unable to load media.");
   }
 }
 
@@ -42,9 +49,12 @@ export async function POST(request: Request) {
 
   let body: {
     title?: string;
+    slug?: string;
     filename?: string;
     size?: number;
     mime?: string;
+    alt?: string;
+    keywords?: string[];
   };
 
   try {
@@ -54,11 +64,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const data = await createAdminVideo({
+    const data = await createAdminMedia({
       title: body.title ?? "",
+      slug: body.slug,
       filename: body.filename ?? "",
       size: Number(body.size ?? 0),
       mime: body.mime ?? "",
+      alt: body.alt,
+      keywords: body.keywords,
     });
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {

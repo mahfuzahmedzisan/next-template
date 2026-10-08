@@ -1,4 +1,4 @@
-import { Film, LayoutDashboard, Radio, Settings, Shield, UserRound } from "lucide-react";
+import { Images, LayoutDashboard, Radio, Settings, Shield, UserRound } from "lucide-react";
 
 import type { NavGroup } from "@/lib/nav";
 
@@ -19,7 +19,7 @@ export const adminNav: NavGroup[] = [
       {
         title: "Media",
         href: "/admin/media",
-        icon: Film,
+        icon: Images,
       },
     ],
   },

@@ -8,11 +8,11 @@ export type TusUploadHandle = {
   resume: () => void;
 };
 
-export function createVideoUpload(options: {
+export function createMediaUpload(options: {
   file: File;
   endpoint: string;
   token: string;
-  videoId: number;
+  mediaId: number;
   onProgress: (percent: number) => void;
   onSuccess: () => void;
   onError: (error: Error) => void;
@@ -25,8 +25,8 @@ export function createVideoUpload(options: {
     retryDelays: [0, 1000, 3000, 5000, 10000],
     metadata: {
       filename: options.file.name,
-      filetype: options.file.type || "video/mp4",
-      video_id: String(options.videoId),
+      filetype: options.file.type || "application/octet-stream",
+      media_id: String(options.mediaId),
     },
     headers: {
       Authorization: `Bearer ${options.token}`,

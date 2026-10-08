@@ -1,27 +1,36 @@
-export type VideoStatus =
+export type MediaKind = "image" | "video" | "audio" | "pdf" | "document";
+
+export type MediaStatus =
   | "awaiting_upload"
   | "uploaded"
   | "processing"
   | "ready"
   | "failed";
 
-export type VideoRecord = {
+export type MediaRecord = {
   id: number;
   title: string;
   slug: string;
-  status: VideoStatus;
+  kind: MediaKind;
+  alt: string | null;
+  keywords: string[];
+  status: MediaStatus;
   progress: number;
   error_message: string | null;
+  mime: string | null;
+  extension: string | null;
+  size: number | null;
   duration_seconds: number | null;
   width: number | null;
   height: number | null;
+  url: string | null;
   stream_url: string | null;
   poster_url: string | null;
   created_at: string | null;
 };
 
-export type VideoListResult = {
-  videos: VideoRecord[];
+export type MediaListResult = {
+  media: MediaRecord[];
   meta: {
     current_page: number;
     per_page: number;
@@ -30,9 +39,11 @@ export type VideoListResult = {
   };
 };
 
-export type CreateVideoResult = {
-  video_id: number;
+export type CreateMediaResult = {
+  media_id: number;
   tus_endpoint: string;
   upload_token: string;
-  video: VideoRecord;
+  media: MediaRecord;
 };
+
+export type MediaTypeFilter = "all" | MediaKind;

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/auth/api-error";
 import { getSession } from "@/lib/auth/auth-cookies";
 import { SessionExpiredError } from "@/lib/auth/session-expired";
-import { deleteAdminVideo, getAdminVideo, updateAdminVideo } from "@/lib/media/videos";
+import { deleteAdminMedia, getAdminMedia, updateAdminMedia } from "@/lib/media/library";
 
 function jsonError(error: unknown, fallback: string) {
   if (error instanceof SessionExpiredError) {
@@ -22,8 +22,8 @@ function jsonError(error: unknown, fallback: string) {
 
 async function idFrom(params: Promise<{ id: string }>) {
   const { id } = await params;
-  const videoId = Number(id);
-  return Number.isInteger(videoId) && videoId > 0 ? videoId : null;
+  const mediaId = Number(id);
+  return Number.isInteger(mediaId) && mediaId > 0 ? mediaId : null;
 }
 
 export async function GET(
@@ -35,16 +35,16 @@ export async function GET(
     return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
   }
 
-  const videoId = await idFrom(context.params);
-  if (videoId === null) {
-    return NextResponse.json({ message: "Video not found." }, { status: 404 });
+  const mediaId = await idFrom(context.params);
+  if (mediaId === null) {
+    return NextResponse.json({ message: "Media not found." }, { status: 404 });
   }
 
   try {
-    const data = await getAdminVideo(videoId);
+    const data = await getAdminMedia(mediaId);
     return NextResponse.json({ data });
   } catch (error) {
-    return jsonError(error, "Unable to load the video.");
+    return jsonError(error, "Unable to load the media item.");
   }
 }
 
@@ -57,23 +57,28 @@ export async function PATCH(
     return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
   }
 
-  const videoId = await idFrom(context.params);
-  if (videoId === null) {
-    return NextResponse.json({ message: "Video not found." }, { status: 404 });
+  const mediaId = await idFrom(context.params);
+  if (mediaId === null) {
+    return NextResponse.json({ message: "Media not found." }, { status: 404 });
   }
 
-  let body: { title?: string };
+  let body: { title?: string; slug?: string; alt?: string | null; keywords?: string[] };
   try {
-    body = (await request.json()) as { title?: string };
+    body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ message: "Invalid JSON body." }, { status: 422 });
   }
 
   try {
-    const data = await updateAdminVideo(videoId, body.title ?? "");
+    const data = await updateAdminMedia(mediaId, {
+      title: body.title ?? "",
+      slug: body.slug ?? "",
+      alt: body.alt,
+      keywords: body.keywords,
+    });
     return NextResponse.json({ data });
   } catch (error) {
-    return jsonError(error, "Unable to update the video.");
+    return jsonError(error, "Unable to update the media item.");
   }
 }
 
@@ -86,15 +91,15 @@ export async function DELETE(
     return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
   }
 
-  const videoId = await idFrom(context.params);
-  if (videoId === null) {
-    return NextResponse.json({ message: "Video not found." }, { status: 404 });
+  const mediaId = await idFrom(context.params);
+  if (mediaId === null) {
+    return NextResponse.json({ message: "Media not found." }, { status: 404 });
   }
 
   try {
-    await deleteAdminVideo(videoId);
-    return NextResponse.json({ message: "Video deleted successfully." });
+    await deleteAdminMedia(mediaId);
+    return NextResponse.json({ message: "Media deleted successfully." });
   } catch (error) {
-    return jsonError(error, "Unable to delete the video.");
+    return jsonError(error, "Unable to delete the media item.");
   }
 }
