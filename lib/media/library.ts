@@ -67,6 +67,15 @@ export function deleteAdminMedia(id: number) {
   });
 }
 
+export async function resumeAdminMediaUpload(id: number) {
+  const data = await authedRequest<{
+    media_id: number;
+    tus_endpoint: string;
+    upload_token: string;
+  }>("post", `/admin/media/${id}/resume`, {}, { onSessionExpired: "throw" });
+  return toBrowserMedia(data);
+}
+
 export async function retryAdminMedia(id: number) {
   const data = await authedRequest<{ media: MediaRecord }>(
     "post",

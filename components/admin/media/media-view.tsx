@@ -169,7 +169,7 @@ function cardActivity(row: MediaViewRow): { label: string; value: number } | nul
     return { label: `Uploading ${row.uploadPercent}%`, value: row.uploadPercent };
   }
   if (row.status === "awaiting_upload" && (row.kind === "video" || row.kind === "audio")) {
-    return { label: "Waiting to convert", value: 8 };
+    return { label: "Upload incomplete", value: 8 };
   }
   if (row.status === "uploaded") return { label: "Converting", value: 8 };
   if (row.status === "processing") return { label: `Converting ${row.progress}%`, value: row.progress };

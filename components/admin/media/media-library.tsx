@@ -483,6 +483,67 @@ export function MediaLibrary({
     replaceRow(body.data.media);
   }
 
+  async function onReupload(id: number, file: File) {
+    const mime = mimeFor(file);
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const row = rows.find((entry) => entry.id === id);
+    if (!mime) {
+      toast.error("This file type is not allowed.");
+      return;
+    }
+    if (row?.extension && extension !== row.extension) {
+      toast.error(`Choose a .${row.extension} file. That is the file this item is waiting for.`);
+      return;
+    }
+    const response = await fetch(`/api/admin/media/${id}/resume`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const body = await readJson<{
+      data?: { media_id: number; tus_endpoint: string; upload_token: string };
+      message?: string;
+    }>(response);
+    if (!response.ok || !body.data) {
+      toast.error(body.message ?? "Unable to start the upload again.");
+      return;
+    }
+    const created = body.data;
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, uploadPercent: 0, uploadError: null, paused: false } : row)),
+    );
+    const handle = createMediaUpload({
+      file,
+      endpoint: created.tus_endpoint,
+      token: created.upload_token,
+      mediaId: created.media_id,
+      onProgress(percent) {
+        setRows((current) =>
+          current.map((row) => (row.id === id ? { ...row, uploadPercent: percent, paused: false } : row)),
+        );
+      },
+      onSuccess() {
+        void fetch(`/api/admin/media/${id}`, { credentials: "include" })
+          .then(async (result) => {
+            if (!result.ok) return;
+            const payload = await readJson<{ data?: { media?: MediaRecord } }>(result);
+            if (!payload.data?.media) return;
+            replaceRow(payload.data.media);
+          })
+          .catch(() => undefined);
+      },
+      onError(error) {
+        setRows((current) =>
+          current.map((row) =>
+            row.id === id ? { ...row, uploadError: error.message, paused: true } : row,
+          ),
+        );
+        toast.error(error.message);
+      },
+    });
+    uploads.current.set(id, handle);
+    handle.start();
+  }
+
   async function onThumbnail(id: number, file: File) {
     const form = new FormData();
     form.append("thumbnail", file);
@@ -681,6 +742,7 @@ export function MediaLibrary({
         onOpenChange={(open) => !open && setSelected(null)}
         onSave={onSave}
         onRetry={onRetry}
+        onReupload={onReupload}
         onCancel={onDelete}
         onThumbnail={onThumbnail}
       />

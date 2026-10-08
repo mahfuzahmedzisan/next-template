@@ -26,6 +26,7 @@ export function MediaDetailSheet({
   onOpenChange,
   onSave,
   onRetry,
+  onReupload,
   onCancel,
   onThumbnail,
 }: {
@@ -33,6 +34,7 @@ export function MediaDetailSheet({
   onOpenChange: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
   onRetry: (id: number) => Promise<void>;
+  onReupload: (id: number, file: File) => Promise<void>;
   onCancel: (id: number) => Promise<void>;
   onThumbnail: (id: number, file: File) => Promise<void>;
 }) {
@@ -100,6 +102,7 @@ export function MediaDetailSheet({
             onPreview={setPreview}
             onSave={onSave}
             onRetry={onRetry}
+            onReupload={onReupload}
             onCancel={onCancel}
             onThumbnail={onThumbnail}
           />
@@ -117,6 +120,7 @@ function MediaDetailForm({
   onPreview,
   onSave,
   onRetry,
+  onReupload,
   onCancel,
   onThumbnail,
 }: {
@@ -127,6 +131,7 @@ function MediaDetailForm({
   onPreview: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
   onRetry: (id: number) => Promise<void>;
+  onReupload: (id: number, file: File) => Promise<void>;
   onCancel: (id: number) => Promise<void>;
   onThumbnail: (id: number, file: File) => Promise<void>;
 }) {
@@ -140,6 +145,8 @@ function MediaDetailForm({
   const [cancelling, setCancelling] = useState(false);
   const [thumbBusy, setThumbBusy] = useState(false);
   const thumbInput = useRef<HTMLInputElement>(null);
+  const reuploadInput = useRef<HTMLInputElement>(null);
+  const uploadMissing = item.status === "awaiting_upload";
   const streamable = item.kind === "video" || item.kind === "audio";
   const converting = item.status === "uploaded" || item.status === "processing";
   const canPreview = item.kind === "image" && Boolean(url);
@@ -182,12 +189,29 @@ function MediaDetailForm({
                 variant="outline"
                 disabled={retrying || cancelling}
                 onClick={() => {
+                  if (uploadMissing) {
+                    reuploadInput.current?.click();
+                    return;
+                  }
                   setRetrying(true);
                   void onRetry(item.id).finally(() => setRetrying(false));
                 }}
               >
-                {retrying ? "Starting" : "Retry"}
+                {retrying ? "Starting" : uploadMissing ? "Upload again" : "Retry"}
               </Button>
+              <input
+                ref={reuploadInput}
+                type="file"
+                className="sr-only"
+                accept={item.extension ? `.${item.extension}` : undefined}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  setRetrying(true);
+                  void onReupload(item.id, file).finally(() => setRetrying(false));
+                }}
+              />
               <Button
                 type="button"
                 variant="outline"
@@ -344,7 +368,7 @@ function ContainedPreview({ src, alt }: { src: string; alt: string }) {
 function streamStatusTitle(item: MediaRecord & { uploadPercent?: number | null }) {
   if (item.status === "failed") return "Conversion failed";
   if (item.status === "awaiting_upload" && item.uploadPercent != null) return `Uploading ${item.uploadPercent}%`;
-  if (item.status === "awaiting_upload") return "Waiting to convert";
+  if (item.status === "awaiting_upload") return "Upload did not finish";
   if (item.status === "uploaded") return "Preparing the stream";
   if (item.status === "processing") return `Converting · ${item.progress}%`;
   return "Stream is not ready";
@@ -355,7 +379,7 @@ function streamStatusDetail(item: MediaRecord) {
     return item.error_message || "The stream was not created. You can try the conversion again.";
   }
   if (item.status === "awaiting_upload") {
-    return "Playback and the link appear after the upload finishes and the stream is ready.";
+    return "The file never arrived, so conversion cannot start. Upload it again, or cancel.";
   }
   return "This file is being converted for playback. The link appears when that finishes.";
 }
