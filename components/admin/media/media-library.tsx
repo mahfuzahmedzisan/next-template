@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -138,11 +138,12 @@ export function MediaLibrary({
   initialMedia: MediaRecord[];
   loadError: string | null;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const kind = (searchParams.get("kind") as MediaTypeFilter | null) ?? "all";
-  const q = searchParams.get("q") ?? "";
-  const [query, setQuery] = useState(q);
+  const [kind, setKind] = useState<MediaTypeFilter>(
+    () => (searchParams.get("kind") as MediaTypeFilter | null) ?? "all",
+  );
+  const [q, setQ] = useState(() => searchParams.get("q") ?? "");
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [rows, setRows] = useState<Row[]>(() =>
     initialMedia.map((item) => ({
       ...item,
@@ -167,7 +168,6 @@ export function MediaLibrary({
   useEffect(() => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
-    if (kind !== "all") params.set("kind", kind);
     const handle = window.setTimeout(() => {
       void fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" })
         .then(async (response) => {
@@ -196,7 +196,7 @@ export function MediaLibrary({
         .catch(() => undefined);
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [q, kind]);
+  }, [q]);
 
   useEffect(() => {
     const echo = getEcho();
@@ -231,7 +231,6 @@ export function MediaLibrary({
     const timer = window.setInterval(() => {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
-      if (kind !== "all") params.set("kind", kind);
       void fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" })
         .then(async (response) => {
           if (!response.ok) return;
@@ -249,18 +248,21 @@ export function MediaLibrary({
         .catch(() => undefined);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [needsPoll, q, kind]);
+  }, [needsPoll, q]);
 
-  function writeQuery(next: { q?: string; kind?: MediaTypeFilter }) {
-    const params = new URLSearchParams(searchParams.toString());
-    const queryValue = next.q ?? q;
-    const kindValue = next.kind ?? kind;
-    if (queryValue) params.set("q", queryValue);
+  function syncUrl(next: { q: string; kind: MediaTypeFilter }) {
+    const params = new URLSearchParams(window.location.search);
+    if (next.q) params.set("q", next.q);
     else params.delete("q");
-    if (kindValue !== "all") params.set("kind", kindValue);
+    if (next.kind !== "all") params.set("kind", next.kind);
     else params.delete("kind");
     const suffix = params.toString();
-    router.replace(suffix ? `/admin/media?${suffix}` : "/admin/media");
+    window.history.replaceState(null, "", suffix ? `/admin/media?${suffix}` : "/admin/media");
+  }
+
+  function selectKind(next: MediaTypeFilter) {
+    setKind(next);
+    syncUrl({ q, kind: next });
   }
 
   function patchJob(key: string, patch: Partial<UploadJob>) {
@@ -435,6 +437,8 @@ export function MediaLibrary({
     );
   }
 
+  const visibleRows = rows.filter((row) => kind === "all" || row.kind === kind);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -458,7 +462,7 @@ export function MediaLibrary({
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => writeQuery({ kind: tab.value })}
+                onClick={() => selectKind(tab.value)}
               >
                 <Icon className="size-3.5" />
                 {tab.label}
@@ -472,7 +476,9 @@ export function MediaLibrary({
             className="relative min-w-0 flex-1 xl:w-72"
             onSubmit={(event) => {
               event.preventDefault();
-              writeQuery({ q: query.trim() });
+              const next = query.trim();
+              setQ(next);
+              syncUrl({ q: next, kind });
             }}
           >
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -493,7 +499,7 @@ export function MediaLibrary({
 
       {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
 
-      {rows.length === 0 ? (
+      {visibleRows.length === 0 ? (
         <button
           type="button"
           onClick={() => setUploadOpen(true)}
@@ -502,12 +508,14 @@ export function MediaLibrary({
           <span className="flex size-11 items-center justify-center rounded-full bg-muted">
             <Upload className="size-4" />
           </span>
-          <span className="text-sm font-medium">No files yet</span>
-          <span className="text-xs text-muted-foreground">Upload images, video, audio, or documents</span>
+          <span className="text-sm font-medium">{rows.length === 0 ? "No files yet" : "Nothing in this view"}</span>
+          {rows.length === 0 ? (
+            <span className="text-xs text-muted-foreground">Upload images, video, audio, or documents</span>
+          ) : null}
         </button>
       ) : (
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {rows.map((row) => {
+          {visibleRows.map((row) => {
             const preview = toSameOriginStorageUrl(row.poster_url) ?? row.poster_url;
             const imagePreview =
               row.kind === "image"

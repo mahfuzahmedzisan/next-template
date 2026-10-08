@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy, Expand } from "lucide-react";
 
+import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
 import { VideoPlayer } from "@/components/media/video-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,10 +30,33 @@ export function MediaDetailSheet({
 }) {
   const url = toSameOriginStorageUrl(item?.url) ?? item?.url ?? "";
   const poster = toSameOriginStorageUrl(item?.poster_url) ?? item?.poster_url ?? undefined;
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   return (
-    <Sheet open={item !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+    <Sheet
+      open={item !== null}
+      onOpenChange={(next) => {
+        if (!next) setPreviewOpen(false);
+        onOpenChange(next);
+      }}
+    >
+      <SheetContent
+        className="w-full overflow-y-auto sm:max-w-md"
+        onInteractOutside={(event) => {
+          if (previewOpen) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (previewOpen) event.preventDefault();
+        }}
+        onFocusOutside={(event) => {
+          if (previewOpen) event.preventDefault();
+        }}
+        onEscapeKeyDown={(event) => {
+          if (!previewOpen) return;
+          event.preventDefault();
+          setPreviewOpen(false);
+        }}
+      >
         <SheetHeader>
           <SheetTitle>{item?.title ?? "Media"}</SheetTitle>
           <SheetDescription>
@@ -45,6 +70,8 @@ export function MediaDetailSheet({
             item={item}
             url={url}
             poster={poster}
+            previewOpen={previewOpen}
+            onPreview={setPreviewOpen}
             onSave={onSave}
           />
         ) : null}
@@ -57,11 +84,15 @@ function MediaDetailForm({
   item,
   url,
   poster,
+  previewOpen,
+  onPreview,
   onSave,
 }: {
   item: MediaRecord;
   url: string;
   poster: string | undefined;
+  previewOpen: boolean;
+  onPreview: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
 }) {
   const [title, setTitle] = useState(item.title);
@@ -69,16 +100,35 @@ function MediaDetailForm({
   const [alt, setAlt] = useState(item.alt ?? "");
   const [keywords, setKeywords] = useState(item.keywords.join(", "));
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const canPreview = item.kind === "image" ? Boolean(url) : Boolean(item.stream_url);
 
   return (
     <>
       <div className="flex flex-col gap-4 px-4">
         {item.kind === "image" && url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site
-          <img src={url} alt={item.alt || item.title} className="w-full rounded-lg object-cover" />
+          <button type="button" className="group relative block w-full" onClick={() => onPreview(true)}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site */}
+            <img src={url} alt={item.alt || item.title} className="w-full rounded-lg object-cover" />
+            <span className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-background/90 text-foreground shadow-sm">
+              <Expand className="size-3.5" />
+            </span>
+          </button>
         ) : null}
         {(item.kind === "video" || item.kind === "audio") && item.stream_url ? (
-          <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
+          <div className="relative">
+            <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="absolute top-2 right-2 bg-background/90"
+              aria-label="Open preview"
+              onClick={() => onPreview(true)}
+            >
+              <Expand />
+            </Button>
+          </div>
         ) : null}
         {item.kind === "pdf" && url ? (
           <a className="text-sm underline" href={url} target="_blank" rel="noreferrer">
@@ -101,15 +151,27 @@ function MediaDetailForm({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="detail-url">URL</Label>
-          <div className="flex gap-2">
-            <Input id="detail-url" readOnly value={url} />
+          <div className="flex items-center gap-1 rounded-lg border bg-muted/40 pr-1">
+            <Input
+              id="detail-url"
+              readOnly
+              value={url}
+              className="border-0 bg-transparent font-mono text-xs shadow-none focus-visible:ring-0"
+            />
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={copied ? "Copied" : "Copy URL"}
               disabled={!url}
-              onClick={() => void navigator.clipboard.writeText(url)}
+              onClick={() => {
+                void navigator.clipboard.writeText(url).then(() => {
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 1500);
+                });
+              }}
             >
-              Copy
+              {copied ? <Check /> : <Copy />}
             </Button>
           </div>
         </div>
@@ -147,6 +209,17 @@ function MediaDetailForm({
           Save
         </Button>
       </SheetFooter>
+      <MediaPreviewLightbox open={previewOpen && canPreview} onClose={() => onPreview(false)} label={item.title}>
+        {item.kind === "image" && url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt={item.alt || item.title} className="max-h-[90vh] max-w-[min(96vw,1100px)] object-contain" />
+        ) : null}
+        {(item.kind === "video" || item.kind === "audio") && item.stream_url ? (
+          <div className="w-[min(96vw,960px)]">
+            <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
+          </div>
+        ) : null}
+      </MediaPreviewLightbox>
     </>
   );
 }

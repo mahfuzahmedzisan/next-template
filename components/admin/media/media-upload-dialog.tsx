@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FileAudio,
@@ -13,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,11 +25,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-
-const FileUploadLightbox = dynamic(
-  () => import("@/components/file-upload/file-upload-lightbox").then((module) => module.FileUploadLightbox),
-  { ssr: false },
-);
 
 export const MAX_UPLOAD_FILES = 10;
 
@@ -294,16 +289,27 @@ export function MediaUploadDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next && lightboxIndex !== null) {
-          setLightboxIndex(null);
-          return;
-        }
         if (next) onOpenChange(true);
         else requestClose();
       }}
-      modal={lightboxIndex === null}
     >
-      <DialogContent className="flex max-h-[min(88vh,820px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+      <DialogContent
+        className="flex max-h-[min(88vh,820px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl"
+        onEscapeKeyDown={(event) => {
+          if (lightboxIndex === null) return;
+          event.preventDefault();
+          setLightboxIndex(null);
+        }}
+        onInteractOutside={(event) => {
+          if (lightboxIndex !== null) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (lightboxIndex !== null) event.preventDefault();
+        }}
+        onFocusOutside={(event) => {
+          if (lightboxIndex !== null) event.preventDefault();
+        }}
+      >
         <DialogHeader className="border-b px-5 py-4">
           <DialogTitle>{transferring ? "Uploading" : "Upload media"}</DialogTitle>
         </DialogHeader>
@@ -349,6 +355,7 @@ export function MediaUploadDialog({
             </ul>
           ) : (
             <>
+              {previews.length < MAX_UPLOAD_FILES ? (
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
@@ -379,9 +386,10 @@ export function MediaUploadDialog({
                 </span>
                 <span className="text-sm font-medium">Drop files here, or browse</span>
                 <span className="text-xs text-muted-foreground">
-                  Up to {MAX_UPLOAD_FILES} files, including SVG
+                  Up to {MAX_UPLOAD_FILES} files
                 </span>
               </button>
+              ) : null}
               {limitNote ? <p className="text-xs text-destructive">{limitNote}</p> : null}
               <input
                 ref={inputRef}
@@ -445,7 +453,7 @@ export function MediaUploadDialog({
                     id="media-name"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
-                    placeholder="New image"
+                    placeholder="Shared title"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -584,18 +592,15 @@ export function MediaUploadDialog({
           )}
         </DialogFooter>
       </DialogContent>
-      {lightboxIndex !== null ? (
-        <FileUploadLightbox
-          open
-          close={() => setLightboxIndex(null)}
-          index={lightboxIndex}
-          slides={lightboxItems.map((item) =>
-            item.kind === "video"
-              ? { type: "video" as const, sources: [{ src: item.url, type: item.file.type || "video/mp4" }] }
-              : { src: item.url, alt: item.file.name },
-          )}
-        />
-      ) : null}
+      <MediaPreviewLightbox
+        open={lightboxIndex !== null && lightboxItems[lightboxIndex] !== undefined}
+        onClose={() => setLightboxIndex(null)}
+        label={lightboxItems[lightboxIndex ?? -1]?.file.name ?? "Preview"}
+      >
+        {lightboxItems[lightboxIndex ?? -1] ? (
+          <PreviewStage preview={lightboxItems[lightboxIndex ?? -1]} />
+        ) : null}
+      </MediaPreviewLightbox>
     </Dialog>
   );
 }
@@ -606,6 +611,21 @@ function PreviewThumb({ preview }: { preview: Preview | undefined }) {
       {preview ? <PreviewMedia preview={preview} /> : null}
     </div>
   );
+}
+
+function PreviewStage({ preview }: { preview: Preview }) {
+  if (preview.kind === "image") {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={preview.url} alt={preview.file.name} className="max-h-[90vh] max-w-[min(96vw,1100px)] object-contain" />
+    );
+  }
+  if (preview.kind === "video") {
+    return (
+      <video src={preview.url} controls autoPlay className="max-h-[90vh] max-w-[min(96vw,1100px)]" />
+    );
+  }
+  return null;
 }
 
 function PreviewMedia({ preview }: { preview: Preview }) {
