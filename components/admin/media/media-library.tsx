@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import { createMediaUpload, type TusUploadHandle } from "@/lib/media/tus-upload";
@@ -156,7 +157,9 @@ export function MediaLibrary({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [jobs, setJobs] = useState<UploadJob[]>([]);
   const [selected, setSelected] = useState<MediaRecord | null>(null);
+  const [listLoading, setListLoading] = useState(false);
   const uploads = useRef(new Map<number, TusUploadHandle>());
+  const listRequest = useRef(0);
   const rowsRef = useRef(rows);
   const toasted = useRef(new Set<string>());
   const needsPoll = rows.some((row) => row.status === "uploaded" || row.status === "processing");
@@ -165,38 +168,41 @@ export function MediaLibrary({
     rowsRef.current = rows;
   }, [rows]);
 
-  useEffect(() => {
+  async function loadList(nextKind: MediaTypeFilter, nextQuery: string) {
+    const requestId = ++listRequest.current;
+    setListLoading(true);
     const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    const handle = window.setTimeout(() => {
-      void fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" })
-        .then(async (response) => {
-          if (!response.ok) return;
-          const body = await readJson<{ data?: { media?: MediaRecord[] } }>(response);
-          const media = body.data?.media ?? [];
-          setRows((current) => {
-            const incoming = media.map((item) => {
-              const existing = current.find((row) => row.id === item.id);
-              return {
-                ...item,
-                uploadPercent: existing?.uploadPercent ?? null,
-                uploadError: existing?.uploadError ?? null,
-                paused: existing?.paused ?? false,
-              };
-            });
-            const uploading = current.filter(
-              (row) =>
-                row.uploadPercent !== null &&
-                row.status === "awaiting_upload" &&
-                !incoming.some((item) => item.id === row.id),
-            );
-            return [...uploading, ...incoming];
-          });
-        })
-        .catch(() => undefined);
-    }, 250);
-    return () => window.clearTimeout(handle);
-  }, [q]);
+    if (nextQuery) params.set("q", nextQuery);
+    if (nextKind !== "all") params.set("kind", nextKind);
+    try {
+      const response = await fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" });
+      if (!response.ok || requestId !== listRequest.current) return;
+      const body = await readJson<{ data?: { media?: MediaRecord[] } }>(response);
+      const media = body.data?.media ?? [];
+      setRows((current) => {
+        const incoming = media.map((item) => {
+          const existing = current.find((row) => row.id === item.id);
+          return {
+            ...item,
+            uploadPercent: existing?.uploadPercent ?? null,
+            uploadError: existing?.uploadError ?? null,
+            paused: existing?.paused ?? false,
+          };
+        });
+        const uploading = current.filter(
+          (row) =>
+            row.uploadPercent !== null &&
+            row.status === "awaiting_upload" &&
+            !incoming.some((item) => item.id === row.id),
+        );
+        return [...uploading, ...incoming];
+      });
+    } catch {
+      // Keep the current grid if the list request fails.
+    } finally {
+      if (requestId === listRequest.current) setListLoading(false);
+    }
+  }
 
   useEffect(() => {
     const echo = getEcho();
@@ -250,19 +256,10 @@ export function MediaLibrary({
     return () => window.clearInterval(timer);
   }, [needsPoll, q]);
 
-  function syncUrl(next: { q: string; kind: MediaTypeFilter }) {
-    const params = new URLSearchParams(window.location.search);
-    if (next.q) params.set("q", next.q);
-    else params.delete("q");
-    if (next.kind !== "all") params.set("kind", next.kind);
-    else params.delete("kind");
-    const suffix = params.toString();
-    window.history.replaceState(null, "", suffix ? `/admin/media?${suffix}` : "/admin/media");
-  }
-
   function selectKind(next: MediaTypeFilter) {
+    if (next === kind) return;
     setKind(next);
-    syncUrl({ q, kind: next });
+    void loadList(next, q);
   }
 
   function patchJob(key: string, patch: Partial<UploadJob>) {
@@ -478,7 +475,7 @@ export function MediaLibrary({
               event.preventDefault();
               const next = query.trim();
               setQ(next);
-              syncUrl({ q: next, kind });
+              void loadList(kind, next);
             }}
           >
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -499,7 +496,22 @@ export function MediaLibrary({
 
       {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
 
-      {visibleRows.length === 0 ? (
+      {listLoading ? (
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }, (_, index) => (
+            <li key={index} className="overflow-hidden rounded-xl border bg-card">
+              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <div className="flex items-center gap-2 px-3 py-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+                <Skeleton className="size-7 rounded-md" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : visibleRows.length === 0 ? (
         <button
           type="button"
           onClick={() => setUploadOpen(true)}
@@ -514,7 +526,7 @@ export function MediaLibrary({
           ) : null}
         </button>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid grid-cols-2 items-start gap-3 md:grid-cols-3 xl:grid-cols-4">
           {visibleRows.map((row) => {
             const preview = toSameOriginStorageUrl(row.poster_url) ?? row.poster_url;
             const imagePreview =
@@ -530,7 +542,7 @@ export function MediaLibrary({
               row.kind === "document" ? Files :
               FileImage;
             return (
-              <li key={row.id} className="group overflow-hidden rounded-xl border bg-card">
+              <li key={row.id} className="self-start overflow-hidden rounded-xl border bg-card">
                 <button type="button" className="block w-full text-left" onClick={() => setSelected(row)}>
                   <div className="relative aspect-[4/3] bg-muted">
                     {imagePreview ? (
@@ -556,41 +568,43 @@ export function MediaLibrary({
                       </div>
                     ) : null}
                   </div>
-                  <div className="px-3 pt-2.5 pb-1">
+                </button>
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setSelected(row)}>
                     <p className="truncate text-sm font-medium">{row.title}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {formatSize(row.size) || row.extension?.toUpperCase() || row.kind}
                       {showUpload ? ` · ${row.uploadPercent}%` : ""}
                       {row.status === "processing" ? ` · ${row.progress}%` : ""}
                     </p>
-                  </div>
-                </button>
-                {row.uploadError || (row.status === "failed" && row.error_message) ? (
-                  <p className="px-3 pb-1 text-xs text-destructive">
-                    {row.uploadError || row.error_message}
-                  </p>
-                ) : null}
-                <div className="flex items-center justify-end gap-1 px-2 pb-2">
-                  {showUpload ? (
+                    {row.uploadError || (row.status === "failed" && row.error_message) ? (
+                      <p className="truncate text-xs text-destructive">
+                        {row.uploadError || row.error_message}
+                      </p>
+                    ) : null}
+                  </button>
+                  <div className="flex shrink-0 items-center">
+                    {showUpload ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={row.paused ? "Resume upload" : "Pause upload"}
+                        onClick={() => (row.paused ? resumeUpload(row.id) : pauseUpload(row.id))}
+                      >
+                        {row.paused ? <Play /> : <Pause />}
+                      </Button>
+                    ) : null}
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={row.paused ? "Resume upload" : "Pause upload"}
-                      onClick={() => (row.paused ? resumeUpload(row.id) : pauseUpload(row.id))}
+                      aria-label={`Delete ${row.title}`}
+                      onClick={() => void onDelete(row.id)}
                     >
-                      {row.paused ? <Play /> : <Pause />}
+                      <Trash2 />
                     </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Delete ${row.title}`}
-                    onClick={() => void onDelete(row.id)}
-                  >
-                    <Trash2 />
-                  </Button>
+                  </div>
                 </div>
               </li>
             );
