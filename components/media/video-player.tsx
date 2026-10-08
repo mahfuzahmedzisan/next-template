@@ -20,6 +20,23 @@ type VideoPlayerProps = {
   fluid?: boolean
 }
 
+function playbackType(src: string, type?: string) {
+  if (
+    type === "hls" ||
+    type === "application/x-mpegURL" ||
+    type === "application/vnd.apple.mpegurl"
+  ) {
+    return "application/x-mpegURL"
+  }
+
+  const path = src.split("?")[0]?.split("#")[0] ?? src
+  if (path.endsWith(".m3u8")) {
+    return "application/x-mpegURL"
+  }
+
+  return type ?? "video/mp4"
+}
+
 /**
  * Video.js player for Next.js App Router (client-only).
  * Apache-2.0 licensed — replaces native HTML5 video chrome.
@@ -35,6 +52,7 @@ export function VideoPlayer({
   loop = false,
   fluid = true,
 }: VideoPlayerProps) {
+  const sourceType = playbackType(src, type)
   const containerRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<Player | null>(null)
 
@@ -56,7 +74,7 @@ export function VideoPlayer({
       responsive: true,
       playsinline: true,
       poster,
-      sources: [{ src, type }],
+      sources: [{ src, type: sourceType }],
       controlBar: {
         pictureInPictureToggle: true,
         volumePanel: { inline: false },
@@ -80,9 +98,9 @@ export function VideoPlayer({
     const player = playerRef.current
     if (!player || player.isDisposed()) return
 
-    player.src({ src, type })
+    player.src({ src, type: sourceType })
     if (poster) player.poster(poster)
-  }, [poster, src, type])
+  }, [poster, sourceType, src])
 
   useEffect(() => {
     const player = playerRef.current

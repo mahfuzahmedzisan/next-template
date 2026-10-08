@@ -22,6 +22,12 @@ function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
       { title: "Realtime" },
     ];
   }
+  if (pathname.startsWith("/admin/media")) {
+    return [
+      { title: "Dashboard", href: "/admin" },
+      { title: "Media" },
+    ];
+  }
   if (pathname.startsWith("/admin/profile")) {
     return [
       { title: "Dashboard", href: "/admin" },

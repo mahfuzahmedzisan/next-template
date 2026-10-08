@@ -19,6 +19,13 @@
     },
     "motion-plus": {
       "url": "https://mcp.motion.dev/plus"
-    }
+    },
+    "laravel-boost": {
+      "command": "php",
+      "args": [
+          "API/mahfuz-ahmed-api/artisan",
+          "boost:mcp"
+      ]
+  }
   }
 }

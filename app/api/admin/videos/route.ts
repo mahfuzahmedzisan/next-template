@@ -1,0 +1,67 @@
+import { NextResponse } from "next/server";
+
+import { ApiError } from "@/lib/auth/api-error";
+import { getSession } from "@/lib/auth/auth-cookies";
+import { SessionExpiredError } from "@/lib/auth/session-expired";
+import { createAdminVideo, listAdminVideos } from "@/lib/media/videos";
+
+function jsonError(error: unknown, fallback: string) {
+  if (error instanceof SessionExpiredError) {
+    return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+  }
+
+  if (error instanceof ApiError) {
+    return NextResponse.json(
+      { message: error.message },
+      { status: error.status || 500 },
+    );
+  }
+
+  return NextResponse.json({ message: fallback }, { status: 500 });
+}
+
+export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+  }
+
+  try {
+    const data = await listAdminVideos("throw");
+    return NextResponse.json({ data });
+  } catch (error) {
+    return jsonError(error, "Unable to load videos.");
+  }
+}
+
+export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+  }
+
+  let body: {
+    title?: string;
+    filename?: string;
+    size?: number;
+    mime?: string;
+  };
+
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ message: "Invalid JSON body." }, { status: 422 });
+  }
+
+  try {
+    const data = await createAdminVideo({
+      title: body.title ?? "",
+      filename: body.filename ?? "",
+      size: Number(body.size ?? 0),
+      mime: body.mime ?? "",
+    });
+    return NextResponse.json({ data }, { status: 201 });
+  } catch (error) {
+    return jsonError(error, "Unable to start the upload.");
+  }
+}

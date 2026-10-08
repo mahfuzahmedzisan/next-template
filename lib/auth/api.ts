@@ -57,7 +57,7 @@ async function reviveSession(
 
 /** Authenticated request to the Laravel API's `/profile/*` resources. */
 export async function authedRequest<T>(
-  method: "get" | "post" | "put" | "delete",
+  method: "get" | "post" | "put" | "patch" | "delete",
   path: string,
   body?: unknown,
   options: { onSessionExpired?: SessionExpiredBehavior } = {},
