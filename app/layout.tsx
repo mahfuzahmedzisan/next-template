@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "lucide-react";
+import { Analytics } from "@vercel/analytics/next";
 import { AnimationProvider } from "@/components/animations/providers/animation-provider";
 import { JsonLd } from "@/components/seo/json-ld";
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary";
@@ -107,6 +108,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </TransitionProvider>
           </AnimationProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
