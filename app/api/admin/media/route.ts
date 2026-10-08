@@ -27,11 +27,14 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const params = new URLSearchParams({ per_page: "50" });
+  const perPage = url.searchParams.get("per_page")?.trim() || "24";
+  const params = new URLSearchParams({ per_page: perPage });
   const q = url.searchParams.get("q")?.trim();
   const kind = url.searchParams.get("kind")?.trim();
+  const page = url.searchParams.get("page")?.trim();
   if (q) params.set("filter[q]", q);
   if (kind && kind !== "all") params.set("filter[kind]", kind);
+  if (page) params.set("page", page);
 
   try {
     const data = await listAdminMedia(params.toString(), "throw");

@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  ChevronLeft,
+  ChevronRight,
   FileAudio,
   FileImage,
   FileText,
   Files,
   Film,
   LayoutGrid,
-  Pause,
-  Play,
   Search,
-  Trash2,
   Upload,
 } from "lucide-react";
 
@@ -26,15 +25,27 @@ import {
   type UploadRequest,
 } from "@/components/admin/media/media-upload-dialog";
 import { MediaDetailSheet } from "@/components/admin/media/media-detail-sheet";
-import { Badge } from "@/components/ui/badge";
+import {
+  MEDIA_VIEWS,
+  MediaBrowser,
+  getMediaView,
+  perPageFor,
+  setMediaView,
+  subscribeMediaView,
+  type MediaViewId,
+} from "@/components/admin/media/media-view";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import { createMediaUpload, type TusUploadHandle } from "@/lib/media/tus-upload";
-import type { MediaRecord, MediaStatus, MediaTypeFilter } from "@/lib/media/types";
+import type { MediaListResult, MediaRecord, MediaStatus, MediaTypeFilter } from "@/lib/media/types";
 import { getEcho } from "@/lib/realtime/echo";
 
 const TABS: Array<{
@@ -95,27 +106,6 @@ function mimeFor(file: File) {
   return MIME_BY_EXTENSION[extension] ?? file.type;
 }
 
-function statusLabel(status: MediaStatus) {
-  switch (status) {
-    case "awaiting_upload":
-      return "Uploading";
-    case "uploaded":
-      return "Queued";
-    case "processing":
-      return "Encoding";
-    case "ready":
-      return "Ready";
-    case "failed":
-      return "Failed";
-  }
-}
-
-function formatSize(size: number | null) {
-  if (!size) return "";
-  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 async function readJson<T>(response: Response): Promise<T> {
   const text = await response.text();
   if (!text) return {} as T;
@@ -133,10 +123,12 @@ async function readJson<T>(response: Response): Promise<T> {
 export function MediaLibrary({
   userId,
   initialMedia,
+  initialMeta,
   loadError,
 }: {
   userId: string | number;
   initialMedia: MediaRecord[];
+  initialMeta: MediaListResult["meta"];
   loadError: string | null;
 }) {
   const searchParams = useSearchParams();
@@ -157,6 +149,9 @@ export function MediaLibrary({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [jobs, setJobs] = useState<UploadJob[]>([]);
   const [selected, setSelected] = useState<MediaRecord | null>(null);
+  const view = useSyncExternalStore(subscribeMediaView, getMediaView, () => "large" as MediaViewId);
+  const [page, setPage] = useState(initialMeta.current_page || 1);
+  const [meta, setMeta] = useState(initialMeta);
   const [listLoading, setListLoading] = useState(false);
   const uploads = useRef(new Map<number, TusUploadHandle>());
   const listRequest = useRef(0);
@@ -168,16 +163,27 @@ export function MediaLibrary({
     rowsRef.current = rows;
   }, [rows]);
 
-  async function loadList(nextKind: MediaTypeFilter, nextQuery: string) {
+  async function loadList(
+    nextKind: MediaTypeFilter,
+    nextQuery: string,
+    nextPage: number,
+    nextPerPage: number,
+  ) {
     const requestId = ++listRequest.current;
     setListLoading(true);
     const params = new URLSearchParams();
     if (nextQuery) params.set("q", nextQuery);
     if (nextKind !== "all") params.set("kind", nextKind);
+    params.set("page", String(nextPage));
+    params.set("per_page", String(nextPerPage));
     try {
       const response = await fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" });
       if (!response.ok || requestId !== listRequest.current) return;
-      const body = await readJson<{ data?: { media?: MediaRecord[] } }>(response);
+      const body = await readJson<{ data?: MediaListResult }>(response);
+      if (body.data?.meta) {
+        setMeta(body.data.meta);
+        setPage(body.data.meta.current_page);
+      }
       const media = body.data?.media ?? [];
       setRows((current) => {
         const incoming = media.map((item) => {
@@ -237,6 +243,9 @@ export function MediaLibrary({
     const timer = window.setInterval(() => {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
+      if (kind !== "all") params.set("kind", kind);
+      params.set("page", String(page));
+      params.set("per_page", String(perPageFor(view)));
       void fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" })
         .then(async (response) => {
           if (!response.ok) return;
@@ -254,12 +263,21 @@ export function MediaLibrary({
         .catch(() => undefined);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [needsPoll, q]);
+  }, [needsPoll, q, kind, page, view]);
 
   function selectKind(next: MediaTypeFilter) {
     if (next === kind) return;
     setKind(next);
-    void loadList(next, q);
+    setPage(1);
+    void loadList(next, q, 1, perPageFor(view));
+  }
+
+  function selectView(next: MediaViewId) {
+    const previous = view;
+    setMediaView(next);
+    if (perPageFor(next) === perPageFor(previous)) return;
+    setPage(1);
+    void loadList(kind, q, 1, perPageFor(next));
   }
 
   function patchJob(key: string, patch: Partial<UploadJob>) {
@@ -475,7 +493,8 @@ export function MediaLibrary({
               event.preventDefault();
               const next = query.trim();
               setQ(next);
-              void loadList(kind, next);
+              setPage(1);
+              void loadList(kind, next, 1, perPageFor(view));
             }}
           >
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -487,6 +506,29 @@ export function MediaLibrary({
               className="pl-8"
             />
           </form>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline">
+                <LayoutGrid data-icon="inline-start" />
+                View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {MEDIA_VIEWS.map((item) => {
+                const Icon = item.icon;
+                const active = view === item.id;
+                return (
+                  <DropdownMenuItem key={item.id} onSelect={() => selectView(item.id)}>
+                    <span className="flex w-3 justify-center">
+                      {active ? <span className="size-1.5 rounded-full bg-foreground" /> : null}
+                    </span>
+                    <Icon />
+                    {item.label}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button type="button" onClick={() => setUploadOpen(true)}>
             <Upload data-icon="inline-start" />
             Upload
@@ -496,22 +538,17 @@ export function MediaLibrary({
 
       {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
 
-      {listLoading ? (
-        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 8 }, (_, index) => (
-            <li key={index} className="overflow-hidden rounded-xl border bg-card">
-              <Skeleton className="aspect-[4/3] w-full rounded-none" />
-              <div className="flex items-center gap-2 px-3 py-2">
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/4" />
-                </div>
-                <Skeleton className="size-7 rounded-md" />
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : visibleRows.length === 0 ? (
+      {listLoading || visibleRows.length > 0 ? (
+        <MediaBrowser
+          view={view}
+          rows={visibleRows}
+          loading={listLoading}
+          onOpen={setSelected}
+          onDelete={(id) => void onDelete(id)}
+          onPause={pauseUpload}
+          onResume={resumeUpload}
+        />
+      ) : (
         <button
           type="button"
           onClick={() => setUploadOpen(true)}
@@ -525,92 +562,43 @@ export function MediaLibrary({
             <span className="text-xs text-muted-foreground">Upload images, video, audio, or documents</span>
           ) : null}
         </button>
-      ) : (
-        <ul className="grid grid-cols-2 items-start gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {visibleRows.map((row) => {
-            const preview = toSameOriginStorageUrl(row.poster_url) ?? row.poster_url;
-            const imagePreview =
-              row.kind === "image"
-                ? (toSameOriginStorageUrl(row.url) ?? row.url ?? preview)
-                : preview;
-            const showUpload = row.status === "awaiting_upload" && row.uploadPercent !== null;
-            const encoding = row.status === "processing" || row.status === "uploaded";
-            const Icon =
-              row.kind === "video" ? Film :
-              row.kind === "audio" ? FileAudio :
-              row.kind === "pdf" ? FileText :
-              row.kind === "document" ? Files :
-              FileImage;
-            return (
-              <li key={row.id} className="self-start overflow-hidden rounded-xl border bg-card">
-                <button type="button" className="block w-full text-left" onClick={() => setSelected(row)}>
-                  <div className="relative aspect-[4/3] bg-muted">
-                    {imagePreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site
-                      <img src={imagePreview} alt={row.alt || row.title} className="size-full object-cover" />
-                    ) : (
-                      <div className="flex size-full items-center justify-center">
-                        <Icon className="size-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <Badge variant="secondary" className="absolute top-2 left-2 capitalize">
-                      {row.kind}
-                    </Badge>
-                    <Badge
-                      variant={row.status === "failed" ? "destructive" : "outline"}
-                      className="absolute top-2 right-2 bg-background/90"
-                    >
-                      {statusLabel(row.status)}
-                    </Badge>
-                    {showUpload || encoding ? (
-                      <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1.5">
-                        <Progress value={showUpload ? row.uploadPercent ?? 0 : row.progress} className="h-1" />
-                      </div>
-                    ) : null}
-                  </div>
-                </button>
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setSelected(row)}>
-                    <p className="truncate text-sm font-medium">{row.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {formatSize(row.size) || row.extension?.toUpperCase() || row.kind}
-                      {showUpload ? ` · ${row.uploadPercent}%` : ""}
-                      {row.status === "processing" ? ` · ${row.progress}%` : ""}
-                    </p>
-                    {row.uploadError || (row.status === "failed" && row.error_message) ? (
-                      <p className="truncate text-xs text-destructive">
-                        {row.uploadError || row.error_message}
-                      </p>
-                    ) : null}
-                  </button>
-                  <div className="flex shrink-0 items-center">
-                    {showUpload ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={row.paused ? "Resume upload" : "Pause upload"}
-                        onClick={() => (row.paused ? resumeUpload(row.id) : pauseUpload(row.id))}
-                      >
-                        {row.paused ? <Play /> : <Pause />}
-                      </Button>
-                    ) : null}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`Delete ${row.title}`}
-                      onClick={() => void onDelete(row.id)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
       )}
+
+      {meta.last_page > 1 ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            {(meta.current_page - 1) * meta.per_page + 1}
+            –
+            {Math.min(meta.current_page * meta.per_page, meta.total)} of {meta.total}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label="Previous page"
+              disabled={listLoading || meta.current_page <= 1}
+              onClick={() => void loadList(kind, q, meta.current_page - 1, perPageFor(view))}
+            >
+              <ChevronLeft />
+            </Button>
+            <span className="min-w-16 text-center text-xs text-muted-foreground">
+              {meta.current_page} / {meta.last_page}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label="Next page"
+              disabled={listLoading || meta.current_page >= meta.last_page}
+              onClick={() => void loadList(kind, q, meta.current_page + 1, perPageFor(view))}
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
 
       <MediaUploadDialog
         open={uploadOpen}
