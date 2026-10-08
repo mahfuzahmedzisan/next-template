@@ -239,7 +239,6 @@ export function MediaBrowser({
           key={row.id}
           row={row}
           dense={view === "small" || view === "medium"}
-          large={view === "extra-large"}
           onOpen={onOpen}
           onDelete={onDelete}
           onPause={onPause}
@@ -253,19 +252,18 @@ export function MediaBrowser({
 function IconCard({
   row,
   dense,
-  large,
   onOpen,
   onDelete,
   onPause,
   onResume,
-}: RowActions & { dense: boolean; large: boolean }) {
+}: RowActions & { dense: boolean }) {
   const showUpload = row.status === "awaiting_upload" && row.uploadPercent !== null;
   return (
     <li className="self-start overflow-hidden rounded-lg border bg-card">
       <button type="button" className="block w-full text-left" onClick={() => onOpen(row)}>
         <Thumb
           row={row}
-          aspect={large ? "aspect-[4/3]" : "aspect-square"}
+          aspect="aspect-[16/10]"
           iconClass={dense ? "size-4" : "size-5"}
           showKind={!dense}
         />
@@ -443,10 +441,14 @@ function Thumb({
   const showUpload = row.status === "awaiting_upload" && row.uploadPercent !== null;
   const encoding = row.status === "processing" || row.status === "uploaded";
   return (
-    <div className={cn("relative bg-muted", aspect)}>
+    <div className={cn("relative overflow-hidden bg-muted", aspect)}>
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site
-        <img src={src} alt={row.alt || row.title} className="size-full object-cover" />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element -- blurred copy only fills the side bars */}
+          <img src={src} alt="" aria-hidden className="absolute inset-0 size-full scale-110 object-cover opacity-50 blur-md" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site */}
+          <img src={src} alt={row.alt || row.title} className="relative size-full object-contain" />
+        </>
       ) : (
         <div className="flex size-full items-center justify-center">
           <KindIcon kind={row.kind} className={cn(iconClass, "text-muted-foreground")} />
@@ -499,7 +501,7 @@ function MediaViewSkeleton({ view }: { view: MediaViewId }) {
     )}>
       {Array.from({ length: count }, (_, index) => (
         <li key={index}>
-          <Skeleton className={cn("w-full", view === "content" ? "h-24" : view === "tiles" ? "h-16" : "aspect-square")} />
+          <Skeleton className={cn("w-full", view === "content" ? "h-24" : view === "tiles" ? "h-16" : "aspect-[16/10]")} />
         </li>
       ))}
     </ul>
