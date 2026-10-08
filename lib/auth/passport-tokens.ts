@@ -28,6 +28,7 @@ export function isTwoFactorChallenge(
 export async function requestLogin(input: {
   email: string;
   password: string;
+  remember?: boolean;
 }): Promise<LoginResult> {
   try {
     const response = await laravelHttp.post("/auth/login", input);

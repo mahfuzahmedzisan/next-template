@@ -10,8 +10,14 @@ export const SESSION_COOKIE = "session";
  */
 export const SESSION_OVERRIDE_HEADER = "x-mahfuz-session";
 
+/** Remember me. Idle time inside this window still refreshes the access token. */
+export const REMEMBER_SESSION_MS = 1000 * 60 * 60 * 24 * 30;
+
+/** Sign-in without Remember me. */
+export const BROWSER_SESSION_MS = 1000 * 60 * 60 * 12;
+
 /** Keep the httpOnly cookie alive longer than the access token so silent refresh can run. */
-export const SESSION_COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+export const SESSION_COOKIE_MAX_AGE_MS = REMEMBER_SESSION_MS;
 
 /** Refresh access token when fewer than this many ms remain. */
 export const ACCESS_TOKEN_REFRESH_SKEW_MS = 60_000;
@@ -43,8 +49,17 @@ function tryGetEncryptionKey(): Uint8Array | null {
   }
 }
 
+export function sessionHasEnded(
+  session: Pick<SessionPayload, "sessionEndsAt">,
+  now = Date.now(),
+): boolean {
+  return typeof session.sessionEndsAt === "number" && session.sessionEndsAt <= now;
+}
+
 export async function encrypt(payload: SessionPayload): Promise<string> {
-  const cookieExpires = new Date(Date.now() + SESSION_COOKIE_MAX_AGE_MS);
+  const cookieExpires = new Date(
+    payload.sessionEndsAt ?? Date.now() + SESSION_COOKIE_MAX_AGE_MS,
+  );
 
   return new EncryptJWT({ ...payload })
     .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
@@ -91,6 +106,8 @@ export async function decrypt(
           ? payload.refreshToken
           : undefined,
       expiresAt,
+      sessionEndsAt:
+        typeof payload.sessionEndsAt === "number" ? payload.sessionEndsAt : undefined,
       user: user as SessionPayload["user"],
     };
   } catch {
@@ -103,6 +120,7 @@ export function sessionLooksAuthenticated(
   session: SessionPayload | null,
 ): boolean {
   if (!session?.accessToken || !session.user?.id) return false;
+  if (sessionHasEnded(session)) return false;
   // Cookie may outlive access token; silent refresh runs in proxy / getSession.
   if (session.refreshToken) return true;
   return session.expiresAt > Date.now();

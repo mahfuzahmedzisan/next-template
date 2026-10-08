@@ -7,6 +7,7 @@ import {
   SESSION_COOKIE,
   SESSION_COOKIE_MAX_AGE_MS,
   encrypt,
+  sessionHasEnded,
 } from "@/lib/auth/session";
 import type { SessionPayload } from "@/types/auth";
 
@@ -32,11 +33,11 @@ export function needsAccessTokenRefresh(session: SessionPayload): boolean {
   return session.expiresAt <= Date.now() + ACCESS_TOKEN_REFRESH_SKEW_MS;
 }
 
-export function sessionCookieOptions() {
+export function sessionCookieOptions(sessionEndsAt?: number) {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    expires: new Date(Date.now() + SESSION_COOKIE_MAX_AGE_MS),
+    expires: new Date(sessionEndsAt ?? Date.now() + SESSION_COOKIE_MAX_AGE_MS),
     sameSite: "lax" as const,
     path: "/",
   };
@@ -56,6 +57,10 @@ const inFlight = new Map<string, Promise<RefreshOutcome>>();
 export async function buildRefreshedSession(
   session: SessionPayload,
 ): Promise<RefreshOutcome> {
+  if (sessionHasEnded(session)) {
+    return { status: "revoked" };
+  }
+
   const { refreshToken } = session;
   if (!refreshToken) {
     return { status: "revoked" };

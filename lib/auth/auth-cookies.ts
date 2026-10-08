@@ -16,10 +16,10 @@ import {
 } from "@/lib/auth/session-refresh";
 import type { SessionPayload } from "@/types/auth";
 
-async function tryWriteSessionCookie(value: string): Promise<boolean> {
+async function tryWriteSessionCookie(value: string, sessionEndsAt?: number): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE, value, sessionCookieOptions());
+    cookieStore.set(SESSION_COOKIE, value, sessionCookieOptions(sessionEndsAt));
     return true;
   } catch {
     // Cookie writes are only allowed in Route Handlers / Server Actions.
@@ -39,7 +39,7 @@ async function tryDeleteSessionCookie(): Promise<void> {
 
 export async function createSession(payload: SessionPayload): Promise<void> {
   const session = await encryptSessionCookie(payload);
-  const written = await tryWriteSessionCookie(session);
+  const written = await tryWriteSessionCookie(session, payload.sessionEndsAt);
   if (!written) {
     throw new Error(
       "Unable to write session cookie outside a mutable request context",
@@ -87,7 +87,7 @@ export const getSession = cache(async (): Promise<SessionPayload | null> => {
   }
 
   const encrypted = await encryptSessionCookie(outcome.session);
-  await tryWriteSessionCookie(encrypted);
+  await tryWriteSessionCookie(encrypted, outcome.session.sessionEndsAt);
   return outcome.session;
 });
 

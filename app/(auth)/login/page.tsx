@@ -40,6 +40,7 @@ const loginSchema = z.object({
     .min(1, "Email is required")
     .email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
+  remember: z.boolean(),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -60,7 +61,7 @@ function LoginForm() {
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", remember: false },
   });
 
   useEffect(() => {
@@ -140,6 +141,34 @@ function LoginForm() {
                     <PasswordInput autoComplete="current-password" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="remember"
+              render={({ field }) => (
+                <FormItem>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 size-4 accent-foreground"
+                      checked={field.value}
+                      onChange={(event) => field.onChange(event.target.checked)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                    <span>
+                      <span className="font-medium">Remember me</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        Stay signed in on this browser for 30 days. After that
+                        you sign in again. Leaving this off ends the session
+                        after 12 hours. Idle time in between does not.
+                      </span>
+                    </span>
+                  </label>
                 </FormItem>
               )}
             />

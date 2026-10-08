@@ -5,6 +5,7 @@ import {
   SESSION_COOKIE,
   SESSION_OVERRIDE_HEADER,
   decrypt,
+  sessionHasEnded,
   sessionLooksAuthenticated,
 } from "@/lib/auth/session";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
@@ -60,6 +61,12 @@ async function handleProxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete(SESSION_OVERRIDE_HEADER);
 
+  if (session && sessionHasEnded(session)) {
+    request.cookies.delete(SESSION_COOKIE);
+    session = null;
+    clearedSession = true;
+  }
+
   // Persist silent refresh before RSC runs (cookie writes are illegal in RSC).
   if (session && needsAccessTokenRefresh(session)) {
     const outcome = await buildRefreshedSession(session);
@@ -105,7 +112,7 @@ async function handleProxy(request: NextRequest) {
       redirectResponse.cookies.set(
         SESSION_COOKIE,
         refreshedCookieValue,
-        sessionCookieOptions(),
+        sessionCookieOptions(session?.sessionEndsAt),
       );
     }
     return redirectResponse;
@@ -116,7 +123,7 @@ async function handleProxy(request: NextRequest) {
     response.cookies.set(
       SESSION_COOKIE,
       refreshedCookieValue,
-      sessionCookieOptions(),
+      sessionCookieOptions(session?.sessionEndsAt),
     );
   } else if (clearedSession) {
     response.cookies.delete(SESSION_COOKIE);
