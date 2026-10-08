@@ -1,5 +1,6 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import { HlsJsVideo } from "@videojs/react/media/hlsjs-video"
 import { Video, VideoPlayer as VideoJsPlayer } from "@videojs/react/video"
 
@@ -66,7 +67,16 @@ export function VideoPlayer({
       className={cn("overflow-hidden bg-black", fluid ? "aspect-video w-full" : "size-full", className)}
     >
       <VideoJsPlayer poster={playbackPoster}>
-        {controls ? <VideoSkin className="size-full">{media}</VideoSkin> : media}
+        {controls ? (
+          <VideoSkin
+            className="size-full"
+            style={{ "--media-video-border-radius": "0px" } as CSSProperties}
+          >
+            {media}
+          </VideoSkin>
+        ) : (
+          media
+        )}
       </VideoJsPlayer>
     </div>
   )
