@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Check, Copy, Expand } from "lucide-react";
 
 import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
@@ -31,11 +31,26 @@ export function MediaDetailSheet({
   const url = toSameOriginStorageUrl(item?.url) ?? item?.url ?? "";
   const poster = toSameOriginStorageUrl(item?.poster_url) ?? item?.poster_url ?? undefined;
   const [previewOpen, setPreviewOpen] = useState(false);
+  const previewLock = useRef(false);
+
+  function setPreview(open: boolean) {
+    if (open) {
+      previewLock.current = true;
+      setPreviewOpen(true);
+      return;
+    }
+    previewLock.current = true;
+    setPreviewOpen(false);
+    window.setTimeout(() => {
+      previewLock.current = false;
+    }, 250);
+  }
 
   return (
     <Sheet
       open={item !== null}
       onOpenChange={(next) => {
+        if (!next && previewLock.current) return;
         if (!next) setPreviewOpen(false);
         onOpenChange(next);
       }}
@@ -43,18 +58,18 @@ export function MediaDetailSheet({
       <SheetContent
         className="w-full overflow-y-auto sm:max-w-md"
         onInteractOutside={(event) => {
-          if (previewOpen) event.preventDefault();
+          if (previewLock.current) event.preventDefault();
         }}
         onPointerDownOutside={(event) => {
-          if (previewOpen) event.preventDefault();
+          if (previewLock.current) event.preventDefault();
         }}
         onFocusOutside={(event) => {
-          if (previewOpen) event.preventDefault();
+          if (previewLock.current) event.preventDefault();
         }}
         onEscapeKeyDown={(event) => {
-          if (!previewOpen) return;
+          if (!previewLock.current) return;
           event.preventDefault();
-          setPreviewOpen(false);
+          setPreview(false);
         }}
       >
         <SheetHeader>
@@ -71,7 +86,7 @@ export function MediaDetailSheet({
             url={url}
             poster={poster}
             previewOpen={previewOpen}
-            onPreview={setPreviewOpen}
+            onPreview={setPreview}
             onSave={onSave}
           />
         ) : null}
