@@ -58,7 +58,7 @@ export function VideoPlayer({
     loop,
     playsInline: true,
     className: "size-full object-contain",
-    style: { objectFit: "contain", objectPosition: "center" },
+    style: { objectFit: "contain" as const, objectPosition: "center" as const },
   }
 
   const media = hls ? <HlsJsVideo {...mediaProps} /> : <Video {...mediaProps} />

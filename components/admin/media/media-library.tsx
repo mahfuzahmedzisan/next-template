@@ -681,6 +681,7 @@ export function MediaLibrary({
         onOpenChange={(open) => !open && setSelected(null)}
         onSave={onSave}
         onRetry={onRetry}
+        onCancel={onDelete}
         onThumbnail={onThumbnail}
       />
     </div>

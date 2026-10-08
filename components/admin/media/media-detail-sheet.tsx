@@ -26,12 +26,14 @@ export function MediaDetailSheet({
   onOpenChange,
   onSave,
   onRetry,
+  onCancel,
   onThumbnail,
 }: {
   item: (MediaRecord & { uploadPercent?: number | null }) | null;
   onOpenChange: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
   onRetry: (id: number) => Promise<void>;
+  onCancel: (id: number) => Promise<void>;
   onThumbnail: (id: number, file: File) => Promise<void>;
 }) {
   const url = toSameOriginStorageUrl(item?.url) ?? item?.url ?? "";
@@ -98,6 +100,7 @@ export function MediaDetailSheet({
             onPreview={setPreview}
             onSave={onSave}
             onRetry={onRetry}
+            onCancel={onCancel}
             onThumbnail={onThumbnail}
           />
         ) : null}
@@ -114,6 +117,7 @@ function MediaDetailForm({
   onPreview,
   onSave,
   onRetry,
+  onCancel,
   onThumbnail,
 }: {
   item: MediaRecord & { uploadPercent?: number | null };
@@ -123,6 +127,7 @@ function MediaDetailForm({
   onPreview: (open: boolean) => void;
   onSave: (body: { title: string; slug: string; alt: string; keywords: string[] }) => Promise<void>;
   onRetry: (id: number) => Promise<void>;
+  onCancel: (id: number) => Promise<void>;
   onThumbnail: (id: number, file: File) => Promise<void>;
 }) {
   const [title, setTitle] = useState(item.title);
@@ -132,6 +137,7 @@ function MediaDetailForm({
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [thumbBusy, setThumbBusy] = useState(false);
   const thumbInput = useRef<HTMLInputElement>(null);
   const streamable = item.kind === "video" || item.kind === "audio";
@@ -170,19 +176,30 @@ function MediaDetailForm({
                 }
               />
             ) : null}
-            {item.status === "failed" ? (
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
-                disabled={retrying}
+                disabled={retrying || cancelling}
                 onClick={() => {
                   setRetrying(true);
                   void onRetry(item.id).finally(() => setRetrying(false));
                 }}
               >
-                {retrying ? "Starting" : "Retry conversion"}
+                {retrying ? "Starting" : "Retry"}
               </Button>
-            ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                disabled={retrying || cancelling}
+                onClick={() => {
+                  setCancelling(true);
+                  void onCancel(item.id).finally(() => setCancelling(false));
+                }}
+              >
+                {cancelling ? "Cancelling" : "Cancel"}
+              </Button>
+            </div>
           </div>
         ) : null}
         {streamable ? (
