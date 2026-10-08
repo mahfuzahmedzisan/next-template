@@ -5,6 +5,7 @@ import { Check, Copy, Expand } from "lucide-react";
 
 import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
 import { VideoPlayer } from "@/components/media/video-player";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,8 +80,11 @@ export function MediaDetailSheet({
       >
         <SheetHeader>
           <SheetTitle>{item?.title ?? "Media"}</SheetTitle>
-          <SheetDescription>
-            {item ? `${item.kind} · ${item.status}` : "Details"}
+          <SheetDescription className="flex items-center gap-2">
+            <span>{item ? `${item.kind} · ${item.status.replaceAll("_", " ")}` : "Details"}</span>
+            {item && (item.kind === "video" || item.kind === "audio") && item.status === "ready" && item.stream_url ? (
+              <Badge className="bg-sky-600 text-white hover:bg-sky-600">HLS</Badge>
+            ) : null}
           </SheetDescription>
         </SheetHeader>
 
@@ -129,6 +133,7 @@ function MediaDetailForm({
   const [copied, setCopied] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [thumbBusy, setThumbBusy] = useState(false);
+  const thumbInput = useRef<HTMLInputElement>(null);
   const streamable = item.kind === "video" || item.kind === "audio";
   const converting = item.status === "uploaded" || item.status === "processing";
   const canPreview = item.kind === "image" && Boolean(url);
@@ -138,22 +143,18 @@ function MediaDetailForm({
       <div className="flex flex-col gap-4 px-4">
         {item.kind === "image" && url ? (
           <button type="button" className="group relative block w-full" onClick={() => onPreview(true)}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site */}
-            <img src={url} alt={item.alt || item.title} className="w-full rounded-lg object-cover" />
+            <ContainedPreview src={url} alt={item.alt || item.title} />
             <span className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-background/90 text-foreground shadow-sm">
               <Expand className="size-3.5" />
             </span>
           </button>
         ) : null}
         {streamable && item.stream_url ? (
-          <VideoPlayer src={item.stream_url} type="hls" poster={poster} />
+          <VideoPlayer src={item.stream_url} type="hls" poster={poster} className="aspect-[16/10] rounded-lg" />
         ) : null}
         {streamable && !item.stream_url ? (
           <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-3">
-            {poster ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={poster} alt="" className="aspect-video w-full rounded-md object-contain" />
-            ) : null}
+            {poster ? <ContainedPreview src={poster} alt="" /> : null}
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium">{streamStatusTitle(item)}</p>
               <p className="text-xs text-muted-foreground">{streamStatusDetail(item)}</p>
@@ -186,20 +187,40 @@ function MediaDetailForm({
         ) : null}
         {streamable ? (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="detail-thumb">Thumbnail</Label>
-            <Input
-              id="detail-thumb"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              disabled={thumbBusy}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (!file) return;
-                setThumbBusy(true);
-                void onThumbnail(item.id, file).finally(() => setThumbBusy(false));
-              }}
-            />
+            <Label>Thumbnail</Label>
+            <div className="flex items-center gap-3">
+              <div className="w-28 shrink-0">
+                {poster ? (
+                  <ContainedPreview src={poster} alt="" />
+                ) : (
+                  <div className="flex aspect-[16/10] items-center justify-center rounded-lg bg-muted text-[10px] text-muted-foreground">
+                    None
+                  </div>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={thumbBusy}
+                onClick={() => thumbInput.current?.click()}
+              >
+                {thumbBusy ? "Saving" : poster ? "Replace" : "Add thumbnail"}
+              </Button>
+              <input
+                ref={thumbInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  setThumbBusy(true);
+                  void onThumbnail(item.id, file).finally(() => setThumbBusy(false));
+                }}
+              />
+            </div>
           </div>
         ) : null}
         {item.kind === "pdf" && url ? (
@@ -292,9 +313,21 @@ function MediaDetailForm({
   );
 }
 
+function ContainedPreview({ src, alt }: { src: string; alt: string }) {
+  return (
+    <span className="relative block aspect-[16/10] overflow-hidden rounded-lg bg-muted">
+      {/* eslint-disable-next-line @next/next/no-img-element -- blurred copy only fills the side bars */}
+      <img src={src} alt="" aria-hidden className="absolute inset-0 size-full scale-110 object-cover opacity-50 blur-md" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site */}
+      <img src={src} alt={alt} className="relative size-full object-contain" />
+    </span>
+  );
+}
+
 function streamStatusTitle(item: MediaRecord & { uploadPercent?: number | null }) {
   if (item.status === "failed") return "Conversion failed";
-  if (item.status === "awaiting_upload") return "Uploading the file";
+  if (item.status === "awaiting_upload" && item.uploadPercent != null) return `Uploading ${item.uploadPercent}%`;
+  if (item.status === "awaiting_upload") return "Waiting to convert";
   if (item.status === "uploaded") return "Preparing the stream";
   if (item.status === "processing") return `Converting · ${item.progress}%`;
   return "Stream is not ready";

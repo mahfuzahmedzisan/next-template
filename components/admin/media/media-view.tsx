@@ -160,6 +160,30 @@ function KindIcon({ kind, className }: { kind: MediaKind; className?: string }) 
   return <Icon className={className} />;
 }
 
+function hlsReady(row: MediaViewRow) {
+  return (row.kind === "video" || row.kind === "audio") && row.status === "ready" && Boolean(row.stream_url);
+}
+
+function cardActivity(row: MediaViewRow): { label: string; value: number } | null {
+  if (row.status === "awaiting_upload" && row.uploadPercent !== null) {
+    return { label: `Uploading ${row.uploadPercent}%`, value: row.uploadPercent };
+  }
+  if (row.status === "awaiting_upload" && (row.kind === "video" || row.kind === "audio")) {
+    return { label: "Waiting to convert", value: 8 };
+  }
+  if (row.status === "uploaded") return { label: "Converting", value: 8 };
+  if (row.status === "processing") return { label: `Converting ${row.progress}%`, value: row.progress };
+  return null;
+}
+
+function HlsTag({ className }: { className?: string }) {
+  return (
+    <Badge className={cn("bg-sky-600 text-white hover:bg-sky-600", className)}>
+      HLS
+    </Badge>
+  );
+}
+
 function previewSrc(row: MediaViewRow) {
   const poster = toSameOriginStorageUrl(row.poster_url) ?? row.poster_url;
   if (row.kind === "image") return toSameOriginStorageUrl(row.url) ?? row.url ?? poster;
@@ -290,6 +314,13 @@ function ListRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
           <KindIcon kind={row.kind} className="size-4 text-muted-foreground" />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm">{row.title}</span>
+        {hlsReady(row) ? <HlsTag /> : null}
+        {cardActivity(row) ? (
+          <span className="hidden w-28 shrink-0 sm:block">
+            <span className="mb-1 block truncate text-[10px] text-muted-foreground">{cardActivity(row)?.label}</span>
+            <Progress value={cardActivity(row)?.value} className="h-1" />
+          </span>
+        ) : null}
         <span className="hidden w-24 shrink-0 text-xs text-muted-foreground capitalize sm:block">{row.kind}</span>
         <span className="w-16 shrink-0 text-xs text-muted-foreground">{formatSize(row.size)}</span>
       </button>
@@ -306,9 +337,12 @@ function TileRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
         <Thumb row={row} aspect="size-14" iconClass="size-4" />
       </button>
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(row)}>
-        <p className="truncate text-sm font-medium">{row.title}</p>
+        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+          <span className="truncate">{row.title}</span>
+          {hlsReady(row) ? <HlsTag /> : null}
+        </p>
         <p className="truncate text-xs text-muted-foreground capitalize">
-          {row.kind} · {formatSize(row.size)}
+          {cardActivity(row)?.label ?? `${row.kind} · ${formatSize(row.size)}`}
         </p>
       </button>
       <RowTools row={row} showUpload={showUpload} onDelete={onDelete} onPause={onPause} onResume={onResume} />
@@ -324,8 +358,13 @@ function ContentRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
         <Thumb row={row} aspect="aspect-video" iconClass="size-5" />
       </button>
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(row)}>
-        <p className="truncate text-sm font-medium">{row.title}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground capitalize">{row.kind}</p>
+        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+          <span className="truncate">{row.title}</span>
+          {hlsReady(row) ? <HlsTag /> : null}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground capitalize">
+          {cardActivity(row)?.label ?? row.kind}
+        </p>
         <p className="text-xs text-muted-foreground">
           {formatSize(row.size)} · {formatWhen(row.created_at)}
         </p>
@@ -361,11 +400,21 @@ function DetailsTable({ rows, onOpen, onDelete, onPause, onResume }: {
                   <button type="button" className="flex max-w-xs items-center gap-2 text-left" onClick={() => onOpen(row)}>
                     <KindIcon kind={row.kind} className="size-4 shrink-0 text-muted-foreground" />
                     <span className="truncate font-medium">{row.title}</span>
+                    {hlsReady(row) ? <HlsTag /> : null}
                   </button>
                 </td>
                 <td className="px-3 py-2 capitalize text-muted-foreground">{row.kind}</td>
                 <td className="px-3 py-2 text-muted-foreground">{formatSize(row.size)}</td>
-                <td className="px-3 py-2 text-muted-foreground">{statusLabel(row.status)}</td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {cardActivity(row) ? (
+                    <span className="block w-28">
+                      <span className="mb-1 block text-[10px]">{cardActivity(row)?.label}</span>
+                      <Progress value={cardActivity(row)?.value} className="h-1" />
+                    </span>
+                  ) : (
+                    statusLabel(row.status)
+                  )}
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">{formatWhen(row.created_at)}</td>
                 <td className="px-2 py-1">
                   <RowTools row={row} showUpload={showUpload} onDelete={onDelete} onPause={onPause} onResume={onResume} />
@@ -438,8 +487,7 @@ function Thumb({
   showKind?: boolean;
 }) {
   const src = previewSrc(row);
-  const showUpload = row.status === "awaiting_upload" && row.uploadPercent !== null;
-  const encoding = row.status === "processing" || row.status === "uploaded";
+  const activity = cardActivity(row);
   return (
     <div className={cn("relative overflow-hidden bg-muted", aspect)}>
       {src ? (
@@ -459,15 +507,11 @@ function Thumb({
           {row.kind}
         </Badge>
       ) : null}
-      {showUpload || encoding ? (
+      {hlsReady(row) ? <HlsTag className="absolute top-1.5 right-1.5" /> : null}
+      {activity ? (
         <div className="absolute inset-x-0 bottom-0 bg-background/90 px-2 py-1.5">
-          <p className="mb-1 text-[10px] font-medium">
-            {showUpload ? `Uploading ${row.uploadPercent ?? 0}%` : row.status === "uploaded" ? "Converting" : `Converting ${row.progress}%`}
-          </p>
-          <Progress
-            value={showUpload ? row.uploadPercent ?? 0 : row.status === "uploaded" ? 8 : row.progress}
-            className="h-1"
-          />
+          <p className="mb-1 text-[10px] font-medium">{activity.label}</p>
+          <Progress value={activity.value} className="h-1" />
         </div>
       ) : null}
     </div>

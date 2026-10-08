@@ -58,19 +58,30 @@ export function VideoPlayer({
     loop,
     playsInline: true,
     className: "size-full object-contain",
+    style: { objectFit: "contain", objectPosition: "center" },
   }
 
   const media = hls ? <HlsJsVideo {...mediaProps} /> : <Video {...mediaProps} />
 
   return (
     <div
-      className={cn("overflow-hidden bg-black", fluid ? "aspect-video w-full" : "size-full", className)}
+      className={cn(
+        "overflow-hidden bg-black [&_video]:!object-contain",
+        fluid ? "aspect-video w-full" : "size-full",
+        className,
+      )}
     >
       <VideoJsPlayer poster={playbackPoster}>
         {controls ? (
           <VideoSkin
             className="size-full"
-            style={{ "--media-video-border-radius": "0px" } as CSSProperties}
+            style={
+              {
+                "--media-video-border-radius": "0px",
+                "--media-object-fit": "contain",
+                "--media-object-position": "center",
+              } as CSSProperties
+            }
           >
             {media}
           </VideoSkin>
