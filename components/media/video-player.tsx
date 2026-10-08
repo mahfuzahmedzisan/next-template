@@ -4,9 +4,12 @@ import { useEffect, useRef } from "react"
 import videojs from "video.js"
 import type Player from "video.js/dist/types/player"
 
+import { registerQualityMenu } from "@/components/media/quality-menu"
+import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media"
 import { cn } from "@/lib/utils"
 
 import "video.js/dist/video-js.css"
+import "./video-player.css"
 
 type VideoPlayerProps = {
   src: string
@@ -52,7 +55,9 @@ export function VideoPlayer({
   loop = false,
   fluid = true,
 }: VideoPlayerProps) {
-  const sourceType = playbackType(src, type)
+  const playbackSrc = toSameOriginStorageUrl(src) ?? src
+  const playbackPoster = toSameOriginStorageUrl(poster) ?? undefined
+  const sourceType = playbackType(playbackSrc, type)
   const containerRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<Player | null>(null)
 
@@ -64,6 +69,8 @@ export function VideoPlayer({
     videoElement.classList.add("vjs-big-play-centered", "vjs-fill")
     container.appendChild(videoElement)
 
+    registerQualityMenu()
+
     const player = videojs(videoElement, {
       controls,
       autoplay,
@@ -73,11 +80,52 @@ export function VideoPlayer({
       fluid,
       responsive: true,
       playsinline: true,
-      poster,
-      sources: [{ src, type: sourceType }],
+      poster: playbackPoster,
+      playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
+      sources: [{ src: playbackSrc, type: sourceType }],
+      html5: {
+        vhs: {
+          overrideNative: true,
+        },
+      },
+      userActions: {
+        hotkeys(this: Player, event: KeyboardEvent) {
+          const key = event.key.toLowerCase()
+          if (key === "arrowleft" || key === "j") {
+            event.preventDefault()
+            this.currentTime(Math.max(0, (this.currentTime() ?? 0) - 10))
+            return
+          }
+          if (key === "arrowright" || key === "l") {
+            event.preventDefault()
+            const duration = this.duration() ?? Number.NaN
+            const next = (this.currentTime() ?? 0) + 10
+            this.currentTime(Number.isFinite(duration) ? Math.min(duration, next) : next)
+            return
+          }
+          ;(this as Player & { handleHotkeys: (event: Event) => void }).handleHotkeys(event)
+        },
+      },
       controlBar: {
         pictureInPictureToggle: true,
         volumePanel: { inline: false },
+        skipButtons: { backward: 10, forward: 10 },
+        children: [
+          "playToggle",
+          "skipBackward",
+          "skipForward",
+          "volumePanel",
+          "currentTimeDisplay",
+          "timeDivider",
+          "durationDisplay",
+          "progressControl",
+          "remainingTimeDisplay",
+          "customControlSpacer",
+          "playbackRateMenuButton",
+          "QualityMenuButton",
+          "pictureInPictureToggle",
+          "fullscreenToggle",
+        ],
       },
     })
 
@@ -98,9 +146,9 @@ export function VideoPlayer({
     const player = playerRef.current
     if (!player || player.isDisposed()) return
 
-    player.src({ src, type: sourceType })
-    if (poster) player.poster(poster)
-  }, [poster, sourceType, src])
+    player.src({ src: playbackSrc, type: sourceType })
+    if (playbackPoster) player.poster(playbackPoster)
+  }, [playbackPoster, playbackSrc, sourceType])
 
   useEffect(() => {
     const player = playerRef.current

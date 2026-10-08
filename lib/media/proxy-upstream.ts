@@ -88,7 +88,7 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
   }
 
   if (path.endsWith(".m3u8") && upstream.ok && request.method !== "HEAD") {
-    const text = rewritePlaylist(await upstream.text(), origin);
+    const text = rewritePlaylist(await upstream.text());
     return new Response(text, {
       status: upstream.status,
       headers: {
@@ -139,18 +139,8 @@ export function rewriteTusLocation(location: string | null): string | null {
   }
 }
 
-function rewritePlaylist(playlist: string, origin: string): string {
-  let host = "";
-  try {
-    host = new URL(origin).host;
-  } catch {
-    return playlist;
-  }
-
-  return playlist.replace(
-    new RegExp(`https?:\\/\\/${escapeRegExp(host)}\\/storage\\/`, "g"),
-    "/api/storage/",
-  );
+function rewritePlaylist(playlist: string): string {
+  return playlist.replace(/https?:\/\/[^/\s"'\\]+\/storage\//g, "/api/storage/");
 }
 
 function safePath(slug: string[] | undefined): string | null {
@@ -159,8 +149,4 @@ function safePath(slug: string[] | undefined): string | null {
     return null;
   }
   return parts.join("/");
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

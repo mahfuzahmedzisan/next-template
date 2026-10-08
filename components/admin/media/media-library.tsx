@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { VideoPlayer } from "@/components/media/video-player";
 import { Button } from "@/components/ui/button";
+import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import { createVideoUpload, type TusUploadHandle } from "@/lib/media/tus-upload";
 import type { VideoRecord } from "@/lib/media/types";
 import { getEcho } from "@/lib/realtime/echo";
@@ -126,7 +127,7 @@ export function MediaLibrary({
             ...row,
             status,
             progress: data.progress ?? row.progress,
-            stream_url: data.stream_url ?? row.stream_url,
+            stream_url: toSameOriginStorageUrl(data.stream_url) ?? row.stream_url,
             error_message: data.error_message ?? row.error_message,
           };
         }),
@@ -374,7 +375,7 @@ export function MediaLibrary({
               ) : row.poster_url ? (
                 // eslint-disable-next-line @next/next/no-img-element -- poster is an API storage URL, not a local asset
                 <img
-                  src={row.poster_url}
+                  src={toSameOriginStorageUrl(row.poster_url) ?? row.poster_url}
                   alt=""
                   className="aspect-video w-full rounded-lg object-cover"
                 />
