@@ -19,7 +19,9 @@ export function createVideoUpload(options: {
 }): TusUploadHandle {
   const upload = new tus.Upload(options.file, {
     endpoint: options.endpoint,
-    chunkSize: 8 * 1024 * 1024,
+    // Stay under the host's request-body limit. The browser only talks to
+    // this site; the BFF forwards each chunk to tusd.
+    chunkSize: 3 * 1024 * 1024,
     retryDelays: [0, 1000, 3000, 5000, 10000],
     metadata: {
       filename: options.file.name,
