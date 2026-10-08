@@ -5,26 +5,48 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  FileAudio,
+  FileImage,
+  FileText,
+  Files,
+  Film,
+  LayoutGrid,
+  Pause,
+  Play,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react";
+
+import {
+  fileKey,
   MediaUploadDialog,
   thumbnailFor,
+  type UploadJob,
   type UploadRequest,
 } from "@/components/admin/media/media-upload-dialog";
 import { MediaDetailSheet } from "@/components/admin/media/media-detail-sheet";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import { createMediaUpload, type TusUploadHandle } from "@/lib/media/tus-upload";
 import type { MediaRecord, MediaStatus, MediaTypeFilter } from "@/lib/media/types";
 import { getEcho } from "@/lib/realtime/echo";
 
-const TABS: Array<{ value: MediaTypeFilter; label: string }> = [
-  { value: "all", label: "All" },
-  { value: "image", label: "Images" },
-  { value: "video", label: "Video" },
-  { value: "audio", label: "Audio" },
-  { value: "pdf", label: "PDF" },
-  { value: "document", label: "Documents" },
+const TABS: Array<{
+  value: MediaTypeFilter;
+  label: string;
+  icon: typeof LayoutGrid;
+}> = [
+  { value: "all", label: "All", icon: LayoutGrid },
+  { value: "image", label: "Images", icon: FileImage },
+  { value: "video", label: "Video", icon: Film },
+  { value: "audio", label: "Audio", icon: FileAudio },
+  { value: "pdf", label: "PDF", icon: FileText },
+  { value: "document", label: "Documents", icon: Files },
 ];
 
 const MIME_BY_EXTENSION: Record<string, string> = {
@@ -92,6 +114,20 @@ function formatSize(size: number | null) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text) return {} as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(
+      response.ok
+        ? "The server returned an unexpected response."
+        : `The server returned an error (${response.status}).`,
+    );
+  }
+}
+
 export function MediaLibrary({
   userId,
   initialMedia,
@@ -116,6 +152,7 @@ export function MediaLibrary({
   );
   const [busy, setBusy] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [jobs, setJobs] = useState<UploadJob[]>([]);
   const [selected, setSelected] = useState<MediaRecord | null>(null);
   const uploads = useRef(new Map<number, TusUploadHandle>());
   const rowsRef = useRef(rows);
@@ -134,7 +171,7 @@ export function MediaLibrary({
       void fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" })
         .then(async (response) => {
           if (!response.ok) return;
-          const body = (await response.json()) as { data?: { media?: MediaRecord[] } };
+          const body = await readJson<{ data?: { media?: MediaRecord[] } }>(response);
           const media = body.data?.media ?? [];
           setRows((current) => {
             const incoming = media.map((item) => {
@@ -197,7 +234,7 @@ export function MediaLibrary({
       void fetch(`/api/admin/media?${params.toString()}`, { credentials: "include" })
         .then(async (response) => {
           if (!response.ok) return;
-          const body = (await response.json()) as { data?: { media?: MediaRecord[] } };
+          const body = await readJson<{ data?: { media?: MediaRecord[] } }>(response);
           const media = body.data?.media ?? [];
           setRows((current) =>
             current.map((row) => {
@@ -225,15 +262,30 @@ export function MediaLibrary({
     router.replace(suffix ? `/admin/media?${suffix}` : "/admin/media");
   }
 
+  function patchJob(key: string, patch: Partial<UploadJob>) {
+    setJobs((current) => current.map((job) => (job.key === key ? { ...job, ...patch } : job)));
+  }
+
   async function onUpload(request: UploadRequest) {
     setBusy(true);
+    setJobs(
+      request.files.map((file) => ({
+        key: fileKey(file),
+        name: file.name,
+        percent: 0,
+        state: "waiting",
+      })),
+    );
+
     for (const file of request.files) {
+      const key = fileKey(file);
       const title = file.name.replace(/\.[^.]+$/, "") || file.name;
       const mime = mimeFor(file);
       if (!mime) {
-        toast.error("This file type is not allowed.", { description: file.name });
+        patchJob(key, { state: "error", message: "This file type is not allowed." });
         continue;
       }
+      patchJob(key, { state: "uploading" });
       try {
         const response = await fetch("/api/admin/media", {
           method: "POST",
@@ -248,7 +300,7 @@ export function MediaLibrary({
             keywords: request.keywords,
           }),
         });
-        const body = (await response.json()) as {
+        const body = await readJson<{
           message?: string;
           data?: {
             media_id: number;
@@ -256,12 +308,13 @@ export function MediaLibrary({
             upload_token: string;
             media: MediaRecord;
           };
-        };
+        }>(response);
         if (!response.ok || !body.data) {
-          toast.error(body.message ?? "Unable to start the upload.");
+          patchJob(key, { state: "error", message: body.message ?? "Unable to start the upload." });
           continue;
         }
         const created = body.data;
+        patchJob(key, { mediaId: created.media_id });
         const cover = thumbnailFor(file, request);
         if (cover) {
           const form = new FormData();
@@ -282,6 +335,7 @@ export function MediaLibrary({
           token: created.upload_token,
           mediaId: created.media_id,
           onProgress(percent) {
+            patchJob(key, { percent, state: "uploading" });
             setRows((current) =>
               current.map((row) =>
                 row.id === created.media_id ? { ...row, uploadPercent: percent, paused: false } : row,
@@ -289,10 +343,11 @@ export function MediaLibrary({
             );
           },
           onSuccess() {
+            patchJob(key, { percent: 100, state: "done" });
             void fetch(`/api/admin/media/${created.media_id}`, { credentials: "include" })
               .then(async (result) => {
                 if (!result.ok) return;
-                const payload = (await result.json()) as { data?: { media?: MediaRecord } };
+                const payload = await readJson<{ data?: { media?: MediaRecord } }>(result);
                 if (!payload.data?.media) return;
                 const media = payload.data.media;
                 setRows((current) =>
@@ -308,22 +363,24 @@ export function MediaLibrary({
               .catch(() => undefined);
           },
           onError(error) {
+            patchJob(key, { state: "error", message: error.message });
             setRows((current) =>
               current.map((row) =>
                 row.id === created.media_id ? { ...row, uploadError: error.message, paused: true } : row,
               ),
             );
-            toast.error("Upload paused", { description: error.message });
           },
         });
         uploads.current.set(created.media_id, handle);
         handle.start();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Unable to start the upload.");
+        patchJob(key, {
+          state: "error",
+          message: error instanceof Error ? error.message : "Unable to start the upload.",
+        });
       }
     }
     setBusy(false);
-    setUploadOpen(false);
   }
 
   async function onDelete(id: number) {
@@ -332,7 +389,7 @@ export function MediaLibrary({
       credentials: "include",
     });
     if (!response.ok) {
-      const body = (await response.json()) as { message?: string };
+      const body = await readJson<{ message?: string }>(response);
       toast.error(body.message ?? "Unable to delete this file.");
       return;
     }
@@ -350,7 +407,7 @@ export function MediaLibrary({
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const payload = (await response.json()) as { message?: string; data?: { media?: MediaRecord } };
+    const payload = await readJson<{ message?: string; data?: { media?: MediaRecord } }>(response);
     if (!response.ok || !payload.data?.media) {
       toast.error(payload.message ?? "Unable to save.");
       return;
@@ -361,103 +418,171 @@ export function MediaLibrary({
     toast.success("Saved");
   }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs
-          value={kind}
-          onValueChange={(value) => writeQuery({ kind: value as MediaTypeFilter })}
-        >
-          <TabsList>
-            {TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <Button type="button" onClick={() => setUploadOpen(true)}>
-          Upload
-        </Button>
-      </div>
+  function pauseUpload(id: number) {
+    uploads.current.get(id)?.pause();
+    setRows((current) => current.map((item) => (item.id === id ? { ...item, paused: true } : item)));
+    setJobs((current) =>
+      current.map((job) => (job.mediaId === id ? { ...job, state: "paused" } : job)),
+    );
+  }
 
-      <form
-        className="flex gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          writeQuery({ q: query.trim() });
-        }}
-      >
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search name, slug, alt text, or keywords"
-          aria-label="Search media"
-        />
-        <Button type="submit" variant="outline">
-          Search
-        </Button>
-      </form>
+  function resumeUpload(id: number) {
+    uploads.current.get(id)?.resume();
+    setRows((current) => current.map((item) => (item.id === id ? { ...item, paused: false } : item)));
+    setJobs((current) =>
+      current.map((job) => (job.mediaId === id ? { ...job, state: "uploading" } : job)),
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div
+          role="tablist"
+          aria-label="Media type"
+          className="flex flex-wrap gap-1 rounded-xl bg-muted/70 p-1"
+        >
+          {TABS.map((tab) => {
+            const active = kind === tab.value;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={cn(
+                  "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => writeQuery({ kind: tab.value })}
+              >
+                <Icon className="size-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <form
+            className="relative min-w-0 flex-1 xl:w-72"
+            onSubmit={(event) => {
+              event.preventDefault();
+              writeQuery({ q: query.trim() });
+            }}
+          >
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search name, alt, keywords"
+              aria-label="Search media"
+              className="pl-8"
+            />
+          </form>
+          <Button type="button" onClick={() => setUploadOpen(true)}>
+            <Upload data-icon="inline-start" />
+            Upload
+          </Button>
+        </div>
+      </div>
 
       {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
 
       {rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed px-6 py-10 text-center text-sm text-muted-foreground">
-          No files in this view yet.
-        </p>
+        <button
+          type="button"
+          onClick={() => setUploadOpen(true)}
+          className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-6 py-16 text-center hover:bg-muted/40"
+        >
+          <span className="flex size-11 items-center justify-center rounded-full bg-muted">
+            <Upload className="size-4" />
+          </span>
+          <span className="text-sm font-medium">No files yet</span>
+          <span className="text-xs text-muted-foreground">Upload images, video, audio, or documents</span>
+        </button>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2">
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
           {rows.map((row) => {
-            const preview = toSameOriginStorageUrl(row.poster_url || row.url) ?? row.poster_url ?? row.url;
+            const preview = toSameOriginStorageUrl(row.poster_url) ?? row.poster_url;
+            const imagePreview =
+              row.kind === "image"
+                ? (toSameOriginStorageUrl(row.url) ?? row.url ?? preview)
+                : preview;
             const showUpload = row.status === "awaiting_upload" && row.uploadPercent !== null;
+            const encoding = row.status === "processing" || row.status === "uploaded";
+            const Icon =
+              row.kind === "video" ? Film :
+              row.kind === "audio" ? FileAudio :
+              row.kind === "pdf" ? FileText :
+              row.kind === "document" ? Files :
+              FileImage;
             return (
-              <li key={row.id} className="flex flex-col gap-3 rounded-xl border p-4">
-                <button type="button" className="text-left" onClick={() => setSelected(row)}>
-                  {row.kind === "image" && preview ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site
-                    <img src={preview} alt={row.alt || row.title} className="mb-3 aspect-video w-full rounded-lg object-cover" />
-                  ) : (
-                    <div className="mb-3 flex aspect-video items-center justify-center rounded-lg bg-muted text-xs uppercase tracking-wide text-muted-foreground">
-                      {row.kind}
-                    </div>
-                  )}
-                  <p className="font-medium">{row.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {statusLabel(row.status)}
-                    {formatSize(row.size) ? ` · ${formatSize(row.size)}` : ""}
-                    {showUpload ? ` · ${row.uploadPercent}%` : ""}
-                    {row.status === "processing" ? ` · ${row.progress}%` : ""}
-                  </p>
-                </button>
-                {showUpload ? (
-                  <div className="flex gap-2">
-                    {row.paused ? (
-                      <Button type="button" variant="outline" onClick={() => uploads.current.get(row.id)?.resume()}>
-                        Resume
-                      </Button>
+              <li key={row.id} className="group overflow-hidden rounded-xl border bg-card">
+                <button type="button" className="block w-full text-left" onClick={() => setSelected(row)}>
+                  <div className="relative aspect-[4/3] bg-muted">
+                    {imagePreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- storage URL is rewritten to this site
+                      <img src={imagePreview} alt={row.alt || row.title} className="size-full object-cover" />
                     ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          uploads.current.get(row.id)?.pause();
-                          setRows((current) =>
-                            current.map((item) => (item.id === row.id ? { ...item, paused: true } : item)),
-                          );
-                        }}
-                      >
-                        Pause
-                      </Button>
+                      <div className="flex size-full items-center justify-center">
+                        <Icon className="size-6 text-muted-foreground" />
+                      </div>
                     )}
+                    <Badge variant="secondary" className="absolute top-2 left-2 capitalize">
+                      {row.kind}
+                    </Badge>
+                    <Badge
+                      variant={row.status === "failed" ? "destructive" : "outline"}
+                      className="absolute top-2 right-2 bg-background/90"
+                    >
+                      {statusLabel(row.status)}
+                    </Badge>
+                    {showUpload || encoding ? (
+                      <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1.5">
+                        <Progress value={showUpload ? row.uploadPercent ?? 0 : row.progress} className="h-1" />
+                      </div>
+                    ) : null}
                   </div>
+                  <div className="px-3 pt-2.5 pb-1">
+                    <p className="truncate text-sm font-medium">{row.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {formatSize(row.size) || row.extension?.toUpperCase() || row.kind}
+                      {showUpload ? ` · ${row.uploadPercent}%` : ""}
+                      {row.status === "processing" ? ` · ${row.progress}%` : ""}
+                    </p>
+                  </div>
+                </button>
+                {row.uploadError || (row.status === "failed" && row.error_message) ? (
+                  <p className="px-3 pb-1 text-xs text-destructive">
+                    {row.uploadError || row.error_message}
+                  </p>
                 ) : null}
-                {row.uploadError ? <p className="text-sm text-destructive">{row.uploadError}</p> : null}
-                {row.status === "failed" && row.error_message ? (
-                  <p className="text-sm text-destructive">{row.error_message}</p>
-                ) : null}
-                <Button type="button" variant="outline" onClick={() => void onDelete(row.id)}>
-                  Delete
-                </Button>
+                <div className="flex items-center justify-end gap-1 px-2 pb-2">
+                  {showUpload ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={row.paused ? "Resume upload" : "Pause upload"}
+                      onClick={() => (row.paused ? resumeUpload(row.id) : pauseUpload(row.id))}
+                    >
+                      {row.paused ? <Play /> : <Pause />}
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Delete ${row.title}`}
+                    onClick={() => void onDelete(row.id)}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
               </li>
             );
           })}
@@ -466,9 +591,15 @@ export function MediaLibrary({
 
       <MediaUploadDialog
         open={uploadOpen}
-        onOpenChange={setUploadOpen}
+        onOpenChange={(open) => {
+          setUploadOpen(open);
+          if (!open) setJobs([]);
+        }}
         busy={busy}
+        jobs={jobs}
         onSubmit={(request) => void onUpload(request)}
+        onPause={pauseUpload}
+        onResume={resumeUpload}
       />
       <MediaDetailSheet item={selected} onOpenChange={(open) => !open && setSelected(null)} onSave={onSave} />
     </div>

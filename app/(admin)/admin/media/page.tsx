@@ -33,17 +33,13 @@ export default async function MediaPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <RouteReady />
       <div>
         <p className="text-sm text-muted-foreground">Workspace</p>
         <h2 className="mt-1 font-heading text-3xl font-semibold tracking-tight">
           Media
         </h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-          Images, video, audio, PDFs, and documents. Video and audio play as a
-          stream. The original upload is removed once that stream is ready.
-        </p>
       </div>
       <Suspense>
         <MediaLibrary userId={session.user.id} initialMedia={media} loadError={loadError} />
