@@ -15,6 +15,20 @@ export async function listAdminMedia(
   return toBrowserMedia(data);
 }
 
+export async function previewAdminMediaSlugs(title: string, count: number) {
+  const params = new URLSearchParams({
+    title,
+    count: String(count),
+  });
+  const data = await authedRequest<{ slugs: string[] }>(
+    "get",
+    `/admin/media/slug-preview?${params.toString()}`,
+    undefined,
+    { onSessionExpired: "throw" },
+  );
+  return data.slugs;
+}
+
 export async function createAdminMedia(body: {
   title: string;
   slug?: string;

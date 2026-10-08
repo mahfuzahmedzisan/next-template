@@ -55,6 +55,7 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   png: "image/png",
   webp: "image/webp",
   gif: "image/gif",
+  svg: "image/svg+xml",
   mp4: "video/mp4",
   mov: "video/quicktime",
   webm: "video/webm",
@@ -279,7 +280,7 @@ export function MediaLibrary({
 
     for (const file of request.files) {
       const key = fileKey(file);
-      const title = file.name.replace(/\.[^.]+$/, "") || file.name;
+      const title = request.name || file.name.replace(/\.[^.]+$/, "") || file.name;
       const mime = mimeFor(file);
       if (!mime) {
         patchJob(key, { state: "error", message: "This file type is not allowed." });

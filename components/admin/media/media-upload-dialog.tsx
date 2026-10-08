@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FileAudio,
@@ -25,8 +26,15 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
+const FileUploadLightbox = dynamic(
+  () => import("@/components/file-upload/file-upload-lightbox").then((module) => module.FileUploadLightbox),
+  { ssr: false },
+);
+
+export const MAX_UPLOAD_FILES = 10;
+
 const ACCEPT = [
-  ".jpg", ".jpeg", ".png", ".webp", ".gif",
+  ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg",
   ".mp4", ".mov", ".webm", ".mkv",
   ".mp3", ".wav", ".m4a", ".ogg",
   ".pdf", ".txt", ".csv", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
@@ -47,6 +55,7 @@ export type UploadJob = {
 
 export type UploadRequest = {
   files: File[];
+  name: string;
   alt: string;
   keywords: string[];
   thumbnailMode: ThumbnailMode;
@@ -71,7 +80,7 @@ export function fileKey(file: File) {
 
 function kindFor(file: File): Preview["kind"] {
   const extension = extensionOf(file.name);
-  if (["jpg", "jpeg", "png", "webp", "gif"].includes(extension)) return "image";
+  if (["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(extension)) return "image";
   if (["mp4", "mov", "webm", "mkv"].includes(extension)) return "video";
   if (["mp3", "wav", "m4a", "ogg"].includes(extension)) return "audio";
   if (extension === "pdf") return "pdf";
@@ -86,6 +95,14 @@ function formatSize(size: number) {
   if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+const TYPE_BADGE: Record<Preview["kind"], string> = {
+  image: "bg-sky-600 text-white",
+  video: "bg-violet-600 text-white",
+  audio: "bg-amber-500 text-white",
+  pdf: "bg-rose-600 text-white",
+  document: "bg-emerald-700 text-white",
+};
 
 function KindIcon({ kind }: { kind: Preview["kind"] }) {
   const Icon =
@@ -118,6 +135,10 @@ export function MediaUploadDialog({
   const coverRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<Preview[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [name, setName] = useState("");
+  const [slugs, setSlugs] = useState<string[]>([]);
+  const [limitNote, setLimitNote] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [alt, setAlt] = useState("");
   const [keywords, setKeywords] = useState("");
   const [thumbnailMode, setThumbnailMode] = useState<ThumbnailMode>("shared");
@@ -140,6 +161,29 @@ export function MediaUploadDialog({
     [previews],
   );
   const transferring = jobs.length > 0;
+  const lightboxItems = useMemo(
+    () => previews.filter((item) => item.kind === "image" || item.kind === "video"),
+    [previews],
+  );
+
+  useEffect(() => {
+    const title = name.trim();
+    if (!open || title === "" || previews.length === 0) return;
+    const handle = window.setTimeout(() => {
+      const params = new URLSearchParams({
+        title,
+        count: String(Math.min(previews.length, MAX_UPLOAD_FILES)),
+      });
+      void fetch(`/api/admin/media/slug-preview?${params.toString()}`, { credentials: "include" })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const body = (await response.json()) as { data?: { slugs?: string[] } };
+          setSlugs(body.data?.slugs ?? []);
+        })
+        .catch(() => undefined);
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [open, name, previews.length]);
 
   useEffect(() => {
     return () => {
@@ -169,6 +213,10 @@ export function MediaUploadDialog({
   function reset() {
     revokeAll();
     setPreviews([]);
+    setName("");
+    setSlugs([]);
+    setLimitNote(null);
+    setLightboxIndex(null);
     setAlt("");
     setKeywords("");
     setThumbnailMode("shared");
@@ -181,17 +229,26 @@ export function MediaUploadDialog({
 
   function addFiles(incoming: File[]) {
     if (incoming.length === 0 || transferring) return;
-    setPreviews((current) => {
-      const seen = new Set(current.map((item) => item.key));
-      const next = [...current];
-      for (const file of incoming) {
-        const key = fileKey(file);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        next.push({ key, file, url: URL.createObjectURL(file), kind: kindFor(file) });
+    const room = MAX_UPLOAD_FILES - previews.length;
+    if (room <= 0) {
+      setLimitNote(`You can upload ${MAX_UPLOAD_FILES} files at a time.`);
+      return;
+    }
+    const seen = new Set(previews.map((item) => item.key));
+    const next = [...previews];
+    let skipped = false;
+    for (const file of incoming) {
+      if (next.length >= MAX_UPLOAD_FILES) {
+        skipped = true;
+        break;
       }
-      return next;
-    });
+      const key = fileKey(file);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      next.push({ key, file, url: URL.createObjectURL(file), kind: kindFor(file) });
+    }
+    setLimitNote(skipped ? `Only ${MAX_UPLOAD_FILES} files can be added at a time.` : null);
+    setPreviews(next);
   }
 
   function removeFile(key: string) {
@@ -237,9 +294,14 @@ export function MediaUploadDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        if (!next && lightboxIndex !== null) {
+          setLightboxIndex(null);
+          return;
+        }
         if (next) onOpenChange(true);
         else requestClose();
       }}
+      modal={lightboxIndex === null}
     >
       <DialogContent className="flex max-h-[min(88vh,820px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="border-b px-5 py-4">
@@ -317,9 +379,10 @@ export function MediaUploadDialog({
                 </span>
                 <span className="text-sm font-medium">Drop files here, or browse</span>
                 <span className="text-xs text-muted-foreground">
-                  Images, video, audio, PDF, and documents
+                  Up to {MAX_UPLOAD_FILES} files, including SVG
                 </span>
               </button>
+              {limitNote ? <p className="text-xs text-destructive">{limitNote}</p> : null}
               <input
                 ref={inputRef}
                 type="file"
@@ -333,30 +396,58 @@ export function MediaUploadDialog({
               />
 
               {previews.length > 0 ? (
-                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {previews.map((item) => (
-                    <li key={item.key} className="group relative overflow-hidden rounded-xl border bg-card">
-                      <div className="relative aspect-[4/3] bg-muted">
-                        <PreviewMedia preview={item} />
-                        <button
-                          type="button"
-                          aria-label={`Remove ${item.file.name}`}
-                          className="absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-foreground/10"
-                          onClick={() => removeFile(item.key)}
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </div>
-                      <div className="px-2.5 py-2">
-                        <p className="truncate text-xs font-medium">{item.file.name}</p>
-                        <p className="text-[11px] text-muted-foreground">{formatSize(item.file.size)}</p>
-                      </div>
-                    </li>
-                  ))}
+                <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {previews.map((item) => {
+                    const slideIndex = lightboxItems.findIndex((slide) => slide.key === item.key);
+                    return (
+                      <li key={item.key} className="overflow-hidden rounded-lg border bg-card">
+                        <div className="relative aspect-square bg-muted">
+                          <button
+                            type="button"
+                            className="size-full"
+                            aria-label={`Preview ${item.file.name}`}
+                            disabled={slideIndex < 0}
+                            onClick={() => setLightboxIndex(slideIndex)}
+                          >
+                            <PreviewMedia preview={item} />
+                          </button>
+                          <span
+                            className={cn(
+                              "pointer-events-none absolute top-1 left-1 rounded px-1 py-0.5 text-[9px] font-semibold tracking-wide uppercase",
+                              TYPE_BADGE[item.kind],
+                            )}
+                          >
+                            {item.kind === "document" ? "Doc" : item.kind}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${item.file.name}`}
+                            className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-foreground/10"
+                            onClick={() => removeFile(item.key)}
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                        <div className="px-1.5 py-1">
+                          <p className="truncate text-[11px] font-medium">{item.file.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatSize(item.file.size)}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : null}
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="media-name">Name</Label>
+                  <Input
+                    id="media-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="New image"
+                  />
+                </div>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="media-alt">Alt text</Label>
                   <Input
@@ -376,6 +467,9 @@ export function MediaUploadDialog({
                   />
                 </div>
               </div>
+              {name.trim() && slugs.length > 0 ? (
+                <p className="text-xs text-muted-foreground">{slugs.join(", ")}</p>
+              ) : null}
 
               {streamable.length > 0 ? (
                 <div className="flex flex-col gap-3 rounded-xl border p-3">
@@ -451,7 +545,7 @@ export function MediaUploadDialog({
           )}
         </div>
 
-        <DialogFooter className="border-t px-5 py-4">
+        <DialogFooter className="mx-0 mb-0 gap-2 border-t bg-background px-5 py-4">
           {transferring ? (
             <Button
               type="button"
@@ -472,6 +566,7 @@ export function MediaUploadDialog({
                 onClick={() =>
                   onSubmit({
                     files: previews.map((item) => item.file),
+                    name: name.trim(),
                     alt: alt.trim(),
                     keywords: keywords
                       .split(",")
@@ -489,6 +584,18 @@ export function MediaUploadDialog({
           )}
         </DialogFooter>
       </DialogContent>
+      {lightboxIndex !== null ? (
+        <FileUploadLightbox
+          open
+          close={() => setLightboxIndex(null)}
+          index={lightboxIndex}
+          slides={lightboxItems.map((item) =>
+            item.kind === "video"
+              ? { type: "video" as const, sources: [{ src: item.url, type: item.file.type || "video/mp4" }] }
+              : { src: item.url, alt: item.file.name },
+          )}
+        />
+      ) : null}
     </Dialog>
   );
 }
