@@ -171,6 +171,14 @@ function MediaDetailForm({
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium">{streamStatusTitle(item)}</p>
               <p className="text-xs text-muted-foreground">{streamStatusDetail(item)}</p>
+              {item.status === "failed" && item.error_message ? (
+                <details className="mt-1 min-w-0 text-xs">
+                  <summary className="cursor-pointer text-muted-foreground">Technical details</summary>
+                  <pre className="mt-2 max-h-28 max-w-full overflow-auto rounded-md bg-background p-2 font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-muted-foreground">
+                    {item.error_message}
+                  </pre>
+                </details>
+              ) : null}
             </div>
             {item.status === "awaiting_upload" || converting ? (
               <Progress
@@ -376,7 +384,7 @@ function streamStatusTitle(item: MediaRecord & { uploadPercent?: number | null }
 
 function streamStatusDetail(item: MediaRecord) {
   if (item.status === "failed") {
-    return item.error_message || "The stream was not created. You can try the conversion again.";
+    return "This file could not be converted for playback. Try again, or cancel.";
   }
   if (item.status === "awaiting_upload") {
     return "The file never arrived, so conversion cannot start. Upload it again, or cancel.";

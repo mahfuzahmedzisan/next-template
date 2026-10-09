@@ -290,14 +290,18 @@ function IconCard({
           aspect="aspect-[16/10]"
           iconClass={dense ? "size-4" : "size-5"}
           showKind={!dense}
+          showHls={!dense}
         />
       </button>
       <div className={cn("flex items-center gap-1", dense ? "px-1.5 py-1" : "px-2 py-1.5")}>
-        <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(row)}>
-          <p className={cn("truncate font-medium", dense ? "text-[11px]" : "text-xs")}>{row.title}</p>
-          {dense ? null : (
-            <p className="truncate text-[11px] text-muted-foreground">{metaLine(row)}</p>
-          )}
+        <button type="button" className="flex min-w-0 flex-1 items-center gap-1 text-left" onClick={() => onOpen(row)}>
+          <span className="min-w-0 flex-1">
+            <p className={cn("truncate font-medium", dense ? "text-[11px]" : "text-xs")}>{row.title}</p>
+            {dense ? null : (
+              <p className="truncate text-[11px] text-muted-foreground">{metaLine(row)}</p>
+            )}
+          </span>
+          {dense && hlsReady(row) ? <HlsTag className="h-4 px-1 text-[9px]" /> : null}
         </button>
         <RowTools row={row} showUpload={showUpload} onDelete={onDelete} onPause={onPause} onResume={onResume} />
       </div>
@@ -334,12 +338,12 @@ function TileRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
   return (
     <li className="flex items-center gap-3 rounded-lg border bg-card p-2">
       <button type="button" className="size-14 shrink-0 overflow-hidden rounded-md" onClick={() => onOpen(row)}>
-        <Thumb row={row} aspect="size-14" iconClass="size-4" />
+        <Thumb row={row} aspect="size-14" iconClass="size-4" showKind={false} showHls={false} />
       </button>
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(row)}>
-        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+        <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
           <span className="truncate">{row.title}</span>
-          {hlsReady(row) ? <HlsTag /> : null}
+          {hlsReady(row) ? <HlsTag className="h-4 px-1 text-[9px]" /> : null}
         </p>
         <p className="truncate text-xs text-muted-foreground capitalize">
           {cardActivity(row)?.label ?? `${row.kind} · ${formatSize(row.size)}`}
@@ -355,12 +359,12 @@ function ContentRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
   return (
     <li className="flex items-center gap-3 rounded-xl border bg-card p-2">
       <button type="button" className="w-28 shrink-0 overflow-hidden rounded-lg sm:w-40" onClick={() => onOpen(row)}>
-        <Thumb row={row} aspect="aspect-video" iconClass="size-5" />
+        <Thumb row={row} aspect="aspect-video" iconClass="size-5" showKind={false} showHls={false} />
       </button>
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(row)}>
-        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+        <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
           <span className="truncate">{row.title}</span>
-          {hlsReady(row) ? <HlsTag /> : null}
+          {hlsReady(row) ? <HlsTag className="h-4 px-1 text-[9px]" /> : null}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground capitalize">
           {cardActivity(row)?.label ?? row.kind}
@@ -480,11 +484,13 @@ function Thumb({
   aspect,
   iconClass,
   showKind = true,
+  showHls = true,
 }: {
   row: MediaViewRow;
   aspect: string;
   iconClass: string;
   showKind?: boolean;
+  showHls?: boolean;
 }) {
   const src = previewSrc(row);
   const activity = cardActivity(row);
@@ -502,12 +508,18 @@ function Thumb({
           <KindIcon kind={row.kind} className={cn(iconClass, "text-muted-foreground")} />
         </div>
       )}
-      {showKind ? (
-        <Badge variant="secondary" className="absolute top-1.5 left-1.5 capitalize">
-          {row.kind}
-        </Badge>
+      {showKind || (showHls && hlsReady(row)) ? (
+        <div className="absolute inset-x-1.5 top-1.5 flex items-start justify-between gap-1">
+          {showKind ? (
+            <Badge variant="secondary" className="h-4 max-w-[55%] truncate px-1 text-[9px] capitalize">
+              {row.kind}
+            </Badge>
+          ) : (
+            <span />
+          )}
+          {showHls && hlsReady(row) ? <HlsTag className="h-4 px-1 text-[9px]" /> : null}
+        </div>
       ) : null}
-      {hlsReady(row) ? <HlsTag className="absolute top-1.5 right-1.5" /> : null}
       {activity ? (
         <div className="absolute inset-x-0 bottom-0 bg-background/90 px-2 py-1.5">
           <p className="mb-1 text-[10px] font-medium">{activity.label}</p>
@@ -523,8 +535,8 @@ function metaLine(row: MediaViewRow) {
   if (row.uploadPercent !== null && row.status === "awaiting_upload") return `${size} · ${row.uploadPercent}%`;
   if (row.status === "uploaded") return `${size} · Converting`;
   if (row.status === "processing") return `${size} · ${row.progress}%`;
-  if (row.uploadError || (row.status === "failed" && row.error_message)) {
-    return row.uploadError || row.error_message || size;
+  if (row.uploadError || row.status === "failed") {
+    return row.status === "failed" ? `${size} · Conversion failed` : row.uploadError || size;
   }
   return size === "—" ? statusLabel(row.status) : size;
 }
