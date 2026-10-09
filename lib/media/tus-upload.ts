@@ -19,9 +19,8 @@ export function createMediaUpload(options: {
 }): TusUploadHandle {
   const upload = new tus.Upload(options.file, {
     endpoint: options.endpoint,
-    // Stay under the host's request-body limit. The browser only talks to
-    // this site; the BFF forwards each chunk to tusd.
-    chunkSize: 3 * 1024 * 1024,
+    // The browser uploads straight to tusd. Nginx allows 16 MB per PATCH.
+    chunkSize: 8 * 1024 * 1024,
     retryDelays: [0, 1000, 3000, 5000, 10000],
     metadata: {
       filename: options.file.name,
