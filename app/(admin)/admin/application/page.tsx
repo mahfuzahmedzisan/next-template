@@ -1,24 +1,22 @@
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 
 import { ApplicationSettingsScreen } from "@/components/admin/application/application-settings";
-import { RouteReady } from "@/components/transitions/route-ready";
-import { getSession } from "@/lib/auth/auth-cookies";
 import { getApplicationSettings } from "@/lib/settings/admin";
 
-export default async function ApplicationSettingsPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  if (session.user.role !== "admin") redirect("/admin");
+const moved = {
+  smtp: "/admin/application/smtp",
+  backup: "/admin/application/backup",
+  audit: "/admin/application/audit",
+} as const;
+
+export default async function ApplicationSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab } = await searchParams;
+  if (tab && tab in moved) redirect(moved[tab as keyof typeof moved]);
 
   const settings = await getApplicationSettings();
-
-  return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <RouteReady />
-      <Suspense>
-        <ApplicationSettingsScreen initial={settings} />
-      </Suspense>
-    </div>
-  );
+  return <ApplicationSettingsScreen initial={settings} section="general" />;
 }

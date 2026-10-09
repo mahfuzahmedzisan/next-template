@@ -48,9 +48,17 @@ function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
     ];
   }
   if (pathname.startsWith("/admin/application")) {
+    const section = pathname.startsWith("/admin/application/smtp")
+      ? "SMTP"
+      : pathname.startsWith("/admin/application/backup")
+        ? "Database backup"
+        : pathname.startsWith("/admin/application/audit")
+          ? "Audit"
+          : "General";
     return [
       { title: "Dashboard", href: "/admin" },
-      { title: "Application settings" },
+      { title: "Application settings", href: "/admin/application" },
+      { title: section },
     ];
   }
 

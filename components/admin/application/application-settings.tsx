@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -17,98 +16,55 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { AdminSettings, SmtpEncryption } from "@/lib/settings/admin";
-import { cn } from "@/lib/utils";
 
-const tabs = [
-  { id: "general", label: "General" },
-  { id: "smtp", label: "SMTP" },
-  { id: "backup", label: "Database backup" },
-  { id: "audit", label: "Audit" },
-] as const;
+const sections = {
+  general: {
+    title: "General",
+    description: "Name, logo, favicon, and who can register.",
+  },
+  smtp: {
+    title: "SMTP",
+    description: "Mail sent by the app. Empty settings keep the server environment.",
+  },
+  backup: {
+    title: "Database backup",
+    description: "Scheduled dumps and restore points are not set up yet.",
+  },
+  audit: {
+    title: "Audit",
+    description: "An activity log is not set up yet. This page is reserved for sign-in and settings changes.",
+  },
+} as const;
 
-type TabId = (typeof tabs)[number]["id"];
+export type ApplicationSection = keyof typeof sections;
 
-function isTab(value: string | null): value is TabId {
-  return tabs.some((tab) => tab.id === value);
-}
-
-export function ApplicationSettingsScreen({ initial }: { initial: AdminSettings }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const requested = searchParams.get("tab");
-  const tab: TabId = isTab(requested) ? requested : "general";
+export function ApplicationSettingsScreen({
+  initial,
+  section,
+}: {
+  initial: AdminSettings;
+  section: ApplicationSection;
+}) {
   const [settings, setSettings] = useState(initial);
-
-  function selectTab(next: TabId) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (next === "general") params.delete("tab");
-    else params.set("tab", next);
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }
+  const copy = sections[section];
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-sm text-muted-foreground">Workspace</p>
+        <p className="text-sm text-muted-foreground">Application settings</p>
         <h2 className="mt-1 font-heading text-3xl font-semibold tracking-tight">
-          Application settings
+          {copy.title}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Values saved here are used at runtime. Empty mail settings keep the server environment.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{copy.description}</p>
       </div>
 
-      <div role="tablist" aria-label="Application settings" className="flex flex-wrap gap-1 rounded-xl bg-muted/70 p-1">
-        {tabs.map((item) => {
-          const active = tab === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => selectTab(item.id)}
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {tab === "general" ? (
+      {section === "general" ? (
         <GeneralForm settings={settings} onSaved={setSettings} />
       ) : null}
-      {tab === "smtp" ? (
+      {section === "smtp" ? (
         <SmtpForm settings={settings} onSaved={setSettings} />
       ) : null}
-      {tab === "backup" ? (
-        <EmptyTab
-          title="Database backup"
-          body="Scheduled dumps and restore points are not set up yet. This tab is reserved for that."
-        />
-      ) : null}
-      {tab === "audit" ? (
-        <EmptyTab
-          title="Audit"
-          body="An activity log is not set up yet. This tab is reserved for sign-in and settings changes."
-        />
-      ) : null}
     </div>
-  );
-}
-
-function EmptyTab({ title, body }: { title: string; body: string }) {
-  return (
-    <section className="rounded-xl border border-border/70 bg-card/70 p-6">
-      <h3 className="text-sm font-medium">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{body}</p>
-    </section>
   );
 }
 

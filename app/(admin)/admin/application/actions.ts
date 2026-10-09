@@ -29,7 +29,7 @@ function toResult(error: unknown, fallback: string): SettingsActionResult {
 function refresh() {
   revalidatePath("/", "layout");
   revalidatePath("/admin", "layout");
-  revalidatePath("/admin/application");
+  revalidatePath("/admin/application", "layout");
 }
 
 export async function saveGeneralAction(formData: FormData): Promise<SettingsActionResult> {
