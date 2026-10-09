@@ -21,7 +21,7 @@ const fallback: PublicSettings = {
 
 export async function fetchPublicSettings(): Promise<PublicSettings> {
   try {
-    const response = await laravelHttp.get("/settings/public", { timeout: 1500 });
+    const response = await laravelHttp.get("/settings/public", { timeout: 8000 });
     const data = unwrapOrThrow<{ settings: PublicSettings }>(response);
     const settings = data.settings;
 

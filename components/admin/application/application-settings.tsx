@@ -4,6 +4,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { saveGeneralAction, saveSmtpAction } from "@/app/(admin)/admin/application/actions";
+import FileUpload from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,6 +82,8 @@ function GeneralForm({
   const [registration, setRegistration] = useState(general.registration_enabled);
   const [removeLogo, setRemoveLogo] = useState(false);
   const [removeFavicon, setRemoveFavicon] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
 
   function onSubmit(formData: FormData) {
@@ -89,6 +92,8 @@ function GeneralForm({
     formData.set("registration_enabled", registration ? "1" : "0");
     formData.set("remove_logo", removeLogo ? "1" : "0");
     formData.set("remove_favicon", removeFavicon ? "1" : "0");
+    if (logoFile) formData.set("logo", logoFile);
+    if (faviconFile) formData.set("favicon", faviconFile);
 
     startTransition(async () => {
       const result = await saveGeneralAction(formData);
@@ -99,6 +104,8 @@ function GeneralForm({
       onSaved(result.settings);
       setRemoveLogo(false);
       setRemoveFavicon(false);
+      setLogoFile(null);
+      setFaviconFile(null);
       toast.success(result.message);
     });
   }
@@ -116,18 +123,24 @@ function GeneralForm({
         </div>
       </div>
 
-      <BrandField
-        label="Logo"
-        name="logo"
-        url={removeLogo ? null : general.logo_url}
-        onRemove={() => setRemoveLogo(true)}
-      />
-      <BrandField
-        label="Favicon"
-        name="favicon"
-        url={removeFavicon ? null : general.favicon_url}
-        onRemove={() => setRemoveFavicon(true)}
-      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <BrandField
+          label="Logo"
+          url={removeLogo ? null : general.logo_url}
+          file={logoFile}
+          disabled={pending}
+          onChange={setLogoFile}
+          onRemove={() => setRemoveLogo(true)}
+        />
+        <BrandField
+          label="Favicon"
+          url={removeFavicon ? null : general.favicon_url}
+          file={faviconFile}
+          disabled={pending}
+          onChange={setFaviconFile}
+          onRemove={() => setRemoveFavicon(true)}
+        />
+      </div>
 
       <div className="flex items-start justify-between gap-4 rounded-xl border border-border/70 p-4">
         <div>
@@ -146,34 +159,62 @@ function GeneralForm({
   );
 }
 
+function mimeFromUrl(url: string) {
+  const path = url.split("?")[0]?.toLowerCase() ?? "";
+  if (path.endsWith(".svg")) return "image/svg+xml";
+  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
+  if (path.endsWith(".gif")) return "image/gif";
+  if (path.endsWith(".webp")) return "image/webp";
+  if (path.endsWith(".ico")) return "image/x-icon";
+  return "image/png";
+}
+
 function BrandField({
   label,
-  name,
   url,
+  file,
+  disabled,
+  onChange,
   onRemove,
 }: {
   label: string;
-  name: string;
   url: string | null;
+  file: File | null;
+  disabled: boolean;
+  onChange: (file: File | null) => void;
   onRemove: () => void;
 }) {
+  const existing = url
+    ? [
+        {
+          id: label,
+          path: url,
+          url,
+          mime_type: mimeFromUrl(url),
+          name: label,
+        },
+      ]
+    : [];
+
   return (
     <div className="space-y-2">
-      <Label htmlFor={name}>{label}</Label>
-      <div className="flex flex-wrap items-center gap-3">
-        {url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- stored brand file, not a remote optimizer target
-          <img src={url} alt="" className="size-12 rounded-md border object-contain" />
-        ) : (
-          <span className="text-sm text-muted-foreground">No {label.toLowerCase()} yet.</span>
-        )}
-        <Input id={name} name={name} type="file" accept="image/*,.ico" className="max-w-xs" />
-        {url ? (
-          <Button type="button" variant="outline" onClick={onRemove}>
-            Remove
-          </Button>
-        ) : null}
-      </div>
+      <Label>{label}</Label>
+      <FileUpload
+        value={file}
+        onChange={(next) => onChange(Array.isArray(next) ? (next[0] ?? null) : next)}
+        existingFiles={existing}
+        onRemoveExisting={onRemove}
+        accept="image/*,.svg,.ico"
+        maxSize={2}
+        placeholder="Add image"
+        disabled={disabled}
+        lightbox
+        layout="inline"
+        classNames={{
+          dropzone: "flex-row items-center justify-start gap-3 px-3 py-2.5",
+          dropzoneContent: "w-auto flex-row flex-wrap items-center justify-start gap-x-2 gap-y-0 text-left [&_svg]:size-4",
+        }}
+      />
     </div>
   );
 }

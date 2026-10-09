@@ -7,6 +7,7 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { AnimationProvider } from "@/components/animations/providers/animation-provider";
+import { DocumentIcon } from "@/components/brand/document-icon";
 import { JsonLd } from "@/components/seo/json-ld";
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -30,8 +31,6 @@ const description = siteDescription();
 const origin = siteOrigin();
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await fetchPublicSettings();
-
   return {
   metadataBase: origin ? new URL(origin) : undefined,
   title: {
@@ -69,11 +68,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: site.name,
     description,
   },
-  ...(settings.favicon_url ? { icons: { icon: settings.favicon_url } } : {}),
   };
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const settings = await fetchPublicSettings();
+
   return (
     <html
       lang="en"
@@ -81,6 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-svh flex-col">
+        <DocumentIcon href={settings.favicon_url} />
         <JsonLd data={siteStructuredData()} />
         <ThemeProvider
           attribute="class"

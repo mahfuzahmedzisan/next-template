@@ -57,6 +57,8 @@ export interface FileUploadProps {
   onReject?: (rejections: FileRejection[]) => void
   showRejections?: boolean
   lightbox?: boolean
+  /** Single-file row: thumbnail, name, and remove stay in normal flow. */
+  layout?: "card" | "inline"
   placeholder?: string
   hint?: string
   variant?: FileUploadVariant

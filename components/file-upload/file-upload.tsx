@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 import gsap from "gsap"
-import { AlertCircle, Upload } from "lucide-react"
+import { AlertCircle, Upload, X } from "lucide-react"
 import {
   forwardRef,
   useCallback,
@@ -15,7 +15,7 @@ import {
 
 import { usePrefersReducedMotion } from "@/hooks/animations/use-prefers-reduced-motion"
 import { useFileSelection } from "@/hooks/use-file-selection"
-import { fileProgressKey, resolveFileType } from "@/lib/file-upload"
+import { fileProgressKey, formatBytes, resolveExtLabel, resolveFileType } from "@/lib/file-upload"
 import { cn } from "@/lib/utils"
 import type { FileUploadClassNames, FileUploadHandle, FileUploadProps } from "@/types/file-upload"
 
@@ -61,6 +61,53 @@ function AvatarUploadCaption({
   )
 }
 
+function InlineFile({
+  name,
+  size,
+  preview,
+  mime,
+  onRemove,
+  onPreview,
+}: {
+  name: string
+  size?: number
+  preview: string
+  mime: string
+  onRemove?: () => void
+  onPreview?: () => void
+}) {
+  return (
+    <div className="flex h-14 w-full items-center gap-3 rounded-lg border bg-card px-2">
+      <button
+        type="button"
+        onClick={onPreview}
+        disabled={!onPreview}
+        aria-label={onPreview ? `Preview ${name}` : undefined}
+        className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted"
+      >
+        <img src={preview} alt="" className="size-full object-contain" />
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{name}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {size !== undefined ? `${formatBytes(size)} · ` : null}
+          {resolveExtLabel(mime)}
+        </p>
+      </div>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${name}`}
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-destructive hover:bg-destructive/10"
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
 /**
  * A controlled Next.js client component for selecting and previewing files.
  *
@@ -90,6 +137,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(function FileUp
     onReject,
     showRejections = true,
     lightbox = false,
+    layout = "card",
     placeholder = "Drag & drop or click to browse",
     hint,
     variant = "default",
@@ -336,6 +384,25 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(function FileUp
     <FileUploadLightbox open={lightboxOpen} close={() => setLightboxOpen(false)} slides={lightboxSlides} index={lightboxIndex} />
   )
 
+  if (!multiple && layout === "inline" && existingFiles.length > 0 && filePreviews.length === 0) {
+    const file = existingFiles[0]
+    const name = file.name ?? file.path.split("/").pop() ?? "File"
+    return (
+      <div className={rootClassName}>
+        {lightboxElement}
+        <InlineFile
+          name={name}
+          size={file.size}
+          preview={file.url}
+          mime={file.mime_type}
+          onRemove={onRemoveExisting && !isUploading ? () => onRemoveExisting(file.id) : undefined}
+          onPreview={makeOnPreview("existing", 0, resolveFileType(file.mime_type))}
+        />
+        {error && <p className={cn("text-sm text-destructive", mergedClassNames.error)}>{error}</p>}
+      </div>
+    )
+  }
+
   if (!multiple && existingFiles.length > 0 && filePreviews.length === 0) {
     const file = existingFiles[0]
     const type = resolveFileType(file.mime_type)
@@ -363,6 +430,26 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(function FileUp
           {isAvatar && <AvatarUploadCaption title="Profile photo" fileName={name} fileSize={file.size} description="Click the photo to replace, or remove it." />}
         </div>
         {error && <p className={cn("mt-1.5 text-sm text-destructive", mergedClassNames.error)}>{error}</p>}
+      </div>
+    )
+  }
+
+  if (!multiple && layout === "inline" && filePreviews.length > 0) {
+    const preview = filePreviews[0]
+    return (
+      <div className={rootClassName}>
+        {lightboxElement}
+        <InlineFile
+          name={preview.file.name}
+          size={preview.file.size}
+          preview={preview.preview}
+          mime={preview.file.type}
+          onRemove={!isUploading ? () => removeNew(0) : undefined}
+          onPreview={makeOnPreview("new", 0, preview.type)}
+        />
+        {aggregateRow}
+        {rejectionMessages}
+        {error && <p className={cn("text-sm text-destructive", mergedClassNames.error)}>{error}</p>}
       </div>
     )
   }
