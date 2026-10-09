@@ -8,6 +8,13 @@ import { saveGeneralAction, saveSmtpAction } from "@/app/(admin)/admin/applicati
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { AdminSettings, SmtpEncryption } from "@/lib/settings/admin";
 import { cn } from "@/lib/utils";
@@ -280,16 +287,19 @@ function SmtpForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="smtp-encryption">Encryption</Label>
-            <select
-              id="smtp-encryption"
+            <Select
               value={encryption}
-              onChange={(event) => setEncryption(event.target.value as SmtpEncryption)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              onValueChange={(value) => setEncryption(value as SmtpEncryption)}
             >
-              <option value="tls">TLS</option>
-              <option value="ssl">SSL</option>
-              <option value="none">None</option>
-            </select>
+              <SelectTrigger id="smtp-encryption" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tls">TLS</SelectItem>
+                <SelectItem value="ssl">SSL</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="smtp-username">Username</Label>

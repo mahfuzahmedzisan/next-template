@@ -23,6 +23,7 @@
     "*.tsx": "eslint"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.9.1",
     "@sentry/nextjs": "^11.4.0",

@@ -2,10 +2,18 @@
 
 import { Bell, Mail, Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 
 import { updatePreferencesAction } from "@/app/(admin)/admin/profile/actions";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { timeZoneOptions, useDetectedTimeZone } from "@/lib/datetime/timezone";
@@ -39,6 +47,10 @@ export function PreferencesForm({ user }: { user: User }) {
   );
   const [timezone, setTimezone] = useState(user.timezone ?? "auto");
   const detectedZone = useDetectedTimeZone();
+  const zones = useMemo(
+    () => ["auto", ...timeZoneOptions()],
+    [],
+  );
   const active = mounted ? theme : undefined;
 
   function save(partial: {
@@ -152,24 +164,36 @@ export function PreferencesForm({ user }: { user: User }) {
         <p className="text-sm text-muted-foreground">
           Auto follows this browser. A saved zone only changes how dates are shown for you.
         </p>
-        <select
-          id="timezone"
+        <Combobox
+          items={zones}
           value={timezone}
           disabled={pending}
-          onChange={(event) => {
-            const next = event.target.value;
+          itemToStringLabel={(zone) =>
+            zone === "auto" ? `Auto · ${detectedZone}` : zone
+          }
+          onValueChange={(next) => {
+            if (!next) return;
             setTimezone(next);
             save({ timezone: next === "auto" ? null : next });
           }}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
         >
-          <option value="auto">Auto · {detectedZone}</option>
-          {timeZoneOptions().map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
+          <ComboboxInput
+            id="timezone"
+            placeholder="Search time zones"
+            className="w-full"
+            disabled={pending}
+          />
+          <ComboboxContent>
+            <ComboboxEmpty>No time zone found.</ComboboxEmpty>
+            <ComboboxList>
+              {(zone: string) => (
+                <ComboboxItem key={zone} value={zone}>
+                  {zone === "auto" ? `Auto · ${detectedZone}` : zone}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
       </div>
     </div>
   );
