@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -131,6 +131,8 @@ export function MediaLibrary({
   initialMeta: MediaListResult["meta"];
   loadError: string | null;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [kind, setKind] = useState<MediaTypeFilter>(
     () => (searchParams.get("kind") as MediaTypeFilter | null) ?? "all",
@@ -297,6 +299,11 @@ export function MediaLibrary({
     if (next === kind) return;
     setKind(next);
     setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "all") params.delete("kind");
+    else params.set("kind", next);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     void loadList(next, q, 1, perPageFor(view));
   }
 
