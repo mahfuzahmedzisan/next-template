@@ -7,7 +7,6 @@ import { SessionExpiredError } from "@/lib/auth/session-expired";
 import {
   saveGeneralSettings,
   saveSmtpSettings,
-  uploadBrandFile,
   type AdminSettings,
   type SmtpEncryption,
 } from "@/lib/settings/admin";
@@ -33,27 +32,15 @@ function refresh() {
   revalidatePath("/admin/application", "layout");
 }
 
-export async function saveGeneralAction(formData: FormData): Promise<SettingsActionResult> {
+export async function saveGeneralAction(input: {
+  name: string;
+  short_name: string;
+  registration_enabled: boolean;
+  logo_url: string | null;
+  favicon_url: string | null;
+}): Promise<SettingsActionResult> {
   try {
-    let settings = await saveGeneralSettings({
-      name: String(formData.get("name") ?? ""),
-      short_name: String(formData.get("short_name") ?? ""),
-      registration_enabled: formData.get("registration_enabled") === "1",
-      remove_logo: formData.get("remove_logo") === "1",
-      remove_favicon: formData.get("remove_favicon") === "1",
-    });
-
-    const logo = formData.get("logo");
-    const favicon = formData.get("favicon");
-
-    if (logo instanceof File && logo.size > 0) {
-      settings = await uploadBrandFile("logo", logo);
-    }
-
-    if (favicon instanceof File && favicon.size > 0) {
-      settings = await uploadBrandFile("favicon", favicon);
-    }
-
+    const settings = await saveGeneralSettings(input);
     refresh();
     return { ok: true, message: "General settings saved.", settings };
   } catch (error) {

@@ -4,7 +4,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { saveGeneralAction, saveSmtpAction } from "@/app/(admin)/admin/application/actions";
-import FileUpload from "@/components/file-upload";
+import { MediaChoiceField } from "@/components/media/media-choice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,38 +80,33 @@ function GeneralForm({
   const [name, setName] = useState(general.name);
   const [shortName, setShortName] = useState(general.short_name);
   const [registration, setRegistration] = useState(general.registration_enabled);
-  const [removeLogo, setRemoveLogo] = useState(false);
-  const [removeFavicon, setRemoveFavicon] = useState(false);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [faviconFile, setFaviconFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState(general.logo_url);
+  const [faviconUrl, setFaviconUrl] = useState(general.favicon_url);
   const [pending, startTransition] = useTransition();
 
-  function onSubmit(formData: FormData) {
-    formData.set("name", name);
-    formData.set("short_name", shortName);
-    formData.set("registration_enabled", registration ? "1" : "0");
-    formData.set("remove_logo", removeLogo ? "1" : "0");
-    formData.set("remove_favicon", removeFavicon ? "1" : "0");
-    if (logoFile) formData.set("logo", logoFile);
-    if (faviconFile) formData.set("favicon", faviconFile);
-
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     startTransition(async () => {
-      const result = await saveGeneralAction(formData);
+      const result = await saveGeneralAction({
+        name,
+        short_name: shortName,
+        registration_enabled: registration,
+        logo_url: logoUrl,
+        favicon_url: faviconUrl,
+      });
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
       onSaved(result.settings);
-      setRemoveLogo(false);
-      setRemoveFavicon(false);
-      setLogoFile(null);
-      setFaviconFile(null);
+      setLogoUrl(result.settings.general.logo_url);
+      setFaviconUrl(result.settings.general.favicon_url);
       toast.success(result.message);
     });
   }
 
   return (
-    <form action={onSubmit} className="flex flex-col gap-6 rounded-xl border border-border/70 bg-card/70 p-6">
+    <form onSubmit={onSubmit} className="flex flex-col gap-6 rounded-xl border border-border/70 bg-card/70 p-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="app-name">Application name</Label>
@@ -124,21 +119,19 @@ function GeneralForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <BrandField
+        <MediaChoiceField
           label="Logo"
-          url={removeLogo ? null : general.logo_url}
-          file={logoFile}
+          url={logoUrl}
+          accept={["image"]}
           disabled={pending}
-          onChange={setLogoFile}
-          onRemove={() => setRemoveLogo(true)}
+          onChange={setLogoUrl}
         />
-        <BrandField
+        <MediaChoiceField
           label="Favicon"
-          url={removeFavicon ? null : general.favicon_url}
-          file={faviconFile}
+          url={faviconUrl}
+          accept={["image"]}
           disabled={pending}
-          onChange={setFaviconFile}
-          onRemove={() => setRemoveFavicon(true)}
+          onChange={setFaviconUrl}
         />
       </div>
 
@@ -156,66 +149,6 @@ function GeneralForm({
         {pending ? "Saving…" : "Save general"}
       </Button>
     </form>
-  );
-}
-
-function mimeFromUrl(url: string) {
-  const path = url.split("?")[0]?.toLowerCase() ?? "";
-  if (path.endsWith(".svg")) return "image/svg+xml";
-  if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
-  if (path.endsWith(".gif")) return "image/gif";
-  if (path.endsWith(".webp")) return "image/webp";
-  if (path.endsWith(".ico")) return "image/x-icon";
-  return "image/png";
-}
-
-function BrandField({
-  label,
-  url,
-  file,
-  disabled,
-  onChange,
-  onRemove,
-}: {
-  label: string;
-  url: string | null;
-  file: File | null;
-  disabled: boolean;
-  onChange: (file: File | null) => void;
-  onRemove: () => void;
-}) {
-  const existing = url
-    ? [
-        {
-          id: label,
-          path: url,
-          url,
-          mime_type: mimeFromUrl(url),
-          name: label,
-        },
-      ]
-    : [];
-
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <FileUpload
-        value={file}
-        onChange={(next) => onChange(Array.isArray(next) ? (next[0] ?? null) : next)}
-        existingFiles={existing}
-        onRemoveExisting={onRemove}
-        accept="image/*,.svg,.ico"
-        maxSize={2}
-        placeholder="Add image"
-        disabled={disabled}
-        lightbox
-        layout="inline"
-        classNames={{
-          dropzone: "flex-row items-center justify-start gap-3 px-3 py-2.5",
-          dropzoneContent: "w-auto flex-row flex-wrap items-center justify-start gap-x-2 gap-y-0 text-left [&_svg]:size-4",
-        }}
-      />
-    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { authedRequest } from "@/lib/auth/api";
-import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
+import { formatMediaUrl } from "@/lib/media/media-url";
 import type { PublicSettings } from "@/lib/settings/public";
 
 export type SmtpEncryption = "tls" | "ssl" | "none";
@@ -27,8 +27,8 @@ function rewrite(settings: AdminSettings): AdminSettings {
     ...settings,
     general: {
       ...settings.general,
-      logo_url: toSameOriginStorageUrl(settings.general.logo_url),
-      favicon_url: toSameOriginStorageUrl(settings.general.favicon_url),
+      logo_url: formatMediaUrl(settings.general.logo_url),
+      favicon_url: formatMediaUrl(settings.general.favicon_url),
     },
   };
 }
@@ -42,8 +42,8 @@ export async function saveGeneralSettings(input: {
   name: string;
   short_name: string;
   registration_enabled: boolean;
-  remove_logo?: boolean;
-  remove_favicon?: boolean;
+  logo_url?: string | null;
+  favicon_url?: string | null;
 }) {
   const data = await authedRequest<{ settings: AdminSettings }>(
     "put",

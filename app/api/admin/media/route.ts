@@ -31,9 +31,11 @@ export async function GET(request: Request) {
   const params = new URLSearchParams({ per_page: perPage });
   const q = url.searchParams.get("q")?.trim();
   const kind = url.searchParams.get("kind")?.trim();
+  const status = url.searchParams.get("status")?.trim();
   const page = url.searchParams.get("page")?.trim();
   if (q) params.set("filter[q]", q);
   if (kind && kind !== "all") params.set("filter[kind]", kind);
+  if (status) params.set("filter[status]", status);
   if (page) params.set("page", page);
 
   try {

@@ -1,4 +1,4 @@
-import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
+import { formatMediaUrl } from "@/lib/media/media-url";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -61,7 +61,7 @@ async function resolveFavicon(origin: string) {
       json.data?.settings?.favicon_url ??
       json.settings?.favicon_url ??
       json.favicon_url;
-    return raw ? toSameOriginStorageUrl(raw) : null;
+    return raw ? formatMediaUrl(raw) : null;
   } catch {
     return null;
   }

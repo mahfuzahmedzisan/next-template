@@ -1,6 +1,6 @@
 import "server-only";
 
-import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
+import { formatMediaUrl } from "@/lib/media/media-url";
 import { laravelHttp, unwrapOrThrow } from "@/lib/auth/http";
 
 export type PublicSettings = {
@@ -28,8 +28,8 @@ export async function fetchPublicSettings(): Promise<PublicSettings> {
     return {
       name: settings.name || fallback.name,
       short_name: settings.short_name || settings.name || fallback.short_name,
-      logo_url: toSameOriginStorageUrl(settings.logo_url),
-      favicon_url: toSameOriginStorageUrl(settings.favicon_url),
+      logo_url: formatMediaUrl(settings.logo_url),
+      favicon_url: formatMediaUrl(settings.favicon_url),
       registration_enabled: settings.registration_enabled !== false,
     };
   } catch {
