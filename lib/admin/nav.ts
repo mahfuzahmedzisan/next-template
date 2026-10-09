@@ -1,4 +1,4 @@
-import { Images, LayoutDashboard, Radio, Settings, Shield, UserRound } from "lucide-react";
+import { Images, LayoutDashboard, Radio, Settings, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 
 import type { NavGroup } from "@/lib/nav";
 
@@ -20,6 +20,16 @@ export const adminNav: NavGroup[] = [
         title: "Media",
         href: "/admin/media",
         icon: Images,
+      },
+    ],
+  },
+  {
+    label: "Application",
+    items: [
+      {
+        title: "Application settings",
+        href: "/admin/application",
+        icon: SlidersHorizontal,
       },
     ],
   },

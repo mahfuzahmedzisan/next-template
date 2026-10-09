@@ -3,7 +3,7 @@
 import type { Route } from "next";
 import { useSearchParams } from "next/navigation";
 import { useTransitionRouter } from "@/components/transitions/transition-provider";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ function LoginForm() {
   const sessionExpired = searchParams.get("reason") === SESSION_EXPIRED_REASON;
   const next = safeNext(searchParams.get("next"));
   const sessionToastShown = useRef(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -73,6 +74,15 @@ function LoginForm() {
       );
     }
   }, [sessionExpired]);
+
+  useEffect(() => {
+    void fetch("/api/settings/public")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { registration_enabled?: boolean } | null) => {
+        if (body && body.registration_enabled === false) setRegistrationEnabled(false);
+      })
+      .catch(() => undefined);
+  }, []);
 
   async function onSubmit(values: LoginValues) {
     const result = await postAuthApi<
@@ -176,10 +186,12 @@ function LoginForm() {
           </form>
         </Form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <TextLink href="/register">Create one</TextLink>
-        </p>
+        {registrationEnabled ? (
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <TextLink href="/register">Create one</TextLink>
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );

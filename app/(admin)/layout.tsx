@@ -8,6 +8,7 @@ import { logoutAction } from "@/app/(admin)/actions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getSession } from "@/lib/auth/auth-cookies";
 import { logoutUrl } from "@/lib/auth/session-expired";
+import { fetchPublicSettings } from "@/lib/settings/public";
 import { SIDEBAR_COOKIE_NAME } from "@/lib/sidebar-state";
 
 export const metadata: Metadata = {
@@ -31,12 +32,15 @@ export default async function AdminLayout({
   }
 
   const sidebar = (await cookies()).get(SIDEBAR_COOKIE_NAME)?.value;
+  const settings = await fetchPublicSettings();
 
   return (
     <AdminShell
       user={session.user}
       onLogout={logoutAction}
       defaultOpen={sidebar !== "false"}
+      brandLabel={settings.short_name}
+      logoUrl={settings.logo_url}
     >
       {children}
     </AdminShell>

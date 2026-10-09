@@ -23,9 +23,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { formatInZone, useDisplayTimeZone } from "@/lib/datetime/timezone";
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import type { MediaKind, MediaRecord, MediaStatus } from "@/lib/media/types";
+import { cn } from "@/lib/utils";
 
 export type MediaViewId =
   | "extra-large"
@@ -143,11 +144,8 @@ function formatSize(size: number | null) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatWhen(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+function formatWhen(value: string | null, timeZone: string) {
+  return formatInZone(value, timeZone);
 }
 
 function KindIcon({ kind, className }: { kind: MediaKind; className?: string }) {
@@ -356,6 +354,7 @@ function TileRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
 
 function ContentRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
   const showUpload = row.status === "awaiting_upload" && row.uploadPercent !== null;
+  const timeZone = useDisplayTimeZone();
   return (
     <li className="flex items-center gap-3 rounded-xl border bg-card p-2">
       <button type="button" className="w-28 shrink-0 overflow-hidden rounded-lg sm:w-40" onClick={() => onOpen(row)}>
@@ -370,7 +369,7 @@ function ContentRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
           {cardActivity(row)?.label ?? row.kind}
         </p>
         <p className="text-xs text-muted-foreground">
-          {formatSize(row.size)} · {formatWhen(row.created_at)}
+          {formatSize(row.size)} · {formatWhen(row.created_at, timeZone)}
         </p>
         <p className="text-xs text-muted-foreground">{statusLabel(row.status)}</p>
       </button>
@@ -382,6 +381,7 @@ function ContentRow({ row, onOpen, onDelete, onPause, onResume }: RowActions) {
 function DetailsTable({ rows, onOpen, onDelete, onPause, onResume }: {
   rows: MediaViewRow[];
 } & Omit<RowActions, "row">) {
+  const timeZone = useDisplayTimeZone();
   return (
     <div className="overflow-x-auto rounded-xl border">
       <table className="w-full min-w-[640px] text-left text-sm">
@@ -419,7 +419,7 @@ function DetailsTable({ rows, onOpen, onDelete, onPause, onResume }: {
                     statusLabel(row.status)
                   )}
                 </td>
-                <td className="px-3 py-2 text-muted-foreground">{formatWhen(row.created_at)}</td>
+                <td className="px-3 py-2 text-muted-foreground">{formatWhen(row.created_at, timeZone)}</td>
                 <td className="px-2 py-1">
                   <RowTools row={row} showUpload={showUpload} onDelete={onDelete} onPause={onPause} onResume={onResume} />
                 </td>

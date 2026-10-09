@@ -77,6 +77,7 @@ export async function updatePreferencesAction(input: {
   email_notifications?: boolean;
   push_notifications?: boolean;
   theme?: ThemePreference;
+  timezone?: string | null;
 }): Promise<ActionResult> {
   try {
     const result = await updatePreferences(input);

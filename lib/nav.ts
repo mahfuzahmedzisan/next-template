@@ -22,6 +22,8 @@ export type UserSummary = {
   name: string;
   email: string;
   avatar?: string | null;
+  role?: "admin" | "user";
+  timezone?: string | null;
 };
 
 export type UserMenuItem = {

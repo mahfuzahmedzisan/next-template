@@ -19,6 +19,7 @@ export function updatePreferences(input: {
   email_notifications?: boolean;
   push_notifications?: boolean;
   theme?: ThemePreference;
+  timezone?: string | null;
 }) {
   return authedRequest<{ user: User }>("put", "/profile/preferences", input);
 }

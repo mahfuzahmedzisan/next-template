@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { updatePreferencesAction } from "@/app/(admin)/admin/profile/actions";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { timeZoneOptions, useDetectedTimeZone } from "@/lib/datetime/timezone";
 import { applyThemePreference } from "@/lib/theme/persist-theme";
 import { cn } from "@/lib/utils";
 import type { ThemePreference, User } from "@/types/auth";
@@ -36,12 +37,15 @@ export function PreferencesForm({ user }: { user: User }) {
   const [pushNotifications, setPushNotifications] = useState(
     user.push_notifications ?? false,
   );
+  const [timezone, setTimezone] = useState(user.timezone ?? "auto");
+  const detectedZone = useDetectedTimeZone();
   const active = mounted ? theme : undefined;
 
   function save(partial: {
     email_notifications?: boolean;
     push_notifications?: boolean;
     theme?: ThemePreference;
+    timezone?: string | null;
   }) {
     startTransition(async () => {
       const result = await updatePreferencesAction(partial);
@@ -141,6 +145,31 @@ export function PreferencesForm({ user }: { user: User }) {
             />
           </div>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="timezone" className="text-sm font-medium">Time zone</Label>
+        <p className="text-sm text-muted-foreground">
+          Auto follows this browser. A saved zone only changes how dates are shown for you.
+        </p>
+        <select
+          id="timezone"
+          value={timezone}
+          disabled={pending}
+          onChange={(event) => {
+            const next = event.target.value;
+            setTimezone(next);
+            save({ timezone: next === "auto" ? null : next });
+          }}
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        >
+          <option value="auto">Auto · {detectedZone}</option>
+          {timeZoneOptions().map((zone) => (
+            <option key={zone} value={zone}>
+              {zone}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

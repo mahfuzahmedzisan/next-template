@@ -3,6 +3,7 @@
 import { useTransitionRouter } from "@/components/transitions/transition-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -49,6 +50,15 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useTransitionRouter();
+
+  useEffect(() => {
+    void fetch("/api/settings/public")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { registration_enabled?: boolean } | null) => {
+        if (body && body.registration_enabled === false) router.replace("/login");
+      })
+      .catch(() => undefined);
+  }, [router]);
 
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),

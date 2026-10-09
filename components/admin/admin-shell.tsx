@@ -12,6 +12,7 @@ import { HeaderUser } from "@/components/nav/header-user";
 import { SidebarPromo } from "@/components/nav/sidebar-promo";
 import { ModeToggle } from "@/components/mode-toggle";
 import { adminNav } from "@/lib/admin/nav";
+import { TimezoneProvider } from "@/lib/datetime/timezone";
 import type { BreadcrumbItem, UserMenuGroup, UserSummary } from "@/lib/nav";
 import { useTransitionController } from "@/components/transitions/transition-provider";
 
@@ -46,6 +47,12 @@ function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
       { title: "Settings" },
     ];
   }
+  if (pathname.startsWith("/admin/application")) {
+    return [
+      { title: "Dashboard", href: "/admin" },
+      { title: "Application settings" },
+    ];
+  }
 
   return [{ title: "Dashboard" }];
 }
@@ -54,11 +61,15 @@ export function AdminShell({
   user,
   onLogout,
   defaultOpen = true,
+  brandLabel = "Mahfuz Ahmed",
+  logoUrl = null,
   children,
 }: {
   user: UserSummary;
   onLogout: () => void | Promise<void>;
   defaultOpen?: boolean;
+  brandLabel?: string;
+  logoUrl?: string | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -90,15 +101,24 @@ export function AdminShell({
     [onLogout, runTransitionAction],
   );
 
+  const groups = user.role === "admin"
+    ? adminNav
+    : adminNav.filter((group) => group.label !== "Application");
+
   return (
     <AppShell defaultOpen={defaultOpen}>
       <AppSidebar
         brand={{
           href: "/admin",
-          label: "Mahfuz Ahmed",
-          icon: <ShieldCheck className="size-4" />,
+          label: brandLabel,
+          icon: logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- brand file is served from this app
+            <img src={logoUrl} alt="" className="size-4 rounded-sm object-contain" />
+          ) : (
+            <ShieldCheck className="size-4" />
+          ),
         }}
-        groups={adminNav}
+        groups={groups}
         promo={
           <SidebarPromo
             title="Public site"
@@ -124,7 +144,7 @@ export function AdminShell({
           />
         }
       >
-        {children}
+        <TimezoneProvider preference={user.timezone}>{children}</TimezoneProvider>
       </AppContent>
     </AppShell>
   );

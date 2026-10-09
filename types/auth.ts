@@ -12,6 +12,7 @@ export type User = {
   email_notifications?: boolean;
   push_notifications?: boolean;
   theme?: ThemePreference;
+  timezone?: string | null;
 };
 
 /** Encrypted into the httpOnly session cookie. Never sent to the browser as JS-readable JSON. */

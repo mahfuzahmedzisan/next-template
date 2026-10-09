@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TransitionProvider } from "@/components/transitions/transition-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { fetchPublicSettings } from "@/lib/settings/public";
 import { site, siteDescription } from "@/content/site";
 import { siteOrigin } from "@/lib/site-url";
 import { siteStructuredData } from "@/lib/structured-data";
@@ -28,7 +29,10 @@ const geistSans = Geist({
 const description = siteDescription();
 const origin = siteOrigin();
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchPublicSettings();
+
+  return {
   metadataBase: origin ? new URL(origin) : undefined,
   title: {
     default: site.name,
@@ -65,7 +69,9 @@ export const metadata: Metadata = {
     title: site.name,
     description,
   },
-};
+  ...(settings.favicon_url ? { icons: { icon: settings.favicon_url } } : {}),
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
