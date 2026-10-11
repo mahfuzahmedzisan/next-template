@@ -18,7 +18,7 @@ export type SmtpSettings = {
 };
 
 export type AdminSettings = {
-  general: PublicSettings;
+  general: PublicSettings & { audit_retention_days: number };
   smtp: SmtpSettings;
 };
 
@@ -44,6 +44,7 @@ export async function saveGeneralSettings(input: {
   registration_enabled: boolean;
   logo_url?: string | null;
   favicon_url?: string | null;
+  audit_retention_days?: number;
 }) {
   const data = await authedRequest<{ settings: AdminSettings }>(
     "put",

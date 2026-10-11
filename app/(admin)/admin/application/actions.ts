@@ -38,6 +38,7 @@ export async function saveGeneralAction(input: {
   registration_enabled: boolean;
   logo_url: string | null;
   favicon_url: string | null;
+  audit_retention_days: number;
 }): Promise<SettingsActionResult> {
   try {
     const settings = await saveGeneralSettings(input);

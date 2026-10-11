@@ -1,4 +1,4 @@
-import { Database, Images, LayoutDashboard, Mail, MonitorSmartphone, Radio, ScrollText, Settings, Settings2, Shield, SlidersHorizontal, UserRound } from "lucide-react";
+import { Database, History, Images, LayoutDashboard, Mail, MonitorSmartphone, Radio, ScrollText, Settings, Settings2, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 
 import type { NavGroup } from "@/lib/nav";
 
@@ -72,6 +72,11 @@ export const adminNav: NavGroup[] = [
         title: "Devices",
         href: "/admin/devices",
         icon: MonitorSmartphone,
+      },
+      {
+        title: "My activity",
+        href: "/admin/activity",
+        icon: History,
       },
       {
         title: "Settings",

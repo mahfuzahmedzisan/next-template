@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Check, Copy, Expand } from "lucide-react";
 
+import { RecordHistory } from "@/components/admin/audit/record-history";
 import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
 import { VideoPlayer } from "@/components/media/video-player";
 import { Badge } from "@/components/ui/badge";
@@ -330,6 +331,7 @@ function MediaDetailForm({
             onChange={(event) => setKeywords(event.target.value)}
           />
         </div>
+        <RecordHistory subject={`media:${item.id}`} />
       </div>
 
       <SheetFooter>

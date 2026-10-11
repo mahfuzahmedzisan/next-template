@@ -33,11 +33,19 @@ const sections = {
   },
   audit: {
     title: "Audit",
-    description: "An activity log is not set up yet. This page is reserved for sign-in and settings changes.",
+    description: "Every sign-in, security change, record edit, settings change, upload and backup across the site.",
   },
 } as const;
 
 export type ApplicationSection = keyof typeof sections;
+
+const RETENTION_PRESETS = [
+  { days: 30, label: "1 month" },
+  { days: 90, label: "3 months" },
+  { days: 180, label: "6 months" },
+  { days: 365, label: "1 year" },
+  { days: 730, label: "2 years" },
+];
 
 export function ApplicationSectionHeader({
   section,
@@ -98,7 +106,11 @@ function GeneralForm({
   const [registration, setRegistration] = useState(general.registration_enabled);
   const [logoUrl, setLogoUrl] = useState(general.logo_url);
   const [faviconUrl, setFaviconUrl] = useState(general.favicon_url);
+  const [retention, setRetention] = useState(String(general.audit_retention_days ?? 180));
   const [pending, startTransition] = useTransition();
+  const retentionOptions = RETENTION_PRESETS.some((preset) => String(preset.days) === retention)
+    ? RETENTION_PRESETS
+    : [...RETENTION_PRESETS, { days: Number(retention), label: `${retention} days` }].sort((a, b) => a.days - b.days);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,6 +121,7 @@ function GeneralForm({
         registration_enabled: registration,
         logo_url: logoUrl,
         favicon_url: faviconUrl,
+        audit_retention_days: Number(retention),
       });
       if (!result.ok) {
         toast.error(result.message);
@@ -159,6 +172,29 @@ function GeneralForm({
           </p>
         </div>
         <Switch checked={registration} onCheckedChange={setRegistration} aria-label="Public registration" />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-xl border border-border/70 p-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <Label htmlFor="audit-retention" className="text-sm font-medium">
+            Audit log retention
+          </Label>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Older audit entries are deleted every night. Between 1 month and 2 years.
+          </p>
+        </div>
+        <Select value={retention} onValueChange={setRetention} disabled={pending}>
+          <SelectTrigger id="audit-retention" className="w-full sm:w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {retentionOptions.map((option) => (
+              <SelectItem key={option.days} value={String(option.days)}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Button type="submit" disabled={pending} className="self-start">
