@@ -3,6 +3,7 @@ export type AuthApiError = {
   message: string;
   errors?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
   details?: { message?: string };
+  status?: number;
 };
 
 export async function postAuthApi<T>(
@@ -25,7 +26,10 @@ export async function postAuthApi<T>(
     if (!response.ok) {
       return {
         ok: false,
-        error: (json as AuthApiError) ?? { message: "Request failed" },
+        error: {
+          ...((json as AuthApiError) ?? { message: "Request failed" }),
+          status: response.status,
+        },
       };
     }
 

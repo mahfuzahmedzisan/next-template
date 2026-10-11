@@ -15,6 +15,10 @@ const TUS_REQUEST_HEADERS = [
   "upload-checksum",
 ] as const;
 
+/** An SVG opened directly is a document; sandbox it so any missed script cannot run. */
+const SVG_DOCUMENT_CSP =
+  "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox";
+
 const TUS_RESPONSE_HEADERS = [
   "upload-offset",
   "upload-length",
@@ -102,6 +106,10 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
   for (const name of ["content-type", "content-length", "content-range", "accept-ranges", "cache-control"]) {
     const value = upstream.headers.get(name);
     if (value) responseHeaders.set(name, value);
+  }
+  responseHeaders.set("x-content-type-options", "nosniff");
+  if (/\.svgz?$/i.test(path) || responseHeaders.get("content-type")?.includes("svg")) {
+    responseHeaders.set("content-security-policy", SVG_DOCUMENT_CSP);
   }
 
   return new Response(upstream.body, {

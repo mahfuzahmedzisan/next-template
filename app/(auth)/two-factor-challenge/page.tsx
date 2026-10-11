@@ -48,18 +48,20 @@ type RecoveryValues = z.infer<typeof recoverySchema>;
 
 export default function TwoFactorChallengePage() {
   const router = useTransitionRouter();
-  const [challengeToken] = useState<string | null>(() =>
+  // The challenge token itself lives in an httpOnly cookie; this only marks
+  // that a sign-in is waiting for its second step.
+  const [challengeNext] = useState<string | null>(() =>
     typeof window === "undefined"
       ? null
-      : sessionStorage.getItem("challenge_token"),
+      : sessionStorage.getItem("challenge_next"),
   );
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
   useEffect(() => {
-    if (!challengeToken) {
+    if (!challengeNext) {
       router.replace("/login");
     }
-  }, [challengeToken, router]);
+  }, [challengeNext, router]);
 
   const codeForm = useForm<CodeValues>({
     resolver: zodResolver(codeSchema),
@@ -74,17 +76,19 @@ export default function TwoFactorChallengePage() {
   async function completeChallenge(body: Record<string, string>) {
     const result = await postAuthApi<{ user: User }>(
       "/api/auth/two-factor-challenge",
-      { challenge_token: challengeToken, ...body },
+      body,
     );
 
     if (!result.ok) {
       toast.error(firstAuthErrorMessage(result.error), { duration: 4000 });
+      if (result.error.status === 401) {
+        sessionStorage.removeItem("challenge_next");
+        router.replace("/login");
+      }
       return;
     }
 
-    const next = (sessionStorage.getItem("challenge_next") ??
-      "/admin") as Route;
-    sessionStorage.removeItem("challenge_token");
+    const next = (challengeNext ?? "/admin") as Route;
     sessionStorage.removeItem("challenge_next");
 
     await syncStoredThemeToAccount(result.data.user.theme);
@@ -93,7 +97,7 @@ export default function TwoFactorChallengePage() {
     router.refresh();
   }
 
-  if (!challengeToken) {
+  if (!challengeNext) {
     return null;
   }
 

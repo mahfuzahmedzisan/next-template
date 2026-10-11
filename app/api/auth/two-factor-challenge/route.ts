@@ -4,10 +4,13 @@ import { z } from "zod";
 import { ApiError } from "@/lib/auth/api-error";
 import { requestTwoFactorChallenge } from "@/lib/auth/laravel-auth";
 import { createSession } from "@/lib/auth/auth-cookies";
+import {
+  clearChallengeToken,
+  readChallengeToken,
+} from "@/lib/auth/two-factor-cookie";
 
 const challengeSchema = z
   .object({
-    challenge_token: z.string().min(1),
     code: z.string().optional(),
     recovery_code: z.string().optional(),
   })
@@ -18,6 +21,14 @@ const challengeSchema = z
 
 export async function POST(request: Request) {
   try {
+    const challengeToken = await readChallengeToken();
+    if (!challengeToken) {
+      return NextResponse.json(
+        { message: "Your sign-in attempt expired. Sign in again." },
+        { status: 401 },
+      );
+    }
+
     const json = await request.json();
     const parsed = challengeSchema.safeParse(json);
 
@@ -31,16 +42,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await requestTwoFactorChallenge(parsed.data);
+    const result = await requestTwoFactorChallenge({
+      challenge_token: challengeToken,
+      ...parsed.data,
+    });
 
     await createSession({
       accessToken: result.access_token,
       sessionEndsAt: result.session_ends_at * 1000,
       user: result.user,
     });
+    await clearChallengeToken();
 
     return NextResponse.json({ user: result.user });
   } catch (error) {
+    if (error instanceof ApiError && challengeIsDead(error)) {
+      await clearChallengeToken();
+      return NextResponse.json(
+        { message: "Your sign-in attempt expired. Sign in again." },
+        { status: 401 },
+      );
+    }
+
     if (error instanceof ApiError) {
       return NextResponse.json(
         { message: error.message, details: error.body },
@@ -52,4 +75,11 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : "Two-factor verification failed";
     return NextResponse.json({ message }, { status: 500 });
   }
+}
+
+/** Expired, reused, or malformed challenge: retrying the code cannot succeed. */
+function challengeIsDead(error: ApiError): boolean {
+  if (error.status === 400) return true;
+  const body = error.body as { errors?: Record<string, unknown> } | undefined;
+  return error.status === 422 && Boolean(body?.errors?.challenge_token);
 }

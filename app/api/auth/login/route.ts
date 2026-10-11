@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ApiError } from "@/lib/auth/api-error";
 import { isTwoFactorChallenge, requestLogin } from "@/lib/auth/laravel-auth";
 import { createSession } from "@/lib/auth/auth-cookies";
+import { storeChallengeToken } from "@/lib/auth/two-factor-cookie";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -29,13 +30,10 @@ export async function POST(request: Request) {
     const result = await requestLogin(parsed.data);
 
     if (isTwoFactorChallenge(result)) {
-      // No session is created yet - the password has only been proven once,
-      // sealed into the challenge token Laravel just returned. Nothing is
-      // persisted client-side beyond that opaque, short-lived token.
-      return NextResponse.json({
-        two_factor: true,
-        challenge_token: result.challenge_token,
-      });
+      // No session yet. The opaque, short-lived challenge token goes into an
+      // httpOnly cookie that only the two-factor route receives.
+      await storeChallengeToken(result.challenge_token);
+      return NextResponse.json({ two_factor: true });
     }
 
     await createSession({

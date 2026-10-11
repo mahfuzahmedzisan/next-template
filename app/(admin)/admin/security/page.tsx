@@ -5,6 +5,7 @@ import {
   AccountSection,
 } from "@/components/admin/account/account-chrome";
 import { DangerZone } from "@/components/admin/profile/danger-zone";
+import { OtherSessions } from "@/components/admin/profile/other-sessions";
 import { PasswordForm } from "@/components/admin/profile/password-form";
 import { TwoFactorSection } from "@/components/admin/profile/two-factor-section";
 import { getSession } from "@/lib/auth/auth-cookies";
@@ -35,6 +36,13 @@ export default async function SecurityPage() {
         description="Add an authenticator app as a second step at sign-in."
       >
         <TwoFactorSection enabled={session.user.two_factor_enabled} />
+      </AccountSection>
+
+      <AccountSection
+        title="Signed-in devices"
+        description="Lost a device or signed in somewhere shared? End every other session."
+      >
+        <OtherSessions />
       </AccountSection>
 
       <AccountSection

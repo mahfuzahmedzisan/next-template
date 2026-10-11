@@ -12,6 +12,7 @@ import {
   enableTwoFactor,
   getTwoFactorStatus,
   regenerateRecoveryCodes,
+  signOutOtherSessions,
   updatePassword,
   updatePreferences,
   updateProfile,
@@ -106,6 +107,26 @@ export async function updatePasswordAction(
     return { ok: true, message: "Password updated successfully." };
   } catch (error) {
     return toResult(error, "Unable to update password.");
+  }
+}
+
+export async function signOutOtherSessionsAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const { revoked } = await signOutOtherSessions({
+      current_password: String(formData.get("current_password") ?? ""),
+    });
+    return {
+      ok: true,
+      message:
+        revoked === 0
+          ? "No other devices were signed in."
+          : `Signed out of ${revoked} other ${revoked === 1 ? "device" : "devices"}.`,
+    };
+  } catch (error) {
+    return toResult(error, "Unable to sign out other devices.");
   }
 }
 

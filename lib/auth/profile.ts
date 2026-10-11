@@ -34,6 +34,10 @@ export function deleteAvatar() {
   return authedRequest<{ user: User }>("delete", "/profile/avatar");
 }
 
+export function signOutOtherSessions(input: { current_password: string }) {
+  return authedRequest<{ revoked: number }>("delete", "/profile/sessions", input);
+}
+
 export function deleteAccount(input: { current_password: string }) {
   return authedRequest<null>("delete", "/profile", input);
 }

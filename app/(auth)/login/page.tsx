@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
 import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";
-import type { TwoFactorChallengeResponse, User } from "@/types/auth";
+import type { User } from "@/types/auth";
 
 const loginSchema = z.object({
   email: z
@@ -86,7 +86,7 @@ function LoginForm() {
 
   async function onSubmit(values: LoginValues) {
     const result = await postAuthApi<
-      { user: User } | TwoFactorChallengeResponse
+      { user: User } | { two_factor: true }
     >("/api/auth/login", values);
 
     if (!result.ok) {
@@ -95,7 +95,6 @@ function LoginForm() {
     }
 
     if ("two_factor" in result.data && result.data.two_factor) {
-      sessionStorage.setItem("challenge_token", result.data.challenge_token);
       sessionStorage.setItem("challenge_next", next);
       router.push("/two-factor-challenge");
       return;
