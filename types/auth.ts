@@ -31,6 +31,38 @@ export type LaravelTokenResponse = {
   session_ends_at: number;
 };
 
+export type DeviceStatus = "active" | "expired" | "revoked";
+
+export type DeviceRevokedReason =
+  | "signed_out"
+  | "revoked"
+  | "signed_out_everywhere"
+  | "password_changed"
+  | "password_reset";
+
+export type UserDevice = {
+  id: number;
+  browser: string | null;
+  platform: string | null;
+  device_type: "desktop" | "mobile" | "tablet" | "unknown";
+  ip_address: string | null;
+  remember: boolean;
+  status: DeviceStatus;
+  is_current: boolean;
+  signed_in_at: string | null;
+  last_active_at: string | null;
+  expires_at: string | null;
+  revoked_at: string | null;
+  revoked_reason: DeviceRevokedReason | null;
+};
+
+export type PaginationMeta = {
+  current_page: number;
+  per_page: number;
+  total: number;
+  last_page: number;
+};
+
 /** Returned by /auth/login when the account has 2FA enabled, instead of a token pair. */
 export type TwoFactorChallengeResponse = {
   two_factor: true;

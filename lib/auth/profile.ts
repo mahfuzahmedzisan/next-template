@@ -1,7 +1,12 @@
 import "server-only";
 
 import { authedRequest } from "@/lib/auth/api";
-import type { ThemePreference, User } from "@/types/auth";
+import type {
+  PaginationMeta,
+  ThemePreference,
+  User,
+  UserDevice,
+} from "@/types/auth";
 
 export function updateProfile(input: { name: string; email: string }) {
   return authedRequest<{ user: User }>("put", "/profile", input);
@@ -34,8 +39,38 @@ export function deleteAvatar() {
   return authedRequest<{ user: User }>("delete", "/profile/avatar");
 }
 
-export function signOutOtherSessions(input: { current_password: string }) {
-  return authedRequest<{ revoked: number }>("delete", "/profile/sessions", input);
+export function signOutOtherSessions(input: {
+  current_password: string;
+  include_current?: boolean;
+}) {
+  return authedRequest<{ revoked: number; signed_out_current: boolean }>(
+    "delete",
+    "/profile/sessions",
+    input,
+  );
+}
+
+export function listDevices() {
+  return authedRequest<{ devices: UserDevice[] }>("get", "/profile/devices");
+}
+
+export function listDeviceHistory(page = 1) {
+  return authedRequest<{ devices: UserDevice[]; meta: PaginationMeta }>(
+    "get",
+    `/profile/devices/history?page=${encodeURIComponent(String(page))}`,
+  );
+}
+
+export function revokeDevice(id: number) {
+  return authedRequest<null>("delete", `/profile/devices/${id}`);
+}
+
+export function forgetDevice(id: number) {
+  return authedRequest<null>("delete", `/profile/devices/${id}/history`);
+}
+
+export function clearDeviceHistory() {
+  return authedRequest<{ removed: number }>("delete", "/profile/devices/history");
 }
 
 export function deleteAccount(input: { current_password: string }) {

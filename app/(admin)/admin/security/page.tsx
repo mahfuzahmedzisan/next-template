@@ -5,9 +5,10 @@ import {
   AccountSection,
 } from "@/components/admin/account/account-chrome";
 import { DangerZone } from "@/components/admin/profile/danger-zone";
-import { OtherSessions } from "@/components/admin/profile/other-sessions";
 import { PasswordForm } from "@/components/admin/profile/password-form";
 import { TwoFactorSection } from "@/components/admin/profile/two-factor-section";
+import { TransitionLink as Link } from "@/components/transitions/transition-link";
+import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth/auth-cookies";
 import { RouteReady } from "@/components/transitions/route-ready";
 
@@ -40,9 +41,11 @@ export default async function SecurityPage() {
 
       <AccountSection
         title="Signed-in devices"
-        description="Lost a device or signed in somewhere shared? End every other session."
+        description="See every device signed in to this account, revoke one, or sign out everywhere."
       >
-        <OtherSessions />
+        <Button variant="outline" asChild>
+          <Link href="/admin/devices">Manage devices</Link>
+        </Button>
       </AccountSection>
 
       <AccountSection

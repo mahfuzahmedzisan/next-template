@@ -1,4 +1,4 @@
-export type AccountTab = "profile" | "security" | "settings";
+export type AccountTab = "profile" | "security" | "devices" | "settings";
 
 export const accountTabs: {
   id: AccountTab;
@@ -17,6 +17,12 @@ export const accountTabs: {
     href: "/admin/security",
     title: "Security",
     description: "Password, two-factor, and account deletion.",
+  },
+  {
+    id: "devices",
+    href: "/admin/devices",
+    title: "Devices",
+    description: "Signed-in devices and sign-in history.",
   },
   {
     id: "settings",

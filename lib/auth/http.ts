@@ -1,6 +1,7 @@
 import "server-only";
 
 import axios, { AxiosError } from "axios";
+import { headers } from "next/headers";
 import { ApiError } from "@/lib/auth/api-error";
 import { resolveFrontendOrigin } from "@/lib/auth/frontend-origin";
 
@@ -34,8 +35,26 @@ laravelHttp.interceptors.request.use(async (config) => {
   config.headers.set("X-BFF-Secret", secret);
   config.headers.set("X-Frontend-Origin", await resolveFrontendOrigin());
 
+  const client = await browserClient();
+  if (client.ip) config.headers.set("X-Client-IP", client.ip);
+  if (client.userAgent) config.headers.set("X-Client-User-Agent", client.userAgent);
+
   return config;
 });
+
+/** Laravel labels sign-ins in the device history with these. */
+async function browserClient(): Promise<{ ip: string | null; userAgent: string | null }> {
+  try {
+    const headerStore = await headers();
+    const ip =
+      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      headerStore.get("x-real-ip")?.trim() ||
+      null;
+    return { ip, userAgent: headerStore.get("user-agent") };
+  } catch {
+    return { ip: null, userAgent: null };
+  }
+}
 
 export { getApiBaseUrl };
 

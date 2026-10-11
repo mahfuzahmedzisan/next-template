@@ -1,4 +1,4 @@
-import { Database, Images, LayoutDashboard, Mail, Radio, ScrollText, Settings, Settings2, Shield, SlidersHorizontal, UserRound } from "lucide-react";
+import { Database, Images, LayoutDashboard, Mail, MonitorSmartphone, Radio, ScrollText, Settings, Settings2, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 
 import type { NavGroup } from "@/lib/nav";
 
@@ -67,6 +67,11 @@ export const adminNav: NavGroup[] = [
         title: "Security",
         href: "/admin/security",
         icon: Shield,
+      },
+      {
+        title: "Devices",
+        href: "/admin/devices",
+        icon: MonitorSmartphone,
       },
       {
         title: "Settings",

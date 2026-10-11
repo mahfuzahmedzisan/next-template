@@ -19,3 +19,10 @@ args = [
     "shadcn@latest",
     "mcp",
 ]
+
+[mcp_servers.laravel-boost]
+command = "php"
+args = [
+    "API/mahfuz-ahmed-api/artisan",
+    "boost:mcp",
+]

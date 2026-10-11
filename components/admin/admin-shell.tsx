@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, LogOut, Settings, Shield, ShieldCheck, UserRound } from "lucide-react";
+import { Globe, LogOut, MonitorSmartphone, Settings, Shield, ShieldCheck, UserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
 
@@ -39,6 +39,12 @@ function breadcrumbsFor(pathname: string): BreadcrumbItem[] {
     return [
       { title: "Dashboard", href: "/admin" },
       { title: "Security" },
+    ];
+  }
+  if (pathname.startsWith("/admin/devices")) {
+    return [
+      { title: "Dashboard", href: "/admin" },
+      { title: "Devices" },
     ];
   }
   if (pathname.startsWith("/admin/settings")) {
@@ -89,6 +95,7 @@ export function AdminShell({
         items: [
           { title: "Profile", href: "/admin/profile", icon: UserRound },
           { title: "Security", href: "/admin/security", icon: Shield },
+          { title: "Devices", href: "/admin/devices", icon: MonitorSmartphone },
           { title: "Settings", href: "/admin/settings", icon: Settings },
         ],
       },

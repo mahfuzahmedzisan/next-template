@@ -3,6 +3,7 @@
 import {
   LayoutDashboard,
   LogOut,
+  MonitorSmartphone,
   Settings,
   Shield,
   UserRound,
@@ -29,6 +30,7 @@ export function SiteHeaderAccount({
           { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
           { title: "Profile", href: "/admin/profile", icon: UserRound },
           { title: "Security", href: "/admin/security", icon: Shield },
+          { title: "Devices", href: "/admin/devices", icon: MonitorSmartphone },
           { title: "Settings", href: "/admin/settings", icon: Settings },
         ],
       },
