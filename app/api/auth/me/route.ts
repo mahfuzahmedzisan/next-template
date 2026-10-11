@@ -13,11 +13,6 @@ export async function GET() {
     return NextResponse.json({ message: "Unauthenticated" }, { status: 401 });
   }
 
-  if (session.expiresAt <= Date.now()) {
-    await deleteSession();
-    return NextResponse.json({ message: "Session expired" }, { status: 401 });
-  }
-
   try {
     const user = await fetchLaravelUser(session.accessToken);
     await updateSession({ ...session, user });

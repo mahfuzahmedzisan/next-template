@@ -4,7 +4,7 @@ Raw uploads are not playable. The browser sends resumable tus chunks to tusd ins
 
 ## Flow
 
-1. The admin page `POST /api/admin/videos` asks the Next BFF to create a `Video` row. The BFF calls Laravel and returns `tus_endpoint` plus a short-lived upload token. The Passport bearer stays in the httpOnly cookie.
+1. The admin page `POST /api/admin/videos` asks the Next BFF to create a `Video` row. The BFF calls Laravel and returns `tus_endpoint` plus a short-lived upload token. The Sanctum bearer token stays in the httpOnly cookie.
 2. `tus-js-client` uploads straight to the API `tus_endpoint` in about 8 MB chunks. Nginx on the API allows that origin via `FRONTEND_URLS`. Pause is `abort(false)`. Resume uses `findPreviousUploads()` and `start()`. Playback URLs are rewritten to `/api/storage/...`. Upload bytes do not pass through the Next.js host.
 3. tusd calls Laravel on localhost: `POST /internal/tus/{pre-create,pre-finish,post-finish,post-terminate}` with `TUS_HOOK_SECRET`. `pre-finish` runs before tusd answers the browser, so a large file is stored before the client is told the upload finished.
 4. `pre-finish` stores the file on the Spatie `source` collection and dispatches `GenerateHlsJob` on the `media` queue.

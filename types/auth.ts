@@ -17,21 +17,18 @@ export type User = {
 
 /** Encrypted into the httpOnly session cookie. Never sent to the browser as JS-readable JSON. */
 export type SessionPayload = {
+  /** Sanctum personal access token. Laravel rejects it after `sessionEndsAt`. */
   accessToken: string;
-  refreshToken?: string;
-  expiresAt: number;
-  /** Absolute sign-in deadline in ms. Missing on cookies issued before Remember me. */
-  sessionEndsAt?: number;
+  /** Absolute sign-in deadline in ms: 12 hours, or 30 days with Remember me. */
+  sessionEndsAt: number;
   user: User;
 };
 
 export type LaravelTokenResponse = {
   access_token: string;
-  refresh_token?: string;
-  expires_in: number;
   token_type: string;
-  /** Unix seconds. Present on login, register, and two-factor completion. */
-  session_ends_at?: number;
+  /** Unix seconds. Matches the token's `expires_at` in Laravel. */
+  session_ends_at: number;
 };
 
 /** Returned by /auth/login when the account has 2FA enabled, instead of a token pair. */

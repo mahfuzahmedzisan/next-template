@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/auth/api-error";
-import { requestRegister } from "@/lib/auth/passport-tokens";
+import { requestRegister } from "@/lib/auth/laravel-auth";
 import { createSession } from "@/lib/auth/auth-cookies";
-import { BROWSER_SESSION_MS } from "@/lib/auth/session";
 
 const registerSchema = z
   .object({
@@ -37,12 +36,7 @@ export async function POST(request: Request) {
 
     await createSession({
       accessToken: result.access_token,
-      refreshToken: result.refresh_token,
-      expiresAt: Date.now() + result.expires_in * 1000,
-      sessionEndsAt:
-        typeof result.session_ends_at === "number"
-          ? result.session_ends_at * 1000
-          : Date.now() + BROWSER_SESSION_MS,
+      sessionEndsAt: result.session_ends_at * 1000,
       user: result.user,
     });
 
