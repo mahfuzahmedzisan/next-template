@@ -22,7 +22,11 @@ function getApiBaseUrl(): string {
 export const laravelHttp = axios.create({
   baseURL: `${getApiBaseUrl()}/api/v1`,
   headers: { Accept: "application/json" },
-  timeout: 10_000,
+  // `php artisan serve` handles one request at a time and its first request
+  // after idling can exceed 10s, so local dev gets more headroom.
+  timeout:
+    Number(process.env.LARAVEL_API_TIMEOUT_MS) ||
+    (process.env.NODE_ENV === "production" ? 10_000 : 30_000),
   validateStatus: () => true, // We inspect status ourselves; never throw on non-2xx here.
 });
 
