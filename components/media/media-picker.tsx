@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ClipboardPaste, Loader2, Search, X } from "lucide-react";
+import { ClipboardPaste, ImageOff, Search, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { SideSheet } from "@/components/overlay/side-sheet";
 import FileUpload from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { matchesAccept, namePastedFile } from "@/lib/file-upload";
@@ -120,6 +121,10 @@ export function MediaPicker({
   const requestKey = `${debounced}\n${kindsKey}`;
   const rows = library?.key === requestKey ? library.rows : [];
   const loading = open && tab === "media" && library?.key !== requestKey;
+  const choices = rows.flatMap((row) => {
+    const choice = choiceFromRecord(row);
+    return choice && allowedMediaUrl(choice.url, kinds) ? [{ row, choice }] : [];
+  });
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(query.trim()), 300);
@@ -294,17 +299,33 @@ export function MediaPicker({
             />
           </div>
           {loading ? (
-            <p className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Searching
-            </p>
-          ) : rows.length === 0 ? (
-            <p className="mt-6 text-sm text-muted-foreground">No matching files.</p>
+            <div className="mt-4 grid grid-cols-3 gap-2" aria-busy="true" aria-label="Searching media">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div key={index} className="flex flex-col gap-1 rounded-lg border p-1.5">
+                  <Skeleton className="h-16" />
+                  <Skeleton className="mx-0.5 h-3 w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : choices.length === 0 ? (
+            <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-14 text-center">
+              <span className="flex size-10 items-center justify-center rounded-full bg-muted">
+                {debounced ? (
+                  <SearchX className="size-5 text-muted-foreground" />
+                ) : (
+                  <ImageOff className="size-5 text-muted-foreground" />
+                )}
+              </span>
+              <p className="mt-3 text-sm font-medium">{debounced ? "No matching files" : "No files yet"}</p>
+              <p className="mt-1 max-w-64 text-xs text-muted-foreground">
+                {debounced
+                  ? `Nothing matches “${debounced}”. Try another name, slug, or keyword.`
+                  : "Upload a file or add one by URL to see it here."}
+              </p>
+            </div>
           ) : (
             <div className="mt-4 grid grid-cols-3 gap-2">
-              {rows.map((row) => {
-                const choice = choiceFromRecord(row);
-                if (!choice || !allowedMediaUrl(choice.url, kinds)) return null;
+              {choices.map(({ row, choice }) => {
                 const active = selected.some((item) => item.url === choice.url);
                 return (
                   <button
