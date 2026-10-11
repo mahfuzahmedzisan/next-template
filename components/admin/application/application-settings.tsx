@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { saveGeneralAction, saveSmtpAction } from "@/app/(admin)/admin/application/actions";
@@ -29,7 +29,7 @@ const sections = {
   },
   backup: {
     title: "Database backup",
-    description: "Scheduled dumps and restore points are not set up yet.",
+    description: "A database backup every night, kept for 14 days. Back up, restore, or download on demand.",
   },
   audit: {
     title: "Audit",
@@ -39,6 +39,29 @@ const sections = {
 
 export type ApplicationSection = keyof typeof sections;
 
+export function ApplicationSectionHeader({
+  section,
+  children,
+}: {
+  section: ApplicationSection;
+  children?: ReactNode;
+}) {
+  const copy = sections[section];
+
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p className="text-sm text-muted-foreground">Application settings</p>
+        <h2 className="mt-1 font-heading text-3xl font-semibold tracking-tight">
+          {copy.title}
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">{copy.description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function ApplicationSettingsScreen({
   initial,
   section,
@@ -47,17 +70,10 @@ export function ApplicationSettingsScreen({
   section: ApplicationSection;
 }) {
   const [settings, setSettings] = useState(initial);
-  const copy = sections[section];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted-foreground">Application settings</p>
-        <h2 className="mt-1 font-heading text-3xl font-semibold tracking-tight">
-          {copy.title}
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.description}</p>
-      </div>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <ApplicationSectionHeader section={section} />
 
       {section === "general" ? (
         <GeneralForm settings={settings} onSaved={setSettings} />

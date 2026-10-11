@@ -14,7 +14,7 @@ export default async function ApplicationSettingsLayout({
   if (session.user.role !== "admin") redirect("/admin");
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <RouteReady />
       {children}
     </div>
