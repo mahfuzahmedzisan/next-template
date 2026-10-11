@@ -10,11 +10,11 @@ const easeOut = [0.22, 1, 0.36, 1] as const;
 const architecture = [
   {
     title: "BFF session cookie",
-    body: "An httpOnly, encrypted cookie holds your access and refresh tokens. They never reach client-side JavaScript.",
+    body: "An httpOnly, encrypted cookie holds your API token. It never reaches client-side JavaScript.",
   },
   {
-    title: "Laravel Passport",
-    body: "OAuth2 password grant issues short-lived access tokens and long-lived refresh tokens, rotated on every use.",
+    title: "Laravel Sanctum",
+    body: "Hashed API tokens expire after 12 hours, or 30 days with Remember me, and are revoked on logout or a password change.",
   },
   {
     title: "Fortify hardening",
@@ -22,7 +22,7 @@ const architecture = [
   },
   {
     title: "Role checks",
-    body: "auth:api proves who you are. The role middleware decides what you can do.",
+    body: "auth:sanctum proves who you are. The role middleware decides what you can do.",
   },
 ];
 

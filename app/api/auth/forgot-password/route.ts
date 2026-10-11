@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/auth/api-error";
-import { requestForgotPassword } from "@/lib/auth/passport-tokens";
+import { requestForgotPassword } from "@/lib/auth/laravel-auth";
 
 const schema = z.object({ email: z.string().email() });
 

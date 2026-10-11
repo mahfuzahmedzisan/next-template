@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { ApiError } from "@/lib/auth/api-error";
-import { isTwoFactorChallenge, requestLogin } from "@/lib/auth/passport-tokens";
+import { isTwoFactorChallenge, requestLogin } from "@/lib/auth/laravel-auth";
 import { createSession } from "@/lib/auth/auth-cookies";
-import { BROWSER_SESSION_MS } from "@/lib/auth/session";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -41,9 +40,7 @@ export async function POST(request: Request) {
 
     await createSession({
       accessToken: result.access_token,
-      refreshToken: result.refresh_token,
-      expiresAt: Date.now() + result.expires_in * 1000,
-      sessionEndsAt: sessionEndsAtFrom(result.session_ends_at),
+      sessionEndsAt: result.session_ends_at * 1000,
       user: result.user,
     });
 
@@ -59,10 +56,4 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "Login failed";
     return NextResponse.json({ message }, { status: 500 });
   }
-}
-
-function sessionEndsAtFrom(sessionEndsAt: number | undefined) {
-  return typeof sessionEndsAt === "number"
-    ? sessionEndsAt * 1000
-    : Date.now() + BROWSER_SESSION_MS;
 }

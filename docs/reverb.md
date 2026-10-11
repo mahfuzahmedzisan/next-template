@@ -102,7 +102,7 @@ FRONTEND_URL=https://next-template-eta.vercel.app
 FRONTEND_URLS=https://next-template-eta.vercel.app
 BFF_SECRET=<same as Next BFF_SECRET>
 
-# Plus existing DB / Redis / Passport / etc.
+# Plus existing DB / Redis / Scout / etc.
 ```
 
 Do **not** run `reverb:start` in this image.
@@ -131,4 +131,4 @@ Never set `REVERB_APP_SECRET` or `BFF_SECRET` as `NEXT_PUBLIC_*`. Redeploy after
 | Healthcheck unhealthy, empty log | Reverb crash-loop (fix `.env` first); ensure `curl` in image |
 | WS refused in browser | `REVERB_ALLOWED_ORIGINS` missing the Vercel hostname |
 | Public ping fails | API `REVERB_*` mismatch or Reverb down |
-| Private auth 401 | Session / `BFF_SECRET` / Passport token |
+| Private auth 401 | Session / `BFF_SECRET` / expired or revoked Sanctum token |

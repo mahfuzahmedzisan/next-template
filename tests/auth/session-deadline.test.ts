@@ -4,11 +4,9 @@ import test from "node:test";
 import { sessionHasEnded, sessionLooksAuthenticated } from "../../lib/auth/session.ts";
 import type { SessionPayload } from "../../types/auth.ts";
 
-function session(sessionEndsAt?: number): SessionPayload {
+function session(sessionEndsAt: number): SessionPayload {
   return {
-    accessToken: "access",
-    refreshToken: "refresh",
-    expiresAt: Date.now() - 1000,
+    accessToken: "1|token",
     sessionEndsAt,
     user: {
       id: 1,
@@ -20,17 +18,17 @@ function session(sessionEndsAt?: number): SessionPayload {
   };
 }
 
-test("an ended remember-me session is signed out", () => {
+test("a session past its deadline is signed out", () => {
   assert.equal(sessionHasEnded({ sessionEndsAt: Date.now() - 1 }), true);
   assert.equal(sessionLooksAuthenticated(session(Date.now() - 1)), false);
 });
 
-test("a session inside its deadline can still refresh after the access token expires", () => {
+test("a session inside its deadline stays signed in", () => {
   const ends = Date.now() + 1000 * 60 * 60;
   assert.equal(sessionHasEnded({ sessionEndsAt: ends }), false);
   assert.equal(sessionLooksAuthenticated(session(ends)), true);
 });
 
-test("cookies from before remember me stay usable", () => {
-  assert.equal(sessionLooksAuthenticated(session(undefined)), true);
+test("a missing session is not authenticated", () => {
+  assert.equal(sessionLooksAuthenticated(null), false);
 });

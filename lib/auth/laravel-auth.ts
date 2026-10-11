@@ -8,11 +8,10 @@ import type {
 } from "@/types/auth";
 
 /**
- * All Passport client credentials live server-side inside the Laravel API's
- * own `PassportTokenService` - this BFF never holds, sees, or sends an OAuth
- * `client_id`/`client_secret`. It only ever calls the Laravel API's own
- * `/api/v1/auth/*` endpoints with the end user's credentials or an opaque
- * refresh/challenge token.
+ * Calls the Laravel API's `/api/v1/auth/*` endpoints with the end user's
+ * credentials or an opaque two-factor challenge token. Laravel answers with a
+ * Sanctum personal access token, which only ever lives in the encrypted
+ * httpOnly session cookie.
  */
 
 export type TokenEnvelope = LaravelTokenResponse & { user: User };
@@ -92,18 +91,5 @@ export async function requestResetPassword(input: {
     return { message: response.data?.message ?? "Password reset." };
   } catch (error) {
     throw toApiError(error, "Unable to reset password");
-  }
-}
-
-export async function refreshAccessToken(
-  refreshToken: string,
-): Promise<LaravelTokenResponse> {
-  try {
-    const response = await laravelHttp.post("/auth/refresh", {
-      refresh_token: refreshToken,
-    });
-    return unwrapOrThrow<LaravelTokenResponse>(response);
-  } catch (error) {
-    throw toApiError(error, "Failed to refresh access token");
   }
 }

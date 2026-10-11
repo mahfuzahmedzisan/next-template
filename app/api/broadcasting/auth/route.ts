@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/auth-cookies";
 import { laravelHttp, toApiError } from "@/lib/auth/http";
 
 /**
- * Echo never sees the Passport bearer token. This route reads the httpOnly
+ * Echo never sees the Sanctum bearer token. This route reads the httpOnly
  * session and forwards `socket_id` / `channel_name` to the API.
  */
 export async function POST(request: Request) {

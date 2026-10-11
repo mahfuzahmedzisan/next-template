@@ -4,19 +4,11 @@ import type { NextRequest } from "next/server";
 
 import {
   SESSION_COOKIE,
-  SESSION_OVERRIDE_HEADER,
   decrypt,
-  sessionHasEnded,
   sessionLooksAuthenticated,
 } from "@/lib/auth/session";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
 import { runWithFrontendOrigin } from "@/lib/auth/frontend-origin-store";
-import {
-  buildRefreshedSession,
-  encryptSessionCookie,
-  needsAccessTokenRefresh,
-  sessionCookieOptions,
-} from "@/lib/auth/session-refresh";
 
 /**
  * Proxy (Next.js 16's replacement for middleware.ts) only does the
@@ -28,14 +20,6 @@ import {
  * it as a full session store.
  */
 const AUTH_ONLY_PATHS = ["/login", "/register", "/forgot-password"];
-
-function nextWithRequest(request: NextRequest, requestHeaders: Headers) {
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-}
 
 async function resolveFavicon(origin: string) {
   const base = process.env.LARAVEL_API_URL?.replace(/\/$/, "");
@@ -99,40 +83,14 @@ async function handleProxy(request: NextRequest) {
   }
 
   const cookie = request.cookies.get(SESSION_COOKIE)?.value;
-  let session = await decrypt(cookie);
-  let refreshedCookieValue: string | null = null;
-  let clearedSession = false;
-
-  // Never trust a client-supplied override; only proxy may mint one.
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.delete(SESSION_OVERRIDE_HEADER);
-
-  if (session && sessionHasEnded(session)) {
-    request.cookies.delete(SESSION_COOKIE);
-    session = null;
-    clearedSession = true;
-  }
-
-  // Persist silent refresh before RSC runs (cookie writes are illegal in RSC).
-  if (session && needsAccessTokenRefresh(session)) {
-    const outcome = await buildRefreshedSession(session);
-
-    if (outcome.status === "refreshed") {
-      refreshedCookieValue = await encryptSessionCookie(outcome.session);
-      request.cookies.set(SESSION_COOKIE, refreshedCookieValue);
-      requestHeaders.set(SESSION_OVERRIDE_HEADER, refreshedCookieValue);
-      session = outcome.session;
-    } else if (outcome.status === "revoked") {
-      request.cookies.delete(SESSION_COOKIE);
-      session = null;
-      clearedSession = true;
-    }
-    // "unavailable" falls through untouched. The API being briefly
-    // unreachable is not grounds for signing anyone out; the next request
-    // tries again.
-  }
-
+  const session = await decrypt(cookie);
   const authenticated = sessionLooksAuthenticated(session);
+  // An unreadable or past-deadline cookie is dropped so RSC never sees it.
+  const clearedSession = Boolean(cookie) && !authenticated;
+
+  if (clearedSession) {
+    request.cookies.delete(SESSION_COOKIE);
+  }
 
   if (isAdmin && !authenticated) {
     const loginUrl = request.nextUrl.clone();
@@ -153,25 +111,13 @@ async function handleProxy(request: NextRequest) {
     const adminUrl = request.nextUrl.clone();
     adminUrl.pathname = "/admin";
     adminUrl.search = "";
-    const redirectResponse = NextResponse.redirect(adminUrl);
-    if (refreshedCookieValue) {
-      redirectResponse.cookies.set(
-        SESSION_COOKIE,
-        refreshedCookieValue,
-        sessionCookieOptions(session?.sessionEndsAt),
-      );
-    }
-    return redirectResponse;
+    return NextResponse.redirect(adminUrl);
   }
 
-  const response = nextWithRequest(request, requestHeaders);
-  if (refreshedCookieValue) {
-    response.cookies.set(
-      SESSION_COOKIE,
-      refreshedCookieValue,
-      sessionCookieOptions(session?.sessionEndsAt),
-    );
-  } else if (clearedSession) {
+  const response = NextResponse.next({
+    request: { headers: new Headers(request.headers) },
+  });
+  if (clearedSession) {
     response.cookies.delete(SESSION_COOKIE);
   }
 
