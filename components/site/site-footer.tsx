@@ -1,36 +1,74 @@
-import { TransitionLink as Link } from "@/components/transitions/transition-link"
+import type { Route } from "next"
 
-import { siteNav } from "@/content/site"
-import { Button } from "@/components/ui/button"
+import { TransitionLink as Link } from "@/components/transitions/transition-link"
+import { legalNav, primaryNav, site } from "@/content/site"
 import { fetchSiteIdentity } from "@/lib/seo/public"
 
-import { ContactLinks } from "./contact-links"
-import { NavLinks } from "./nav-links"
-
 export async function SiteFooter() {
-  const items = siteNav()
   const identity = await fetchSiteIdentity()
+  const year = new Date().getFullYear()
 
   return (
     <footer className="border-t border-border/70">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium">{identity.name}</p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            A private workspace for your account, session, and security
-            settings.
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+        <div>
+          <p className="text-sm font-semibold">{identity.name}</p>
+          <p className="site-small mt-3 max-w-sm">
+            {site.summary} Based in {site.location}. {site.availability}
           </p>
-          {items.length > 0 ? (
-            <nav aria-label="Footer">
-              <NavLinks />
-            </nav>
-          ) : null}
-          <ContactLinks />
         </div>
-        <Button asChild variant="outline" className="min-h-11 w-fit">
-          <Link href="/login">Open workspace</Link>
-        </Button>
+        <nav aria-label="Site">
+          <p className="text-sm font-medium">Pages</p>
+          <ul className="mt-2">
+            <li>
+              <Link href="/" className="site-foot">
+                Home
+              </Link>
+            </li>
+            {primaryNav.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href as Route} className="site-foot">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <nav aria-label="Legal">
+          <p className="text-sm font-medium">Legal</p>
+          <ul className="mt-2">
+            {legalNav.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href as Route} className="site-foot">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div>
+          <p className="text-sm font-medium">Elsewhere</p>
+          <ul className="mt-2">
+            {site.email ? (
+              <li>
+                <a href={`mailto:${site.email}`} className="site-foot">
+                  Email
+                </a>
+              </li>
+            ) : null}
+            {site.profiles.map((profile) => (
+              <li key={profile.href}>
+                <a href={profile.href} className="site-foot" rel="me noopener" target="_blank">
+                  {profile.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
+      <p className="mx-auto w-full max-w-6xl border-t border-border/70 px-6 py-5 text-xs text-muted-foreground">
+        © {year} {identity.name}. All rights reserved.
+      </p>
     </footer>
   )
 }

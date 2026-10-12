@@ -1,4 +1,4 @@
-import { site, type Project } from "@/content/site"
+import { site } from "@/content/site"
 import type { SeoIdentity } from "@/lib/seo/types"
 
 function personId(origin: string) {
@@ -50,24 +50,23 @@ export function websiteSchema(
   }
 }
 
-export function projectSchema(
+/** BreadcrumbList for an inner page; the home page is always the first item. */
+export function breadcrumbSchema(
   identity: SeoIdentity,
-  project: Project,
-  pageUrl?: string,
+  items: readonly { name: string; path: string }[],
 ): Record<string, unknown> {
   const origin = originOf(identity)
+  const trail = [{ name: "Home", path: "/" }, ...items]
 
   return {
     "@context": "https://schema.org",
-    "@type": "CreativeWork",
-    name: project.title,
-    headline: project.title,
-    description: project.summary,
-    ...(pageUrl ? { url: pageUrl } : {}),
-    ...(project.image ? { image: project.image.src } : {}),
-    ...(project.tags.length > 0 ? { keywords: [...project.tags] } : {}),
-    author: { "@id": personId(origin) },
-    isPartOf: { "@id": websiteId(origin) },
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: `${origin}${item.path === "/" ? "/" : item.path}`,
+    })),
   }
 }
 
@@ -75,13 +74,5 @@ export function siteStructuredData(
   identity: SeoIdentity,
   description?: string | null,
 ): Record<string, unknown>[] {
-  const origin = originOf(identity)
-
-  return [
-    personSchema(identity),
-    websiteSchema(identity, description),
-    ...site.projects.map((project) =>
-      projectSchema(identity, project, `${origin}/#${project.slug}`),
-    ),
-  ]
+  return [personSchema(identity), websiteSchema(identity, description)]
 }

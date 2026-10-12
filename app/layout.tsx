@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import {
-  AlertCircleIcon,
-  InfoIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-} from "lucide-react";
 import { AnimationProvider } from "@/components/animations/providers/animation-provider";
-import { DocumentIcon } from "@/components/brand/document-icon";
+import { AppToaster } from "@/components/app-toaster";
 import { JsonLd } from "@/components/seo/json-ld";
 import { SectionErrorBoundary } from "@/components/site/section-error-boundary";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TransitionProvider } from "@/components/transitions/transition-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { fetchPublicSettings } from "@/lib/settings/public";
+import { fetchBrandIcons } from "@/lib/brand/icons";
 import { fetchPageSeo } from "@/lib/seo/public";
 import { siteStructuredData } from "@/lib/structured-data";
 import { Analytics } from "@vercel/analytics/next"
@@ -28,7 +21,8 @@ const geistSans = Geist({
 
 /** Site-wide parts only; each public page sets its own title, description, canonical and OG. */
 export async function generateMetadata(): Promise<Metadata> {
-  const { identity } = await fetchPageSeo("/");
+  const [{ identity }, brand] = await Promise.all([fetchPageSeo("/"), fetchBrandIcons()]);
+  const v = `?v=${brand.version}`;
 
   return {
     metadataBase: new URL(identity.site_url),
@@ -39,11 +33,18 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: identity.name,
     creator: identity.name,
     formatDetection: { telephone: false, address: false, email: false },
+    icons: {
+      icon: [
+        { url: `/favicon.ico${v}`, type: "image/x-icon" },
+        { url: `/brand/icon-192.png${v}`, sizes: "192x192", type: "image/png" },
+      ],
+      apple: [{ url: `/brand/apple-touch-icon.png${v}`, sizes: "180x180", type: "image/png" }],
+    },
   };
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const [settings, home] = await Promise.all([fetchPublicSettings(), fetchPageSeo("/")]);
+  const home = await fetchPageSeo("/");
 
   return (
     <html
@@ -52,7 +53,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-svh flex-col">
-        <DocumentIcon href={settings.favicon_url} />
         <JsonLd data={siteStructuredData(home.identity, home.description)} />
         <ThemeProvider
           attribute="class"
@@ -70,18 +70,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 >
                   <SectionErrorBoundary>{children}</SectionErrorBoundary>
                 </div>
-                <Toaster
-                  position="top-right"
-                  duration={2000}
-                  richColors
-                  closeButton
-                  icons={{
-                    success: <CheckCircleIcon className="h-4 w-4" />,
-                    error: <XCircleIcon className="h-4 w-4" />,
-                    warning: <AlertCircleIcon className="h-4 w-4" />,
-                    info: <InfoIcon className="h-4 w-4" />,
-                  }}
-                />
+                <AppToaster />
               </TooltipProvider>
             </TransitionProvider>
           </AnimationProvider>

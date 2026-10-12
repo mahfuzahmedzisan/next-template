@@ -123,6 +123,8 @@ export type SeoOptions = {
   image_previews: SeoImagePreview[];
   affix_modes: SeoAffixMode[];
   placeholders: string[];
+  /** The SEO health scan's strict ranges, so the editor counts against the same limits. */
+  lengths: Record<"title" | "description", { min: number; max: number }>;
 };
 
 export type SeoOverview = {

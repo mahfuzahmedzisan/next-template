@@ -1,39 +1,48 @@
 /**
- * Portfolio copy. A section is rendered only when its fields have values.
- * Leave unknown projects, URLs, and contact details unset.
+ * Portfolio profile. This is demo copy; replace it with real details.
+ * Projects and blog posts come from the API, not from this file.
  */
-export type ProjectImage = {
-  src: string
-  width: number
-  height: number
-  alt: string
-}
-
-export type Project = {
-  slug: string
-  title: string
-  summary: string
-  tags: readonly string[]
-  liveUrl?: string
-  sourceUrl?: string
-  image?: ProjectImage
-  caseStudy?: string
-}
-
 export type SiteProfile = {
   label: string
   href: string
 }
 
+export type NavItem = {
+  href: string
+  label: string
+}
+
 export const site = {
-  name: "Dashboard Layout",
-  role: undefined as string | undefined,
-  summary: undefined as string | undefined,
-  about: [] as readonly string[],
-  skills: [] as readonly string[],
-  projects: [] as readonly Project[],
-  email: undefined as string | undefined,
-  profiles: [] as readonly SiteProfile[],
+  name: "Mahfuz Ahmed",
+  role: "Full-stack developer" as string | undefined,
+  summary:
+    "Full-stack developer building fast, accessible web apps with Next.js and Laravel, from first sketch to production support." as
+      | string
+      | undefined,
+  location: "Dhaka, Bangladesh",
+  availability: "Taking on new projects for the next quarter.",
+  about: [
+    "I design and build web applications for small teams that need software to remove friction from their day: dashboards that replace spreadsheets, booking systems that cut phone calls, and portals that make information easy to find.",
+    "Most of my work pairs a Next.js front end with a Laravel API. I care about the parts users never notice until they go wrong: fast first loads, clear errors, accessible controls and data that is never lost.",
+  ] as readonly string[],
+  skills: [
+    "Next.js",
+    "React",
+    "TypeScript",
+    "Laravel",
+    "PHP",
+    "PostgreSQL",
+    "MySQL",
+    "Redis",
+    "Tailwind CSS",
+    "Accessibility",
+    "Technical SEO",
+  ] as readonly string[],
+  email: "hello@mahfuz-ahmed.example" as string | undefined,
+  profiles: [
+    { label: "GitHub", href: "https://github.com/" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/" },
+  ] as readonly SiteProfile[],
   resumeHref: undefined as string | undefined,
 }
 
@@ -41,23 +50,18 @@ export function siteDescription() {
   return site.summary ?? site.role ?? site.name
 }
 
-export function siteNav() {
-  const items: { href: string; label: string }[] = []
+export const primaryNav: readonly NavItem[] = [
+  { href: "/about", label: "About" },
+  { href: "/services", label: "Services" },
+  { href: "/projects", label: "Projects" },
+  { href: "/blog", label: "Blog" },
+  { href: "/contact", label: "Contact" },
+]
 
-  if (site.about.length > 0 || site.skills.length > 0) {
-    items.push({ href: "#about", label: "About" })
-  }
-
-  if (site.projects.length > 0) {
-    items.push({ href: "#work", label: "Work" })
-  }
-
-  if (site.email || site.resumeHref || site.profiles.length > 0) {
-    items.push({ href: "#contact", label: "Contact" })
-  }
-
-  return items
-}
+export const legalNav: readonly NavItem[] = [
+  { href: "/privacy-policy", label: "Privacy policy" },
+  { href: "/terms", label: "Terms of service" },
+]
 
 export function hasContact() {
   return Boolean(site.email || site.resumeHref || site.profiles.length > 0)

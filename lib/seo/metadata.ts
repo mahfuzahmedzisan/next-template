@@ -25,7 +25,13 @@ export function canonicalFor(seo: ResolvedSeo, options: MetadataOptions = {}): s
 export function toMetadata(seo: ResolvedSeo, options: MetadataOptions = {}): Metadata {
   const canonical = canonicalFor(seo, options);
   const ogType: OpenGraphType = seo.open_graph.type === "article" || seo.open_graph.type === "profile" ? seo.open_graph.type : "website";
-  const image = { url: seo.open_graph.image, alt: seo.open_graph.image_alt };
+  const { image_width: width, image_height: height, image_type: type } = seo.open_graph;
+  const image = {
+    url: seo.open_graph.image,
+    alt: seo.open_graph.image_alt,
+    ...(width && height ? { width, height } : {}),
+    ...(type ? { type } : {}),
+  };
   const robots = seo.robots;
 
   const openGraph: Metadata["openGraph"] = {
@@ -67,7 +73,7 @@ export function toMetadata(seo: ResolvedSeo, options: MetadataOptions = {}): Met
       card: seo.twitter.card,
       title: seo.twitter.title,
       description: seo.twitter.description ?? undefined,
-      images: [seo.twitter.image],
+      images: [{ url: seo.twitter.image, alt: seo.open_graph.image_alt }],
       site: seo.twitter.site ?? undefined,
       creator: seo.twitter.creator ?? undefined,
     },

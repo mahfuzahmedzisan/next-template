@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto"
 import { revalidateTag } from "next/cache"
 
 const MAX_TAGS = 20
-const ALLOWED_TAG = /^(seo|(product|blog):[A-Za-z0-9_-]{1,64})$/
+const ALLOWED_TAG = /^(seo|seo-files|(project|post|product|blog):[A-Za-z0-9_-]{1,64})$/
 
 function sameSecret(given: string | null, expected: string): boolean {
   if (!given) return false

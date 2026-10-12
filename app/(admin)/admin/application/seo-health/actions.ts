@@ -2,7 +2,7 @@
 
 import { toResult } from "@/lib/actions/result";
 import { getSeoAuditLatest, getSeoAuditPage, listSeoAudits, startSeoAudit } from "@/lib/admin/seo";
-import type { SeoAuditCheck, SeoAuditLatest, SeoAuditPageRow, SeoAuditRow } from "@/lib/admin/seo-audit-types";
+import type { SeoAuditCheck, SeoAuditLatest, SeoAuditPageRow, SeoAuditRow, SeoAuditScope } from "@/lib/admin/seo-audit-types";
 import { ApiError } from "@/lib/auth/api-error";
 
 type Failure = { ok: false; message: string };
@@ -11,9 +11,9 @@ export type AuditLatestResult = { ok: true; message: string; latest: SeoAuditLat
 export type AuditHistoryResult = { ok: true; audits: SeoAuditRow[] } | Failure;
 export type AuditPageResult = { ok: true; page: SeoAuditPageRow & { checks: SeoAuditCheck[] } } | Failure;
 
-export async function startSeoAuditAction(includeNoindex: boolean): Promise<AuditLatestResult> {
+export async function startSeoAuditAction(includeNoindex: boolean, scope: SeoAuditScope = "full"): Promise<AuditLatestResult> {
   try {
-    return { ok: true, message: "Audit started.", latest: await startSeoAudit(includeNoindex) };
+    return { ok: true, message: "Audit started.", latest: await startSeoAudit(includeNoindex, scope) };
   } catch (error) {
     const result = toResult(error, "Unable to start the audit.") as Failure;
     if (error instanceof ApiError && error.status === 409) {

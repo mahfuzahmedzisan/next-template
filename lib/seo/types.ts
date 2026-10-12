@@ -27,6 +27,10 @@ export type ResolvedSeo = {
     title: string;
     description: string | null;
     image: string;
+    /** Set when the backend knows the real size (its 1200x628 variant or the /og card). */
+    image_width?: number | null;
+    image_height?: number | null;
+    image_type?: string | null;
     image_alt: string;
     type: string;
     locale: string;

@@ -612,3 +612,86 @@ html[data-navigation-progress-active] .route-fallback__track {
     top: calc(100% - var(--media-slider-chapter-end) + var(--media-spacing) * var(--media-chapter-inset-end));
     bottom: calc(var(--media-slider-chapter-start) + var(--media-spacing) * var(--media-chapter-inset-start));
     clip-path: inset(-1px);}
+
+/*
+ * Public site. Every class name is written twice per page (HTML and the RSC
+ * payload), so repeated utility lists live here to keep text-to-HTML high.
+ */
+@layer components {
+  .site-main {
+    @apply mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-6 py-12 md:py-16;
+  }
+  .site-h1 {
+    @apply text-4xl font-semibold tracking-tight text-foreground md:text-5xl;
+  }
+  .site-h2 {
+    @apply text-3xl font-semibold tracking-tight text-foreground;
+  }
+  .site-h2s {
+    @apply text-2xl font-semibold tracking-tight text-foreground;
+  }
+  .site-h3 {
+    @apply text-lg font-semibold text-foreground;
+  }
+  .site-lead {
+    @apply text-lg leading-8 text-muted-foreground;
+  }
+  .site-copy {
+    @apply flex flex-col gap-4 text-base leading-7 text-muted-foreground;
+  }
+  .site-small {
+    @apply text-sm leading-6 text-muted-foreground;
+  }
+  .site-prose {
+    @apply gap-5;
+  }
+  .site-prose h2 {
+    @apply mt-6 text-2xl font-semibold tracking-tight text-foreground;
+  }
+  .site-prose h3 {
+    @apply mt-2 text-lg font-semibold text-foreground;
+  }
+  .site-prose ul {
+    @apply flex list-disc flex-col gap-2 pl-5;
+  }
+  .site-card {
+    @apply rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm;
+  }
+  .site-split {
+    @apply grid gap-10 md:grid-cols-[1fr_1.6fr];
+  }
+  .site-chips {
+    @apply flex flex-wrap gap-2;
+  }
+  .site-chips > li {
+    @apply rounded-full border border-border/70 bg-card px-3 py-1 text-sm text-foreground;
+  }
+  .site-a {
+    @apply font-medium text-foreground underline underline-offset-4;
+  }
+  .site-focus,
+  .site-more,
+  .site-nav,
+  .site-foot {
+    @apply rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50;
+  }
+  .site-more {
+    @apply inline-flex min-h-11 items-center gap-1 text-sm font-medium text-foreground underline-offset-4 hover:underline;
+  }
+  .site-nav {
+    @apply inline-flex min-h-11 items-center px-2 text-sm font-medium text-foreground hover:text-muted-foreground;
+  }
+  .site-foot {
+    @apply inline-flex min-h-9 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline;
+  }
+  .site-skip {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-4 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-md focus:bg-background focus:px-3 focus:text-sm focus:font-medium focus:text-foreground focus:ring-3 focus:ring-ring/50 focus:outline-none;
+  }
+  .site-btn,
+  .site-btn-outline {
+    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-primary px-4 text-sm font-medium whitespace-nowrap text-primary-foreground transition-all outline-none select-none hover:bg-primary/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px [&_svg]:size-4 [&_svg]:shrink-0;
+  }
+  .site-btn-outline {
+    @apply border-border bg-background text-foreground hover:bg-muted dark:border-input dark:bg-input/30 dark:hover:bg-input/50;
+  }
+}

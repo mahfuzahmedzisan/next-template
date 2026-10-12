@@ -3,6 +3,8 @@ import "server-only";
 import { SeoFetchError, seoFetch, seoPrimaryOrigin } from "@/lib/seo/api";
 
 const PUBLIC_CACHE = "public, max-age=300";
+const FILE_TAG = "seo-files";
+const FILE_REVALIDATE_SECONDS = 3600;
 
 type ProxyOptions = {
   contentType: string;
@@ -10,10 +12,18 @@ type ProxyOptions = {
   fallback?: () => string;
 };
 
-/** Streams a backend-generated SEO file (sitemap, robots, llms) to crawlers. */
+/**
+ * Serves a backend-generated SEO file (sitemap, robots, llms) to crawlers.
+ * The upstream copy is cached under the `seo-files` tag, which the backend
+ * revalidates after it regenerates the files. Route handlers using this
+ * export `revalidate = 0` so the outage fallback still runs per request.
+ */
 export async function proxySeoFile(file: string, { contentType, fallback }: ProxyOptions): Promise<Response> {
   try {
-    const upstream = await seoFetch(`/seo/${file}`, { cache: "no-store", headers: { Accept: "*/*" } });
+    const upstream = await seoFetch(`/seo/${file}`, {
+      headers: { Accept: "*/*" },
+      next: { tags: [FILE_TAG], revalidate: FILE_REVALIDATE_SECONDS },
+    });
 
     return new Response(await upstream.text(), {
       headers: { "Content-Type": contentType, "Cache-Control": PUBLIC_CACHE },

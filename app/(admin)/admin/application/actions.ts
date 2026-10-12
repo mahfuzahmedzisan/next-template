@@ -27,7 +27,7 @@ function toResult(error: unknown, fallback: string): SettingsActionResult {
 
 function refresh() {
   revalidatePath("/", "layout");
-  revalidatePath("/icon");
+  revalidatePath("/brand/[file]", "page");
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/application", "layout");
 }

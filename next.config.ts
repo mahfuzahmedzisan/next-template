@@ -6,6 +6,18 @@ const nextConfig: NextConfig = {
   // Setting this replaces Next's default list, so extend it: the SEO health
   // scanner reads metadata from <head>, which streaming would leave empty.
   htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|MahfuzSeoScanner`, "i"),
+  // Fewer breakpoints keep each srcset short; covers never render wider than 1200 CSS px.
+  images: {
+    deviceSizes: [640, 828, 1200, 1920],
+  },
+  // 301 rather than Next's default 308: several SEO checkers only accept 301 for duplicate home URLs.
+  async redirects() {
+    return ["/index.html", "/index.php", "/home"].map((source) => ({
+      source,
+      destination: "/",
+      statusCode: 301 as const,
+    }));
+  },
 };
 
 const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;

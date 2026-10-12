@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { SeoAuditCheck, SeoAuditLatest, SeoAuditPageRow, SeoAuditRow } from "@/lib/admin/seo-audit-types";
+import type { SeoAuditCheck, SeoAuditLatest, SeoAuditPageRow, SeoAuditRow, SeoAuditScope } from "@/lib/admin/seo-audit-types";
 import type {
   SeoFileEntry,
   SeoFileName,
@@ -82,8 +82,8 @@ export async function listSeoAudits() {
   return data.audits;
 }
 
-export function startSeoAudit(includeNoindex: boolean) {
-  return authedRequest<SeoAuditLatest>("post", "/admin/seo/audits", { include_noindex: includeNoindex });
+export function startSeoAudit(includeNoindex: boolean, scope: SeoAuditScope = "full") {
+  return authedRequest<SeoAuditLatest>("post", "/admin/seo/audits", { include_noindex: includeNoindex, scope });
 }
 
 export async function getSeoAuditPage(auditId: number, pageId: number) {

@@ -5,7 +5,6 @@ import { toast } from "sonner";
 
 import { saveSeoSettingsAction } from "@/app/(admin)/admin/application/seo/actions";
 import {
-  DESCRIPTION_RANGE,
   keywordsToText,
   linesToList,
   previewTitle,
@@ -166,7 +165,7 @@ export function SeoSettingsForm({
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <Label htmlFor="seo-default-description">Default description</Label>
-          <CharCount value={description} range={DESCRIPTION_RANGE} />
+          <CharCount value={description} range={overview.options.lengths.description} />
         </div>
         <Textarea
           id="seo-default-description"

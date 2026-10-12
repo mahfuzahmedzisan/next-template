@@ -1,8 +1,5 @@
 import type { SeoFieldValues, SeoGlobalSettings, SeoPageEntry } from "@/lib/admin/seo-types";
 
-export const TITLE_RANGE = { min: 30, max: 60 } as const;
-export const DESCRIPTION_RANGE = { min: 70, max: 160 } as const;
-
 export const PAGE_TYPE_LABELS: Record<string, string> = {
   home: "Home",
   about: "About",

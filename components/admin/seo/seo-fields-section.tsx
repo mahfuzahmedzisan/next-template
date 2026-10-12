@@ -2,13 +2,7 @@
 
 import { useId, type ReactNode } from "react";
 
-import {
-  DESCRIPTION_RANGE,
-  keywordsToText,
-  previewTitle,
-  textToKeywords,
-  TITLE_RANGE,
-} from "@/components/admin/seo/seo-meta";
+import { keywordsToText, previewTitle, textToKeywords } from "@/components/admin/seo/seo-meta";
 import { CharCount, SearchPreview, SocialPreview } from "@/components/admin/seo/seo-previews";
 import { MediaChoiceField } from "@/components/media/media-choice";
 import { Input } from "@/components/ui/input";
@@ -177,7 +171,7 @@ export function SeoFieldsSection({
         <Field
           label="Meta title"
           htmlFor={`${id}-title`}
-          aside={<CharCount value={title} range={TITLE_RANGE} />}
+          aside={<CharCount value={title} range={options.lengths.title} />}
           hint={`Empty uses “${context.fallbackTitle || settings.identity.name}”. The count is for the full title shown above.`}
         >
           <Input
@@ -234,7 +228,7 @@ export function SeoFieldsSection({
         <Field
           label="Meta description"
           htmlFor={`${id}-description`}
-          aside={<CharCount value={value.meta_description ?? ""} range={DESCRIPTION_RANGE} />}
+          aside={<CharCount value={value.meta_description ?? ""} range={options.lengths.description} />}
           hint={settings.default_description ? "Empty uses the site default description." : undefined}
         >
           <Textarea

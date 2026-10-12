@@ -1,15 +1,17 @@
 import type { Metadata } from "next"
-import { KeyRound, ShieldCheck, LayoutDashboard } from "lucide-react"
-import { TransitionLink as Link } from "@/components/transitions/transition-link"
-import { RouteReady } from "@/components/transitions/route-ready"
+import { ArrowRight } from "lucide-react"
+import type { ReactNode } from "react"
 
 import { SeoJsonLd } from "@/components/seo/json-ld"
-import { ContactForm } from "@/components/site/contact-form"
-import { ContactLinks } from "@/components/site/contact-links"
-import { ProjectList } from "@/components/site/project-list"
+import { PostCard, ProjectCard } from "@/components/site/content-cards"
+import { CtaSection } from "@/components/site/cta-section"
 import { Reveal } from "@/components/site/reveal"
-import { Button } from "@/components/ui/button"
-import { hasContact, site } from "@/content/site"
+import { RouteReady } from "@/components/transitions/route-ready"
+import { TransitionLink as Link } from "@/components/transitions/transition-link"
+import { homePage } from "@/content/pages/home"
+import { services } from "@/content/pages/services"
+import { site } from "@/content/site"
+import { fetchPosts, fetchProjects } from "@/lib/content/api"
 import { toMetadata } from "@/lib/seo/metadata"
 import { fetchPageSeo } from "@/lib/seo/public"
 
@@ -17,130 +19,189 @@ export async function generateMetadata(): Promise<Metadata> {
   return toMetadata(await fetchPageSeo("/"))
 }
 
-const features = [
-  {
-    title: "Signed-in workspace",
-    body: "Dashboard, profile, and security live in one shell. The public site stays separate.",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Session stays here",
-    body: "Sign-in goes through this app. Tokens are not left in the browser for page scripts to read.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Account security",
-    body: "Update your password and turn on an authenticator without leaving the workspace.",
-    icon: KeyRound,
-  },
-]
+function SectionHead({ id, title, intro, more }: { id: string; title: string; intro: string; more?: { href: "/services" | "/projects" | "/blog"; label: string } }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="max-w-2xl">
+        <h2 id={id} className="site-h2">
+          {title}
+        </h2>
+        <p className="site-copy mt-3">{intro}</p>
+      </div>
+      {more ? (
+        <Link href={more.href} className="site-more">
+          {more.label} <ArrowRight aria-hidden className="size-4" />
+        </Link>
+      ) : null}
+    </div>
+  )
+}
+
+function Section({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-8">
+      {children}
+    </section>
+  )
+}
 
 export default async function Home() {
-  const seo = await fetchPageSeo("/")
-  const showAbout = site.about.length > 0 || site.skills.length > 0
-  const showWork = site.projects.length > 0
-  const showContact = hasContact()
-  const lead = site.role ?? "Private workspace"
-  const summary =
-    site.summary ??
-    "Sign in to manage your profile, password, and two-factor authentication."
+  const [seo, projects, posts] = await Promise.all([
+    fetchPageSeo("/"),
+    fetchProjects({ featured: true, perPage: 4 }),
+    fetchPosts({ perPage: 3 }),
+  ])
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-20 px-6 py-16 md:py-24">
+    <main className="site-main gap-24 md:py-24">
       <RouteReady />
       <SeoJsonLd seo={seo} />
+
       <Reveal>
-        <section aria-labelledby="home-heading" className="max-w-2xl">
-          <p className="text-sm font-medium text-muted-foreground">{lead}</p>
-          <h1
-            id="home-heading"
-            className="mt-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
-          >
-            {seo.identity.name}
+        <section aria-labelledby="home-heading" className="max-w-3xl">
+          <p className="site-small font-medium">{homePage.eyebrow}</p>
+          <h1 id="home-heading" className="site-h1 mt-3">
+            {homePage.heading}
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">
-            {summary}
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button asChild className="min-h-11">
-              <Link href="/login">Sign in</Link>
-            </Button>
-            {showContact ? (
-              <Button asChild variant="outline" className="min-h-11">
-                <a href="#contact">Contact</a>
-              </Button>
-            ) : (
-              <Button asChild variant="outline" className="min-h-11">
-                <Link href="/register">Create an account</Link>
-              </Button>
-            )}
-            <ContactLinks />
+          <p className="site-lead mt-5 max-w-2xl">{homePage.lead}</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/contact" className="site-btn">
+              Start a project
+            </Link>
+            <Link href="/projects" className="site-btn-outline">
+              See my work
+            </Link>
           </div>
         </section>
       </Reveal>
 
-      <section aria-label="Workspace" className="grid gap-4 md:grid-cols-3">
-        {features.map((feature, index) => (
-          <Reveal key={feature.title} delay={0.08 + index * 0.06}>
-            <article className="h-full rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm backdrop-blur-md">
-              <feature.icon className="size-4 text-foreground" />
-              <h2 className="mt-4 text-base font-semibold">{feature.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {feature.body}
-              </p>
-            </article>
-          </Reveal>
-        ))}
+      <section aria-labelledby="intro-heading" className="site-split">
+        <h2 id="intro-heading" className="site-h2">
+          {homePage.intro.heading}
+        </h2>
+        <div className="site-copy">
+          {homePage.intro.paragraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+          <p>
+            Want the longer version? Read more{" "}
+            <Link href="/about" className="site-a">
+              about me and how I work
+            </Link>
+            .
+          </p>
+        </div>
       </section>
 
-      {showAbout ? (
-        <section id="about" className="scroll-mt-24 flex max-w-2xl flex-col gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            About
-          </h2>
-          {site.about.map((paragraph) => (
-            <p
-              key={paragraph}
-              className="text-base leading-7 text-muted-foreground"
-            >
-              {paragraph}
-            </p>
+      <Section id="services-heading">
+        <SectionHead
+          id="services-heading"
+          title="What I can help with"
+          intro="Four kinds of work make up most of my projects. Many clients start with one and add another once the first release is live."
+          more={{ href: "/services", label: "All services" }}
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {services.map((service) => (
+            <article key={service.slug} className="site-card">
+              <h3 className="site-h3">{service.title}</h3>
+              <p className="site-small mt-2">{service.short}</p>
+            </article>
           ))}
-          {site.skills.length > 0 ? (
-            <ul className="flex flex-wrap gap-2">
-              {site.skills.map((skill) => (
-                <li
-                  key={skill}
-                  className="rounded-full border border-border/70 bg-card px-3 py-1 text-sm text-foreground"
-                >
-                  {skill}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
+        </div>
+      </Section>
 
-      {showWork ? (
-        <section id="work" className="scroll-mt-24 flex flex-col gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Work
-          </h2>
-          <ProjectList />
-        </section>
-      ) : null}
-
-      {showContact ? (
-        <section id="contact" className="scroll-mt-24 flex max-w-xl flex-col gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            Contact
-          </h2>
-          <div className="rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm backdrop-blur-md">
-            <ContactLinks />
-            {site.email ? <ContactForm email={site.email} /> : null}
+      {projects.length > 0 ? (
+        <Section id="work-heading">
+          <SectionHead
+            id="work-heading"
+            title="Selected projects"
+            intro="A few recent case studies, each with the problem, the approach and the results in numbers."
+            more={{ href: "/projects", label: "All projects" }}
+          />
+          <div className="grid gap-6 sm:grid-cols-2">
+            {projects.map((project, index) => (
+              <ProjectCard key={project.id} project={project} priority={index === 0} />
+            ))}
           </div>
-        </section>
+        </Section>
       ) : null}
+
+      <Section id="process-heading">
+        <SectionHead id="process-heading" title={homePage.process.heading} intro={homePage.process.intro} />
+        <ol className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {homePage.process.steps.map((step) => (
+            <li key={step.title} className="site-card">
+              <h3 className="site-h3">{step.title}</h3>
+              <p className="site-small mt-2">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </Section>
+
+      {posts.length > 0 ? (
+        <Section id="writing-heading">
+          <SectionHead
+            id="writing-heading"
+            title="Latest writing"
+            intro="Practical notes on building, shipping and maintaining web applications."
+            more={{ href: "/blog", label: "All posts" }}
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      <section aria-labelledby="faq-heading" className="site-split">
+        <div>
+          <h2 id="faq-heading" className="site-h2">
+            {homePage.faq.heading}
+          </h2>
+          <p className="site-copy mt-3">
+            <span>
+              Something else on your mind?{" "}
+              <Link href="/contact" className="site-a">
+                Ask me directly
+              </Link>
+              .
+            </span>
+          </p>
+        </div>
+        <div className="site-copy">
+          {homePage.faq.items.map((item) => (
+            <div key={item.question}>
+              <h3 className="site-h3 text-base">{item.question}</h3>
+              <p className="site-small mt-2">{item.answer}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="skills-heading" className="flex flex-col gap-4">
+        <h2 id="skills-heading" className="site-h2s">
+          Tools I use every day
+        </h2>
+        <ul className="site-chips">
+          {site.skills.map((skill) => (
+            <li key={skill}>{skill}</li>
+          ))}
+        </ul>
+        <p className="site-small max-w-2xl">
+          I follow the official{" "}
+          <a href="https://nextjs.org/docs" className="site-a">
+            Next.js documentation
+          </a>{" "}
+          and{" "}
+          <a href="https://laravel.com/docs" className="site-a">
+            Laravel documentation
+          </a>{" "}
+          closely and keep every project on supported versions.
+        </p>
+      </section>
+
+      <CtaSection heading={homePage.cta.heading} body={homePage.cta.body} />
     </main>
   )
 }

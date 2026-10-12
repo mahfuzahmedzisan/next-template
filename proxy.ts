@@ -1,4 +1,3 @@
-import { formatMediaUrl } from "@/lib/media/media-url";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -21,36 +20,6 @@ import { runWithFrontendOrigin } from "@/lib/auth/frontend-origin-store";
  */
 const AUTH_ONLY_PATHS = ["/login", "/register", "/forgot-password"];
 
-async function resolveFavicon(origin: string) {
-  const base = process.env.LARAVEL_API_URL?.replace(/\/$/, "");
-  const secret = process.env.BFF_SECRET;
-  if (!base || !secret) return null;
-
-  try {
-    const response = await fetch(`${base}/api/v1/settings/public`, {
-      headers: {
-        Accept: "application/json",
-        "X-BFF-Secret": secret,
-        "X-Frontend-Origin": origin,
-      },
-      cache: "no-store",
-    });
-    if (!response.ok) return null;
-    const json = (await response.json()) as {
-      data?: { settings?: { favicon_url?: string | null } };
-      settings?: { favicon_url?: string | null };
-      favicon_url?: string | null;
-    };
-    const raw =
-      json.data?.settings?.favicon_url ??
-      json.settings?.favicon_url ??
-      json.favicon_url;
-    return raw ? formatMediaUrl(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
 export async function proxy(request: NextRequest) {
   const origin =
     request.headers.get("origin") ?? request.nextUrl.origin;
@@ -61,18 +30,11 @@ export async function proxy(request: NextRequest) {
 async function handleProxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Crawlers want a 200 ICO at /favicon.ico, not a redirect to a PNG.
   if (pathname === "/favicon.ico") {
-    const icon = await resolveFavicon(request.nextUrl.origin);
-    if (icon) {
-      const redirect = NextResponse.redirect(new URL(icon, request.url), 307);
-      redirect.headers.set("Cache-Control", "no-store");
-      return redirect;
-    }
     const url = request.nextUrl.clone();
-    url.pathname = "/icon";
-    const rewrite = NextResponse.rewrite(url);
-    rewrite.headers.set("Cache-Control", "no-store");
-    return rewrite;
+    url.pathname = "/brand/favicon.ico";
+    return NextResponse.rewrite(url);
   }
 
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
