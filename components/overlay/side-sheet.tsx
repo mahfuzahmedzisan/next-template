@@ -36,7 +36,8 @@ export function SideSheet({
       <SheetContent
         side={side}
         className={cn(
-          "w-full gap-0 p-0 data-[side=left]:sm:max-w-xl data-[side=right]:sm:max-w-xl",
+          "w-full gap-0 overflow-hidden p-0 data-[side=left]:sm:max-w-xl data-[side=right]:sm:max-w-xl",
+          "sm:rounded-2xl sm:border data-[side=left]:sm:inset-y-3 data-[side=left]:sm:left-3 data-[side=left]:sm:h-auto data-[side=right]:sm:inset-y-3 data-[side=right]:sm:right-3 data-[side=right]:sm:h-auto",
           className,
         )}
       >
