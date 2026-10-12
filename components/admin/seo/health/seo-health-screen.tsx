@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertTriangle, Info, Loader2, Play } from "lucide-react";
+import { AlertTriangle, ChevronRight, Info, Loader2, Play, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
@@ -77,20 +77,34 @@ function parseTab(value: string | null): Tab {
   return TABS.includes(value as Tab) ? (value as Tab) : "overview";
 }
 
-/** The open tab lives in `?tab=`, so links, reloads and back/forward keep it. */
-function useTabParam(): [Tab, (tab: Tab) => void] {
+const TABS_ID = "seo-health-tabs";
+const ISSUES_ID = "seo-health-issues";
+
+type Go = (tab: Tab, options?: { check?: string; scrollTo?: string }) => void;
+
+/** The open tab and the focused check live in `?tab=` and `?check=`, so links, reloads and back/forward keep them. */
+function useView(): { tab: Tab; check: string | null; go: Go } {
   const searchParams = useSearchParams();
   const tab = parseTab(searchParams.get("tab"));
+  const check = tab === "overview" ? null : searchParams.get("check");
 
-  function setTab(next: Tab) {
+  const go: Go = (next, options = {}) => {
     const params = new URLSearchParams(searchParams.toString());
     if (next === "overview") params.delete("tab");
     else params.set("tab", next);
+    if (options.check) params.set("check", options.check);
+    else params.delete("check");
     const query = params.toString();
     window.history.pushState(null, "", query ? `?${query}` : window.location.pathname);
-  }
 
-  return [tab, setTab];
+    const target = options.scrollTo;
+    if (target) {
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ behavior, block: "start" }));
+    }
+  };
+
+  return { tab, check, go };
 }
 
 const RUNNING_LABELS: Record<SeoAuditScope, string> = {
@@ -135,10 +149,12 @@ function ScoreCard({
   latest,
   timeZone,
   onSection,
+  onChecks,
 }: {
   latest: SeoAuditLatest;
   timeZone: string;
   onSection: (section: SeoAuditSection) => void;
+  onChecks: (result: "passed" | "failed") => void;
 }) {
   const completed = latest.completed;
   const score = completed?.score ?? null;
@@ -158,7 +174,12 @@ function ScoreCard({
           </p>
         </div>
         {completed ? (
-          <ChecksDonut passed={completed.checks_passed} failed={completed.checks_failed} className="w-44" />
+          <ChecksDonut
+            passed={completed.checks_passed}
+            failed={completed.checks_failed}
+            onSelect={onChecks}
+            className="w-44"
+          />
         ) : null}
       </div>
 
@@ -256,7 +277,17 @@ const PRIORITY_COLORS: Record<SeoCheckPriority, string> = {
 };
 
 /** Issue count by priority and estimated fix time by category, from the stored summary. */
-function IssueReport({ summary, categories }: { summary: SeoAuditSummary; categories: Record<SeoCheckCategory, string> }) {
+function IssueReport({
+  summary,
+  categories,
+  priority,
+  onPriority,
+}: {
+  summary: SeoAuditSummary;
+  categories: Record<SeoCheckCategory, string>;
+  priority: SeoCheckPriority | null;
+  onPriority: (priority: SeoCheckPriority) => void;
+}) {
   if (summary.issues.length === 0) return null;
 
   const slices = (Object.keys(PRIORITY_LABELS) as SeoCheckPriority[]).map((priority) => ({
@@ -278,7 +309,13 @@ function IssueReport({ summary, categories }: { summary: SeoAuditSummary; catego
     <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
       <div className="space-y-2 rounded-xl border border-border/70 p-4">
         <h4 className="text-sm font-semibold">Issues by priority</h4>
-        <DonutChart slices={slices} caption={summary.issues.length === 1 ? "issue" : "issues"} className="max-w-52" />
+        <DonutChart
+          slices={slices}
+          caption={summary.issues.length === 1 ? "issue" : "issues"}
+          onSelect={(key) => onPriority(key as SeoCheckPriority)}
+          selected={priority}
+          className="max-w-52"
+        />
       </div>
       <div className="space-y-2 rounded-xl border border-border/70 p-4">
         <h4 className="text-sm font-semibold">Estimated fix time by category</h4>
@@ -288,45 +325,95 @@ function IssueReport({ summary, categories }: { summary: SeoAuditSummary; catego
   );
 }
 
-function Issues({ latest }: { latest: SeoAuditLatest }) {
+function CheckBadge({ onOpen, children }: { onOpen?: () => void; children: ReactNode }) {
+  if (!onOpen) return <Badge variant="outline">{children}</Badge>;
+
+  return (
+    <Badge asChild variant="outline" className="cursor-pointer hover:bg-muted">
+      <button type="button" onClick={onOpen}>
+        {children}
+        <ChevronRight data-icon="inline-end" aria-hidden />
+      </button>
+    </Badge>
+  );
+}
+
+function Issues({
+  latest,
+  onOpen,
+}: {
+  latest: SeoAuditLatest;
+  onOpen: (key: string, section?: SeoAuditSection) => void;
+}) {
+  const [priority, setPriority] = useState<SeoCheckPriority | null>(null);
   const summary = latest.completed?.summary;
   if (!summary) return null;
   const development = latest.completed?.environment === "development";
+  const issues = priority ? summary.issues.filter((issue) => issue.priority === priority) : summary.issues;
 
   return (
-    <section className="space-y-4 rounded-xl border border-border/70 bg-card/70 p-6">
+    <section id={ISSUES_ID} className="scroll-mt-20 space-y-4 rounded-xl border border-border/70 bg-card/70 p-6">
       <div>
         <h3 className="text-base font-semibold">Top issues</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Sorted by priority and weight. Fix the top ones first.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sorted by priority and weight. Open an issue to see where it fails.
+        </p>
       </div>
-      <IssueReport summary={summary} categories={latest.categories} />
+      <IssueReport
+        summary={summary}
+        categories={latest.categories}
+        priority={priority}
+        onPriority={(next) => setPriority((current) => (current === next ? null : next))}
+      />
+      {priority ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Showing {issues.length} {PRIORITY_LABELS[priority].toLowerCase()} priority issue{issues.length === 1 ? "" : "s"}.
+          </span>
+          <Button type="button" variant="ghost" size="xs" onClick={() => setPriority(null)}>
+            <X data-icon="inline-start" aria-hidden />
+            Show all
+          </Button>
+        </div>
+      ) : null}
       {summary.issues.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nothing to fix. Every scored check passed.</p>
       ) : (
-        <ul className="divide-y divide-border/70 rounded-xl border border-border/70">
-          {summary.issues.map((issue) => (
-            <li key={issue.key} className="flex flex-wrap items-start gap-3 p-4">
-              <AlertTriangle
-                className={cn("mt-0.5 size-4 shrink-0", issue.priority === "high" ? "text-destructive" : "text-amber-500")}
-                aria-hidden
-              />
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium">{issue.label}</p>
-                  <Badge variant={issue.priority === "high" ? "destructive" : "secondary"}>{PRIORITY_LABELS[issue.priority]}</Badge>
-                </div>
-                <p className="text-xs leading-5 text-muted-foreground">{issue.message}</p>
-              </div>
-              <div className="text-right text-xs leading-5 text-muted-foreground">
-                <p>
-                  {(issue.section ?? "pages") === "pages"
-                    ? `${issue.pages} page${issue.pages === 1 ? "" : "s"}`
-                    : SECTION_LABELS[issue.section]}
-                </p>
-                <p>{formatMinutes(issue.fix_minutes * Math.max(1, issue.pages))} to fix</p>
-              </div>
-            </li>
-          ))}
+        <ul className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border/70">
+          {issues.map((issue) => {
+            const section = issue.section ?? "pages";
+            return (
+              <li key={issue.key}>
+                <button
+                  type="button"
+                  onClick={() => onOpen(issue.key, section)}
+                  className="group flex w-full flex-wrap items-start gap-3 p-4 text-left outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+                >
+                  <AlertTriangle
+                    className={cn("mt-0.5 size-4 shrink-0", issue.priority === "high" ? "text-destructive" : "text-amber-500")}
+                    aria-hidden
+                  />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-medium">{issue.label}</p>
+                      <Badge variant={issue.priority === "high" ? "destructive" : "secondary"}>
+                        {PRIORITY_LABELS[issue.priority]}
+                      </Badge>
+                    </div>
+                    <p className="text-xs leading-5 text-muted-foreground">{issue.message}</p>
+                  </div>
+                  <div className="text-right text-xs leading-5 text-muted-foreground">
+                    <p>{section === "pages" ? `${issue.pages} page${issue.pages === 1 ? "" : "s"}` : SECTION_LABELS[section]}</p>
+                    <p>{formatMinutes(issue.fix_minutes * Math.max(1, issue.pages))} to fix</p>
+                  </div>
+                  <ChevronRight
+                    className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -342,9 +429,9 @@ function Issues({ latest }: { latest: SeoAuditLatest }) {
           <ul className="flex flex-wrap gap-2">
             {summary.informational.map((item) => (
               <li key={item.key}>
-                <Badge variant="outline">
+                <CheckBadge onOpen={item.failed > 0 ? () => onOpen(item.key) : undefined}>
                   {item.label}: {item.passed} ok · {item.failed} missing
-                </Badge>
+                </CheckBadge>
               </li>
             ))}
           </ul>
@@ -357,9 +444,9 @@ function Issues({ latest }: { latest: SeoAuditLatest }) {
           <ul className="flex flex-wrap gap-2">
             {summary.not_scored.map((item) => (
               <li key={item.key}>
-                <Badge variant="outline">
+                <CheckBadge onOpen={item.failed > 0 ? () => onOpen(item.key) : undefined}>
                   {item.label}: {item.failed > 0 ? `${item.failed} failing` : "ok"}
-                </Badge>
+                </CheckBadge>
               </li>
             ))}
           </ul>
@@ -369,11 +456,24 @@ function Issues({ latest }: { latest: SeoAuditLatest }) {
   );
 }
 
+function checkLabel(summary: SeoAuditSummary | null | undefined, key: string) {
+  return (
+    summary?.issues.find((issue) => issue.key === key)?.label ??
+    summary?.informational.find((item) => item.key === key)?.label ??
+    summary?.not_scored.find((item) => item.key === key)?.label ??
+    key
+  );
+}
+
 function PagesTable({
   latest,
+  check,
+  onClearCheck,
   onSelect,
 }: {
   latest: SeoAuditLatest;
+  check: string | null;
+  onClearCheck: () => void;
   onSelect: (page: SeoAuditPageRow) => void;
 }) {
   const pages = useMemo(() => latest.completed?.pages ?? [], [latest.completed?.pages]);
@@ -382,12 +482,33 @@ function PagesTable({
     () => Array.from(new Set(pages.map((page) => (page.kind === "page" ? "static" : page.page_type)))),
     [pages],
   );
-  const visible = filter === ALL_TYPES ? pages : pages.filter((page) => (page.kind === "page" ? "static" : page.page_type) === filter);
+  const visible = pages.filter(
+    (page) =>
+      (filter === ALL_TYPES || (page.kind === "page" ? "static" : page.page_type) === filter) &&
+      (check === null || (page.failed_checks?.includes(check) ?? true)),
+  );
 
   if (!latest.completed) return null;
 
   return (
     <div className="flex flex-col gap-4">
+      {check ? (
+        <Alert>
+          <AlertTriangle aria-hidden />
+          <AlertTitle>Pages failing “{checkLabel(latest.completed.summary, check)}”</AlertTitle>
+          <AlertDescription>
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+              <span>
+                {visible.length} of {pages.length} page{pages.length === 1 ? "" : "s"}. Open a page to see the check and how to fix it.
+              </span>
+              <Button type="button" variant="outline" size="xs" onClick={onClearCheck}>
+                <X data-icon="inline-start" aria-hidden />
+                Show all pages
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold">Pages</h3>
@@ -413,7 +534,9 @@ function PagesTable({
         </div>
       </div>
 
-      <PageCharts pages={visible} limits={latest.limits ?? DEFAULT_LIMITS} />
+      <div className={cn(check && "order-last")}>
+        <PageCharts pages={visible} limits={latest.limits ?? DEFAULT_LIMITS} />
+      </div>
 
       <ul className="divide-y divide-border/70 rounded-xl border border-border/70 bg-card/70">
         {visible.map((page) => (
@@ -491,7 +614,7 @@ export function SeoHealthScreen({
   const [history, setHistory] = useState(initialHistory);
   const [includeNoindex, setIncludeNoindex] = useState(false);
   const [selected, setSelected] = useState<SeoAuditPageRow | null>(null);
-  const [tab, setTab] = useTabParam();
+  const { tab, check, go } = useView();
   const [pendingScope, setPendingScope] = useState<SeoAuditScope | null>(null);
   const [pending, startTransition] = useTransition();
   const timeZone = useDisplayTimeZone();
@@ -530,12 +653,25 @@ export function SeoHealthScreen({
     });
   }
 
+  /** Page checks open the Pages tab filtered to the failing pages; site-wide checks open their section with the check marked. */
+  function openCheck(key: string, section?: SeoAuditSection) {
+    const pages = latest.completed?.pages ?? [];
+    const tracked = pages.some((page) => page.failed_checks !== undefined);
+    const target = section ?? (!tracked || pages.some((page) => page.failed_checks?.includes(key)) ? "pages" : "site");
+    go(target, { check: key, scrollTo: target === "pages" ? TABS_ID : undefined });
+  }
+
+  function openChecks(result: "passed" | "failed") {
+    if (result === "failed") go("overview", { scrollTo: ISSUES_ID });
+    else go("pages", { scrollTo: TABS_ID });
+  }
+
   const busy = running || pending;
   const runningScope = running ? (current?.scope ?? "full") : pendingScope;
   const progress = current && current.pages_total > 0 ? Math.round((current.pages_scanned / current.pages_total) * 100) : 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <ApplicationSectionHeader section="seo-health">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
@@ -594,7 +730,7 @@ export function SeoHealthScreen({
         </Alert>
       ) : null}
 
-      <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)} className="gap-4">
+      <Tabs id={TABS_ID} value={tab} onValueChange={(value) => go(value as Tab)} className="scroll-mt-20 gap-4">
         <TabsList className="w-full sm:w-fit">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="pages">Pages</TabsTrigger>
@@ -604,22 +740,32 @@ export function SeoHealthScreen({
         </TabsList>
 
         <TabsContent value="overview" className="flex flex-col gap-6">
-          <ScoreCard latest={latest} timeZone={timeZone} onSection={setTab} />
+          <ScoreCard
+            latest={latest}
+            timeZone={timeZone}
+            onSection={(section) => go(section, { scrollTo: TABS_ID })}
+            onChecks={openChecks}
+          />
           <Breakdown latest={latest} />
-          <Issues latest={latest} />
+          <Issues latest={latest} onOpen={openCheck} />
           <History audits={history} timeZone={timeZone} />
         </TabsContent>
 
         <TabsContent value="pages">
           {latest.completed ? (
-            <PagesTable latest={latest} onSelect={setSelected} />
+            <PagesTable
+              latest={latest}
+              check={check}
+              onClearCheck={() => go("pages")}
+              onSelect={setSelected}
+            />
           ) : (
             <p className="text-sm text-muted-foreground">Run a full audit to scan every page.</p>
           )}
         </TabsContent>
 
         <TabsContent value="site">
-          <SitePanel report={latest.sections?.site} timeZone={timeZone} />
+          <SitePanel report={latest.sections?.site} timeZone={timeZone} highlight={check} />
         </TabsContent>
 
         <TabsContent value="sitemap">
@@ -628,11 +774,18 @@ export function SeoHealthScreen({
             timeZone={timeZone}
             onRescan={() => run("sitemap")}
             busy={busy}
+            highlight={check}
           />
         </TabsContent>
 
         <TabsContent value="robots">
-          <RobotsPanel report={latest.sections?.robots} timeZone={timeZone} onRescan={() => run("robots")} busy={busy} />
+          <RobotsPanel
+            report={latest.sections?.robots}
+            timeZone={timeZone}
+            onRescan={() => run("robots")}
+            busy={busy}
+            highlight={check}
+          />
         </TabsContent>
       </Tabs>
 
@@ -641,6 +794,7 @@ export function SeoHealthScreen({
           key={selected.id}
           page={selected}
           categories={latest.categories}
+          highlight={tab === "pages" ? check : null}
           onOpenChange={(open) => {
             if (!open) setSelected(null);
           }}

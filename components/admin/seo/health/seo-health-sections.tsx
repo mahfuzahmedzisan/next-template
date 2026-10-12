@@ -1,12 +1,12 @@
 "use client";
 
 import { Loader2, RefreshCw } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import { formatDateTime } from "@/components/admin/devices/device-meta";
 import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
 import { scoreBar, scoreTone } from "@/components/admin/seo/health/health-meta";
-import { CheckList } from "@/components/admin/seo/health/seo-check-row";
+import { CheckList, checkRowId } from "@/components/admin/seo/health/seo-check-row";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -24,6 +24,7 @@ function SectionShell<Details>({
   report,
   timeZone,
   rescan,
+  highlight = null,
   children,
 }: {
   title: string;
@@ -31,8 +32,20 @@ function SectionShell<Details>({
   report: SeoSectionReport<Details> | null | undefined;
   timeZone: string;
   rescan?: { label: string; onClick: () => void; busy: boolean };
+  highlight?: string | null;
   children?: ReactNode;
 }) {
+  const hasReport = Boolean(report);
+
+  useEffect(() => {
+    if (!hasReport || !highlight) return;
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    const frame = requestAnimationFrame(() =>
+      document.getElementById(checkRowId(highlight))?.scrollIntoView({ behavior, block: "center" }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [hasReport, highlight]);
+
   return (
     <section className="space-y-5 rounded-xl border border-border/70 bg-card/70 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -67,7 +80,7 @@ function SectionShell<Details>({
             </div>
             {report.environment === "development" ? <Badge variant="outline">Development</Badge> : null}
           </div>
-          <CheckList checks={report.checks} />
+          <CheckList checks={report.checks} highlight={highlight} />
           {children}
         </>
       ) : (
@@ -106,13 +119,22 @@ function UrlList({ urls }: { urls: string[] }) {
   );
 }
 
-export function SitePanel({ report, timeZone }: { report: SeoSectionReport<SeoSiteDetails> | null | undefined; timeZone: string }) {
+export function SitePanel({
+  report,
+  timeZone,
+  highlight,
+}: {
+  report: SeoSectionReport<SeoSiteDetails> | null | undefined;
+  timeZone: string;
+  highlight?: string | null;
+}) {
   return (
     <SectionShell
       title="Site"
       description="Checked once per audit: favicon and icons, index-file redirects, real 404s, trailing slashes, HTTPS and a single host."
       report={report}
       timeZone={timeZone}
+      highlight={highlight}
     >
       {report && report.details.icons.length > 0 ? (
         <Detail label="Icons declared on the home page">
@@ -128,11 +150,13 @@ export function SitemapPanel({
   timeZone,
   onRescan,
   busy,
+  highlight,
 }: {
   report: SeoSectionReport<SeoSitemapDetails> | null | undefined;
   timeZone: string;
   onRescan: () => void;
   busy: boolean;
+  highlight?: string | null;
 }) {
   const details = report?.details;
 
@@ -143,6 +167,7 @@ export function SitemapPanel({
       report={report}
       timeZone={timeZone}
       rescan={{ label: "Re-scan sitemap", onClick: onRescan, busy }}
+      highlight={highlight}
     >
       {details ? (
         <>
@@ -199,11 +224,13 @@ export function RobotsPanel({
   timeZone,
   onRescan,
   busy,
+  highlight,
 }: {
   report: SeoSectionReport<SeoRobotsDetails> | null | undefined;
   timeZone: string;
   onRescan: () => void;
   busy: boolean;
+  highlight?: string | null;
 }) {
   const details = report?.details;
   const blocked = details?.ai.blocked ?? [];
@@ -216,6 +243,7 @@ export function RobotsPanel({
       report={report}
       timeZone={timeZone}
       rescan={{ label: "Re-scan robots.txt", onClick: onRescan, busy }}
+      highlight={highlight}
     >
       {details ? (
         <>

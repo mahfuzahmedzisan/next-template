@@ -65,6 +65,8 @@ export type SeoAuditPageRow = {
   failed: number;
   ttfb_ms: number | null;
   html_bytes: number | null;
+  /** Keys of the checks this page failed; missing on an API that predates it. */
+  failed_checks?: string[];
   error: string | null;
 };
 

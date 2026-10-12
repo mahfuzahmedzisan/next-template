@@ -5,11 +5,18 @@ import { Badge } from "@/components/ui/badge";
 import type { SeoAuditCheck } from "@/lib/admin/seo-audit-types";
 import { cn } from "@/lib/utils";
 
-export function CheckRow({ check }: { check: SeoAuditCheck }) {
+export function checkRowId(key: string) {
+  return `seo-check-${key}`;
+}
+
+export function CheckRow({ check, highlighted = false }: { check: SeoAuditCheck; highlighted?: boolean }) {
   const Icon = !check.counted ? CircleSlash : check.passed ? CheckCircle2 : XCircle;
 
   return (
-    <li className="flex gap-3 p-3">
+    <li
+      id={checkRowId(check.key)}
+      className={cn("flex scroll-mt-4 gap-3 p-3", highlighted && "bg-destructive/10 ring-2 ring-destructive/40 ring-inset")}
+    >
       <Icon
         className={cn(
           "mt-0.5 size-4 shrink-0",
@@ -42,13 +49,13 @@ export function CheckRow({ check }: { check: SeoAuditCheck }) {
 }
 
 /** Failing checks first. */
-export function CheckList({ checks }: { checks: SeoAuditCheck[] }) {
+export function CheckList({ checks, highlight = null }: { checks: SeoAuditCheck[]; highlight?: string | null }) {
   const sorted = [...checks].sort((a, b) => Number(a.passed) - Number(b.passed));
 
   return (
-    <ul className="divide-y divide-border/70 rounded-xl border border-border/70">
+    <ul className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border/70">
       {sorted.map((check) => (
-        <CheckRow key={check.key} check={check} />
+        <CheckRow key={check.key} check={check} highlighted={check.key === highlight} />
       ))}
     </ul>
   );
