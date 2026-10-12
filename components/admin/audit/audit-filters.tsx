@@ -1,5 +1,6 @@
 "use client";
 
+import { subDays } from "date-fns";
 import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -88,6 +89,17 @@ export function AuditFiltersBar({
   const startMonth = new Date(today.getFullYear() - DATE_RANGE_YEARS, today.getMonth(), 1);
   const from = dayToDate(zonedDay(filters.from ?? null, timeZone));
   const to = dayToDate(zonedDay(filters.to ?? null, timeZone));
+  const yesterday = subDays(today, 1);
+  const fromPresets = [
+    { label: "Today", date: today },
+    { label: "Yesterday", date: yesterday },
+    { label: "Last 7 days", date: subDays(today, 6) },
+    { label: "Last 30 days", date: subDays(today, 29) },
+  ];
+  const toPresets = [
+    { label: "Today", date: today },
+    { label: "Yesterday", date: yesterday },
+  ];
 
   const pinned = PINNED.filter((key) => filters[key]);
   const active = Object.entries(filters).some(([, value]) => Boolean(value));
@@ -217,6 +229,7 @@ export function AuditFiltersBar({
             disabled={{ after: to ?? today }}
             startMonth={startMonth}
             endMonth={today}
+            presets={fromPresets}
           />
         </Field>
         <Field className="w-48">
@@ -234,6 +247,7 @@ export function AuditFiltersBar({
             disabled={from ? [{ before: from }, { after: today }] : { after: today }}
             startMonth={startMonth}
             endMonth={today}
+            presets={toPresets}
           />
         </Field>
 

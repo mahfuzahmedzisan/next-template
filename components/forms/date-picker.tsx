@@ -3,13 +3,18 @@
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState, type ChangeEvent } from "react";
-import type { DropdownProps, Matcher } from "react-day-picker";
+import { dateMatchModifiers, type DropdownProps, type Matcher } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+export type DatePickerPreset = {
+  label: string;
+  date: Date;
+};
 
 export type DatePickerProps = {
   id?: string;
@@ -19,6 +24,8 @@ export type DatePickerProps = {
   disabled?: Matcher | Matcher[];
   startMonth?: Date;
   endMonth?: Date;
+  /** Quick picks under the calendar; a preset matching `disabled` is disabled too. */
+  presets?: DatePickerPreset[];
   className?: string;
 };
 
@@ -30,9 +37,15 @@ export function DatePicker({
   disabled,
   startMonth,
   endMonth,
+  presets,
   className,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+
+  const select = (date: Date | undefined) => {
+    onChange(date);
+    setOpen(false);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,11 +71,24 @@ export function DatePicker({
           endMonth={endMonth}
           disabled={disabled}
           components={{ Dropdown: CalendarDropdown }}
-          onSelect={(date) => {
-            onChange(date);
-            setOpen(false);
-          }}
+          onSelect={select}
         />
+        {presets?.length ? (
+          <div className="grid grid-cols-2 gap-2 border-t p-3">
+            {presets.map((preset) => (
+              <Button
+                key={preset.label}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={disabled ? dateMatchModifiers(preset.date, disabled) : false}
+                onClick={() => select(preset.date)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
       </PopoverContent>
     </Popover>
   );
