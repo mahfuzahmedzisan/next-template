@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, Info, Loader2, Play } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -22,6 +23,7 @@ import {
   formatMinutes,
   PRIORITY_LABELS,
   scoreBar,
+  scoreFill,
   scoreTone,
   typeLabel,
 } from "@/components/admin/seo/health/health-meta";
@@ -68,6 +70,28 @@ const SECTION_LABELS: Record<SeoAuditSection, string> = {
 };
 
 type Tab = "overview" | SeoAuditSection;
+
+const TABS: Tab[] = ["overview", "pages", "site", "sitemap", "robots"];
+
+function parseTab(value: string | null): Tab {
+  return TABS.includes(value as Tab) ? (value as Tab) : "overview";
+}
+
+/** The open tab lives in `?tab=`, so links, reloads and back/forward keep it. */
+function useTabParam(): [Tab, (tab: Tab) => void] {
+  const searchParams = useSearchParams();
+  const tab = parseTab(searchParams.get("tab"));
+
+  function setTab(next: Tab) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    const query = params.toString();
+    window.history.pushState(null, "", query ? `?${query}` : window.location.pathname);
+  }
+
+  return [tab, setTab];
+}
 
 const RUNNING_LABELS: Record<SeoAuditScope, string> = {
   full: "Scanning the site…",
@@ -165,26 +189,61 @@ function Breakdown({ latest }: { latest: SeoAuditLatest }) {
   const summary = latest.completed?.summary;
   if (!summary) return null;
 
+  const pages = summary.types.reduce((total, type) => total + type.pages, 0);
+  const lowest = summary.types.reduce<(typeof summary.types)[number] | null>(
+    (min, type) => (min === null || type.score < min.score ? type : min),
+    null,
+  );
+  const stats = [
+    { label: "Page types", value: summary.types.length.toString() },
+    { label: "Pages scored", value: pages.toString() },
+    { label: "Lowest", value: lowest ? `${lowest.score}%` : "—", hint: lowest?.label },
+  ];
+
   return (
-    <div className="grid items-start gap-4 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2">
       <ChartPanel title="By category" description="Weighted share of checks passed in each category.">
-        <CategoryRadar categories={summary.categories} />
+        <div className="flex flex-1 items-center">
+          <CategoryRadar categories={summary.categories} className="aspect-auto h-52 max-w-none" />
+        </div>
+        <ul className="flex flex-wrap justify-center gap-2">
+          {summary.categories.map((category) => (
+            <li key={category.key}>
+              <Badge variant="outline" className="gap-1.5">
+                <span className="size-2 rounded-full" style={{ background: scoreFill(category.score) }} aria-hidden />
+                {category.label}
+                <span className="tabular-nums text-muted-foreground">{category.score}%</span>
+              </Badge>
+            </li>
+          ))}
+        </ul>
       </ChartPanel>
       <ChartPanel title="By page type" description="Average score of each page type.">
-        {summary.types.length === 0 ? (
-          <ChartEmpty>No scored pages.</ChartEmpty>
-        ) : (
-          <HorizontalBars
-            rows={summary.types.map((type) => ({
-              key: type.type,
-              label: type.label,
-              value: type.score,
-              hint: `${type.pages} page${type.pages === 1 ? "" : "s"}`,
-            }))}
-            valueLabel="Score"
-            max={100}
-          />
-        )}
+        <div className="flex flex-1 flex-col justify-center">
+          {summary.types.length === 0 ? (
+            <ChartEmpty>No scored pages.</ChartEmpty>
+          ) : (
+            <HorizontalBars
+              rows={summary.types.map((type) => ({
+                key: type.type,
+                label: type.label,
+                value: type.score,
+                hint: `${type.pages} page${type.pages === 1 ? "" : "s"}`,
+              }))}
+              valueLabel="Score"
+              max={100}
+            />
+          )}
+        </div>
+        <dl className="grid gap-3 sm:grid-cols-3">
+          {stats.map((stat) => (
+            <div key={stat.label} className="min-w-0 rounded-lg border border-border/70 p-3">
+              <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+              <dd className="mt-1 text-lg font-semibold tabular-nums">{stat.value}</dd>
+              {stat.hint ? <dd className="truncate text-xs text-muted-foreground">{stat.hint}</dd> : null}
+            </div>
+          ))}
+        </dl>
       </ChartPanel>
     </div>
   );
@@ -432,7 +491,7 @@ export function SeoHealthScreen({
   const [history, setHistory] = useState(initialHistory);
   const [includeNoindex, setIncludeNoindex] = useState(false);
   const [selected, setSelected] = useState<SeoAuditPageRow | null>(null);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useTabParam();
   const [pendingScope, setPendingScope] = useState<SeoAuditScope | null>(null);
   const [pending, startTransition] = useTransition();
   const timeZone = useDisplayTimeZone();
