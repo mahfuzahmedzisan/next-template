@@ -18,7 +18,13 @@ import { runWithFrontendOrigin } from "@/lib/auth/frontend-origin-store";
  * on its own. This keeps Proxy fast and avoids the anti-pattern of treating
  * it as a full session store.
  */
-const AUTH_ONLY_PATHS = ["/login", "/register", "/forgot-password"];
+const AUTH_ONLY_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/two-factor-challenge",
+];
 
 export async function proxy(request: NextRequest) {
   const origin =
@@ -94,5 +100,7 @@ export const config = {
     "/login",
     "/register",
     "/forgot-password",
+    "/reset-password",
+    "/two-factor-challenge",
   ],
 };

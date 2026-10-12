@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { TransitionLink as Link } from "@/components/transitions/transition-link";
-import { redirect } from "next/navigation";
 import { KeyRound, ShieldCheck } from "lucide-react";
 
 import { ModeToggle } from "@/components/mode-toggle";
-import { getSession } from "@/lib/auth/auth-cookies";
 import { fetchSiteIdentity } from "@/lib/seo/public";
 
 export const metadata: Metadata = {
@@ -23,16 +21,16 @@ const notes = [
   },
 ];
 
+/**
+ * Stays static: reading the session here would render every auth page per
+ * request. Proxy sends signed-in visitors to /admin instead.
+ */
 export default async function AuthLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [session, identity] = await Promise.all([getSession(), fetchSiteIdentity()]);
-
-  if (session) {
-    redirect("/admin");
-  }
+  const identity = await fetchSiteIdentity();
 
   return (
     <div className="relative grid min-h-svh bg-muted/40 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
