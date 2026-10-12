@@ -20,10 +20,11 @@ type State = { status: "loading" } | { status: "error"; message: string } | { st
 
 type Filter = "all" | "failed" | "passed" | "not_scored";
 
+/** Failed and Passed match the page's passed/failed counts, so they include not-scored checks too. */
 const FILTERS: { value: Filter; label: string; empty: string; matches: (check: SeoAuditCheck) => boolean }[] = [
   { value: "all", label: "All", empty: "No checks ran on this page.", matches: () => true },
-  { value: "failed", label: "Failed", empty: "Nothing failed on this page.", matches: (check) => check.counted && !check.passed },
-  { value: "passed", label: "Passed", empty: "No check passed on this page.", matches: (check) => check.counted && check.passed },
+  { value: "failed", label: "Failed", empty: "Nothing failed on this page.", matches: (check) => !check.passed },
+  { value: "passed", label: "Passed", empty: "No check passed on this page.", matches: (check) => check.passed },
   { value: "not_scored", label: "Not scored", empty: "Every check on this page is scored.", matches: (check) => !check.counted },
 ];
 
