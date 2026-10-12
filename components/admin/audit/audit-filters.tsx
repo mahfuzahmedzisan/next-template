@@ -1,23 +1,28 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { humanizeKey, zonedDay, zonedDayBoundary } from "@/components/admin/audit/audit-meta";
+import { DatePicker } from "@/components/forms/date-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { AuditOverview } from "@/lib/admin/audit-types";
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxSeparator,
+} from "@/components/ui/combobox";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { AuditOption, AuditOverview } from "@/lib/admin/audit-types";
+import { dateToDay, dayToDate } from "@/lib/datetime/day";
 
 export type AuditFilters = Partial<
   Record<
@@ -26,10 +31,21 @@ export type AuditFilters = Partial<
   >
 >;
 
+type EventGroup = { value: string; items: AuditOption[] };
+
 /** Filters set by links (a request id, a user, a record) rather than the controls. */
 const PINNED: (keyof AuditFilters)[] = ["request_id", "subject", "causer", "involving", "ip", "origin"];
 
 const SEARCH_DELAY_MS = 350;
+
+/** Matches the longest retention setting, so older days are never offered. */
+const DATE_RANGE_YEARS = 2;
+
+const LABEL_CLASS = "text-xs text-muted-foreground";
+
+const optionLabel = (option: AuditOption) => option.label;
+const optionValue = (option: AuditOption) => option.value;
+const sameOption = (a: AuditOption, b: AuditOption) => a.value === b.value;
 
 export function AuditFiltersBar({
   filters,
@@ -44,6 +60,7 @@ export function AuditFiltersBar({
 }) {
   const [query, setQuery] = useState(filters.q ?? "");
   const applied = useRef(filters.q ?? "");
+  const [now] = useState(() => new Date());
 
   useEffect(() => {
     if (query.trim() === applied.current) return;
@@ -54,24 +71,34 @@ export function AuditFiltersBar({
     return () => window.clearTimeout(timer);
   }, [query, onChange]);
 
-  const eventGroups = options.categories
-    .map((category) => ({
-      ...category,
-      events: options.events.filter((event) => event.category === category.value),
-    }))
-    .filter((group) => group.events.length > 0);
-  const recordEvents = options.events.filter((event) => event.category === null);
+  const eventGroups: EventGroup[] = [
+    ...options.categories
+      .filter((category) => !filters.category || category.value === filters.category)
+      .map((category) => ({
+        value: category.label,
+        items: options.events.filter((event) => event.category === category.value),
+      })),
+    { value: "Record changes", items: options.events.filter((event) => event.category === null) },
+  ].filter((group) => group.items.length > 0);
+
+  const selectedCategory = options.categories.find((category) => category.value === filters.category) ?? null;
+  const selectedEvent = options.events.find((event) => event.value === filters.event) ?? null;
+
+  const today = dayToDate(zonedDay(now.toISOString(), timeZone)) ?? now;
+  const startMonth = new Date(today.getFullYear() - DATE_RANGE_YEARS, today.getMonth(), 1);
+  const from = dayToDate(zonedDay(filters.from ?? null, timeZone));
+  const to = dayToDate(zonedDay(filters.to ?? null, timeZone));
 
   const pinned = PINNED.filter((key) => filters[key]);
   const active = Object.entries(filters).some(([, value]) => Boolean(value));
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
-        <div className="space-y-1.5 md:col-span-2 xl:col-span-1">
-          <Label htmlFor="audit-search" className="text-xs text-muted-foreground">
+      <FieldGroup className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
+        <Field className="md:col-span-2 xl:col-span-1">
+          <FieldLabel htmlFor="audit-search" className={LABEL_CLASS}>
             Search
-          </Label>
+          </FieldLabel>
           <InputGroup className="h-9">
             <InputGroupAddon>
               <Search aria-hidden />
@@ -84,98 +111,131 @@ export function AuditFiltersBar({
               maxLength={120}
             />
           </InputGroup>
-        </div>
+        </Field>
 
-        <FilterSelect
-          id="audit-category"
-          label="Category"
-          value={filters.category}
-          onChange={(value) => onChange({ category: value, event: undefined })}
-        >
-          <SelectItem value="all">All categories</SelectItem>
-          {options.categories.map((category) => (
-            <SelectItem key={category.value} value={category.value}>
-              {category.label}
-            </SelectItem>
-          ))}
-        </FilterSelect>
+        <Field>
+          <FieldLabel htmlFor="audit-category" className={LABEL_CLASS}>
+            Category
+          </FieldLabel>
+          <Combobox
+            items={options.categories}
+            value={selectedCategory}
+            onValueChange={(category: AuditOption | null) =>
+              onChange({ category: category?.value, event: undefined })
+            }
+            itemToStringLabel={optionLabel}
+            itemToStringValue={optionValue}
+            isItemEqualToValue={sameOption}
+            autoHighlight
+          >
+            <ComboboxInput id="audit-category" placeholder="All categories" className="h-9 w-full" showClear />
+            <ComboboxContent>
+              <ComboboxEmpty>No categories found.</ComboboxEmpty>
+              <ComboboxList>
+                {(category: AuditOption) => (
+                  <ComboboxItem key={category.value} value={category}>
+                    {category.label}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </Field>
 
-        <FilterSelect
-          id="audit-event"
-          label="Event"
-          value={filters.event}
-          onChange={(value) => onChange({ event: value })}
-        >
-          <SelectItem value="all">All events</SelectItem>
-          {eventGroups
-            .filter((group) => !filters.category || group.value === filters.category)
-            .map((group) => (
-              <SelectGroup key={group.value}>
-                <SelectLabel>{group.label}</SelectLabel>
-                {group.events.map((event) => (
-                  <SelectItem key={event.value} value={event.value}>
-                    {event.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          <SelectGroup>
-            <SelectLabel>Record changes</SelectLabel>
-            {recordEvents.map((event) => (
-              <SelectItem key={event.value} value={event.value}>
-                {event.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </FilterSelect>
+        <Field>
+          <FieldLabel htmlFor="audit-event" className={LABEL_CLASS}>
+            Event
+          </FieldLabel>
+          <Combobox
+            items={eventGroups}
+            value={selectedEvent}
+            onValueChange={(event: AuditOption | null) => onChange({ event: event?.value })}
+            itemToStringLabel={optionLabel}
+            itemToStringValue={optionValue}
+            isItemEqualToValue={sameOption}
+            autoHighlight
+          >
+            <ComboboxInput id="audit-event" placeholder="All events" className="h-9 w-full" showClear />
+            <ComboboxContent>
+              <ComboboxEmpty>No events found.</ComboboxEmpty>
+              <ComboboxList>
+                {(group: EventGroup) => (
+                  <ComboboxGroup key={group.value} items={group.items}>
+                    <ComboboxLabel>{group.value}</ComboboxLabel>
+                    <ComboboxCollection>
+                      {(event: AuditOption) => (
+                        <ComboboxItem key={event.value} value={event}>
+                          {event.label}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxCollection>
+                    <ComboboxSeparator />
+                  </ComboboxGroup>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+        </Field>
 
-        <FilterSelect
-          id="audit-severity"
-          label="Severity"
-          value={filters.severity}
-          onChange={(value) => onChange({ severity: value })}
-        >
-          <SelectItem value="all">Any severity</SelectItem>
-          <SelectItem value="warning,critical">Warning and critical</SelectItem>
-          {options.severities.map((severity) => (
-            <SelectItem key={severity.value} value={severity.value}>
-              {severity.label}
-            </SelectItem>
-          ))}
-        </FilterSelect>
-      </div>
+        <Field>
+          <FieldLabel htmlFor="audit-severity" className={LABEL_CLASS}>
+            Severity
+          </FieldLabel>
+          <Select
+            value={filters.severity || "all"}
+            onValueChange={(next) => onChange({ severity: next === "all" ? undefined : next })}
+          >
+            <SelectTrigger id="audit-severity" className="h-9 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-80">
+              <SelectItem value="all">Any severity</SelectItem>
+              <SelectItem value="warning,critical">Warning and critical</SelectItem>
+              {options.severities.map((severity) => (
+                <SelectItem key={severity.value} value={severity.value}>
+                  {severity.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      </FieldGroup>
 
       <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="audit-from" className="text-xs text-muted-foreground">
+        <Field className="w-48">
+          <FieldLabel htmlFor="audit-from" className={LABEL_CLASS}>
             From
-          </Label>
-          <Input
+          </FieldLabel>
+          <DatePicker
             id="audit-from"
-            type="date"
-            className="h-9 w-40"
-            value={zonedDay(filters.from ?? null, timeZone)}
-            max={zonedDay(filters.to ?? null, timeZone) || undefined}
-            onChange={(event) =>
-              onChange({ from: event.target.value ? zonedDayBoundary(event.target.value, timeZone) ?? undefined : undefined })
+            className="h-9"
+            placeholder="Any date"
+            value={from}
+            onChange={(date) =>
+              onChange({ from: date ? (zonedDayBoundary(dateToDay(date), timeZone) ?? undefined) : undefined })
             }
+            disabled={{ after: to ?? today }}
+            startMonth={startMonth}
+            endMonth={today}
           />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="audit-to" className="text-xs text-muted-foreground">
+        </Field>
+        <Field className="w-48">
+          <FieldLabel htmlFor="audit-to" className={LABEL_CLASS}>
             To
-          </Label>
-          <Input
+          </FieldLabel>
+          <DatePicker
             id="audit-to"
-            type="date"
-            className="h-9 w-40"
-            value={zonedDay(filters.to ?? null, timeZone)}
-            min={zonedDay(filters.from ?? null, timeZone) || undefined}
-            onChange={(event) =>
-              onChange({ to: event.target.value ? zonedDayBoundary(event.target.value, timeZone, true) ?? undefined : undefined })
+            className="h-9"
+            placeholder="Any date"
+            value={to}
+            onChange={(date) =>
+              onChange({ to: date ? (zonedDayBoundary(dateToDay(date), timeZone, true) ?? undefined) : undefined })
             }
+            disabled={from ? [{ before: from }, { after: today }] : { after: today }}
+            startMonth={startMonth}
+            endMonth={today}
           />
-        </div>
+        </Field>
 
         {pinned.map((key) => (
           <span
@@ -211,34 +271,6 @@ export function AuditFiltersBar({
           </Button>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function FilterSelect({
-  id,
-  label,
-  value,
-  onChange,
-  children,
-}: {
-  id: string;
-  label: string;
-  value: string | undefined;
-  onChange: (value: string | undefined) => void;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs text-muted-foreground">
-        {label}
-      </Label>
-      <Select value={value || "all"} onValueChange={(next) => onChange(next === "all" ? undefined : next)}>
-        <SelectTrigger id={id} className="h-9 w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="max-h-80">{children}</SelectContent>
-      </Select>
     </div>
   );
 }
