@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Gauge, Info, Loader2, Play } from "lucide-react";
+import { AlertTriangle, Info, Loader2, Play } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +11,13 @@ import {
 } from "@/app/(admin)/admin/application/seo-health/actions";
 import { ApplicationSectionHeader } from "@/components/admin/application/application-settings";
 import { formatDateTime } from "@/components/admin/devices/device-meta";
+import { CategoryRadar } from "@/components/admin/seo/health/charts/category-radar";
+import { ChartEmpty, ChartPanel } from "@/components/admin/seo/health/charts/chart-panel";
+import { ChecksDonut, DonutChart } from "@/components/admin/seo/health/charts/checks-donut";
+import { HistoryChart } from "@/components/admin/seo/health/charts/history-chart";
+import { PageCharts } from "@/components/admin/seo/health/charts/page-charts";
+import { ScoreGauge } from "@/components/admin/seo/health/charts/score-gauge";
+import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
 import {
   formatMinutes,
   PRIORITY_LABELS,
@@ -40,6 +47,9 @@ import type {
   SeoAuditRow,
   SeoAuditScope,
   SeoAuditSection,
+  SeoAuditSummary,
+  SeoCheckCategory,
+  SeoCheckPriority,
 } from "@/lib/admin/seo-audit-types";
 import { useDisplayTimeZone } from "@/lib/datetime/timezone";
 import { cn } from "@/lib/utils";
@@ -47,6 +57,8 @@ import { cn } from "@/lib/utils";
 const POLL_MS = 4000;
 const POLL_LIMIT_MS = 20 * 60 * 1000;
 const ALL_TYPES = "__all";
+/** Matches config/seo.php, for an API that predates `limits`. */
+const DEFAULT_LIMITS = { ttfb_ms: 800, max_html_kb: 512 };
 
 const SECTION_LABELS: Record<SeoAuditSection, string> = {
   pages: "Pages",
@@ -110,25 +122,20 @@ function ScoreCard({
 
   return (
     <section className="space-y-5 rounded-xl border border-border/70 bg-card/70 p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="flex items-center gap-4">
-          <span className="flex size-14 items-center justify-center rounded-2xl border border-border/70 bg-muted/40">
-            <Gauge className="size-6 text-muted-foreground" aria-hidden />
-          </span>
-          <div>
-            <p className="text-sm text-muted-foreground">Site score</p>
-            <p className={cn("text-4xl font-semibold tabular-nums", scoreTone(score))}>{score === null ? "—" : `${score}%`}</p>
-          </div>
-        </div>
-        <div className="flex-1 space-y-2 md:pl-6">
-          <Progress value={score ?? 0} className={cn("h-2", scoreBar(score))} aria-label="Site score" />
-          <p className="text-xs leading-5 text-muted-foreground">
+      <div className="grid items-center gap-6 md:grid-cols-[auto_1fr_auto]">
+        <ScoreGauge score={score} label="Site score" className="mx-auto" />
+        <div className="space-y-2 text-center md:text-left">
+          <h3 className="text-base font-semibold">Site score</h3>
+          <p className="text-sm leading-6 text-muted-foreground">
             {completed
               ? `${completed.pages_total} page${completed.pages_total === 1 ? "" : "s"} · ${completed.checks_passed} checks passed · ${completed.checks_failed} failed · scanned ${formatDateTime(completed.finished_at, timeZone)}`
               : "No audit yet. Run one to scan every indexable page, the site settings, the sitemap and robots.txt."}
             {completed?.pages_failed ? ` · ${completed.pages_failed} page(s) could not be scanned` : ""}
           </p>
         </div>
+        {completed ? (
+          <ChecksDonut passed={completed.checks_passed} failed={completed.checks_failed} className="w-44" />
+        ) : null}
       </div>
 
       {sections.length > 0 ? (
@@ -138,16 +145,13 @@ function ScoreCard({
               <button
                 type="button"
                 onClick={() => onSection(section.key)}
-                className="w-full space-y-2 rounded-xl border border-border/70 p-4 text-left outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="flex w-full items-center gap-3 rounded-xl border border-border/70 p-3 text-left outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <div className="flex items-center justify-between text-sm">
-                  <span>{section.label}</span>
-                  <span className={cn("font-semibold tabular-nums", scoreTone(section.score))}>
-                    {section.score === null ? "—" : `${section.score}%`}
-                  </span>
-                </div>
-                <Progress value={section.score ?? 0} className={scoreBar(section.score)} aria-label={`${section.label} score`} />
-                <p className="text-xs text-muted-foreground">{section.weight}% of the site score</p>
+                <ScoreGauge score={section.score} label={`${section.label} score`} size="sm" />
+                <span className="min-w-0 space-y-0.5">
+                  <span className="block text-sm font-medium">{section.label}</span>
+                  <span className="block text-xs text-muted-foreground">{section.weight}% of the site score</span>
+                </span>
               </button>
             </li>
           ))}
@@ -162,41 +166,65 @@ function Breakdown({ latest }: { latest: SeoAuditLatest }) {
   if (!summary) return null;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <section className="space-y-3 rounded-xl border border-border/70 bg-card/70 p-6">
-        <h3 className="text-base font-semibold">By category</h3>
-        <ul className="space-y-3">
-          {summary.categories.map((category) => (
-            <li key={category.key} className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <span>{category.label}</span>
-                <span className={cn("font-medium tabular-nums", scoreTone(category.score))}>{category.score}%</span>
-              </div>
-              <Progress value={category.score} className={scoreBar(category.score)} aria-label={`${category.label} score`} />
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="space-y-3 rounded-xl border border-border/70 bg-card/70 p-6">
-        <h3 className="text-base font-semibold">By page type</h3>
+    <div className="grid items-start gap-4 md:grid-cols-2">
+      <ChartPanel title="By category" description="Weighted share of checks passed in each category.">
+        <CategoryRadar categories={summary.categories} />
+      </ChartPanel>
+      <ChartPanel title="By page type" description="Average score of each page type.">
         {summary.types.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No scored pages.</p>
+          <ChartEmpty>No scored pages.</ChartEmpty>
         ) : (
-          <ul className="space-y-3">
-            {summary.types.map((type) => (
-              <li key={type.type} className="space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span>
-                    {type.label} <span className="text-muted-foreground">· {type.pages}</span>
-                  </span>
-                  <span className={cn("font-medium tabular-nums", scoreTone(type.score))}>{type.score}%</span>
-                </div>
-                <Progress value={type.score} className={scoreBar(type.score)} aria-label={`${type.label} score`} />
-              </li>
-            ))}
-          </ul>
+          <HorizontalBars
+            rows={summary.types.map((type) => ({
+              key: type.type,
+              label: type.label,
+              value: type.score,
+              hint: `${type.pages} page${type.pages === 1 ? "" : "s"}`,
+            }))}
+            valueLabel="Score"
+            max={100}
+          />
         )}
-      </section>
+      </ChartPanel>
+    </div>
+  );
+}
+
+const PRIORITY_COLORS: Record<SeoCheckPriority, string> = {
+  high: "var(--score-bad)",
+  medium: "var(--score-warn)",
+  low: "var(--muted-foreground)",
+};
+
+/** Issue count by priority and estimated fix time by category, from the stored summary. */
+function IssueReport({ summary, categories }: { summary: SeoAuditSummary; categories: Record<SeoCheckCategory, string> }) {
+  if (summary.issues.length === 0) return null;
+
+  const slices = (Object.keys(PRIORITY_LABELS) as SeoCheckPriority[]).map((priority) => ({
+    key: priority,
+    label: PRIORITY_LABELS[priority],
+    value: summary.issues.filter((issue) => issue.priority === priority).length,
+    color: PRIORITY_COLORS[priority],
+  }));
+
+  const minutes = new Map<SeoCheckCategory, number>();
+  for (const issue of summary.issues) {
+    minutes.set(issue.category, (minutes.get(issue.category) ?? 0) + issue.fix_minutes * Math.max(1, issue.pages));
+  }
+  const fixRows = [...minutes.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([category, value]) => ({ key: category, label: categories[category] ?? category, value, fill: "var(--chart-1)" }));
+
+  return (
+    <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div className="space-y-2 rounded-xl border border-border/70 p-4">
+        <h4 className="text-sm font-semibold">Issues by priority</h4>
+        <DonutChart slices={slices} caption={summary.issues.length === 1 ? "issue" : "issues"} className="max-w-52" />
+      </div>
+      <div className="space-y-2 rounded-xl border border-border/70 p-4">
+        <h4 className="text-sm font-semibold">Estimated fix time by category</h4>
+        <HorizontalBars rows={fixRows} valueLabel="Fix time" format={formatMinutes} />
+      </div>
     </div>
   );
 }
@@ -212,6 +240,7 @@ function Issues({ latest }: { latest: SeoAuditLatest }) {
         <h3 className="text-base font-semibold">Top issues</h3>
         <p className="mt-1 text-sm text-muted-foreground">Sorted by priority and weight. Fix the top ones first.</p>
       </div>
+      <IssueReport summary={summary} categories={latest.categories} />
       {summary.issues.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nothing to fix. Every scored check passed.</p>
       ) : (
@@ -299,7 +328,7 @@ function PagesTable({
   if (!latest.completed) return null;
 
   return (
-    <section className="space-y-4 rounded-xl border border-border/70 bg-card/70 p-6">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold">Pages</h3>
@@ -325,7 +354,9 @@ function PagesTable({
         </div>
       </div>
 
-      <ul className="divide-y divide-border/70 rounded-xl border border-border/70">
+      <PageCharts pages={visible} limits={latest.limits ?? DEFAULT_LIMITS} />
+
+      <ul className="divide-y divide-border/70 rounded-xl border border-border/70 bg-card/70">
         {visible.map((page) => (
           <li key={page.id}>
             <button
@@ -355,31 +386,17 @@ function PagesTable({
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }
 
 function History({ audits, timeZone }: { audits: SeoAuditRow[]; timeZone: string }) {
   const finished = audits.filter((audit) => audit.status !== "queued" && audit.status !== "running");
   if (finished.length === 0) return null;
-  const chart = [...finished].reverse();
 
   return (
-    <section className="space-y-4 rounded-xl border border-border/70 bg-card/70 p-6">
-      <h3 className="text-base font-semibold">History</h3>
-      <div className="flex h-24 items-end gap-1.5" aria-hidden>
-        {chart.map((audit) => (
-          <div
-            key={audit.id}
-            title={`${audit.score ?? "—"}%`}
-            className={cn(
-              "min-w-2 flex-1 rounded-t",
-              audit.status === "failed" ? "bg-destructive/40" : audit.environment === "development" ? "bg-muted-foreground/40" : "bg-primary/70",
-            )}
-            style={{ height: `${Math.max(4, audit.score ?? 0)}%` }}
-          />
-        ))}
-      </div>
+    <ChartPanel title="History" description="Score of each audit over time, newest on the right.">
+      <HistoryChart audits={finished} timeZone={timeZone} />
       <ul className="divide-y divide-border/70 rounded-xl border border-border/70 text-sm">
         {finished.map((audit) => (
           <li key={audit.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
@@ -400,7 +417,7 @@ function History({ audits, timeZone }: { audits: SeoAuditRow[]; timeZone: string
           </li>
         ))}
       </ul>
-    </section>
+    </ChartPanel>
   );
 }
 

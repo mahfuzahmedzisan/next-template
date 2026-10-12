@@ -4,6 +4,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { formatDateTime } from "@/components/admin/devices/device-meta";
+import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
 import { scoreBar, scoreTone } from "@/components/admin/seo/health/health-meta";
 import { CheckList } from "@/components/admin/seo/health/seo-check-row";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,14 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+function sitemapName(url: string) {
+  try {
+    return new URL(url).pathname.replace(/^\/+/, "") || url;
+  } catch {
+    return url;
+  }
+}
+
 function UrlList({ urls }: { urls: string[] }) {
   return (
     <ul className="divide-y divide-border/70 rounded-xl border border-border/70 text-xs">
@@ -137,6 +146,21 @@ export function SitemapPanel({
     >
       {details ? (
         <>
+          {details.files.length > 0 ? (
+            <Detail label="URLs per sitemap file">
+              <HorizontalBars
+                rows={details.files.map((file) => ({
+                  key: file.url,
+                  label: sitemapName(file.url),
+                  hint: file.url,
+                  value: file.count,
+                  fill: file.error || file.status !== 200 ? "var(--score-bad)" : "var(--chart-2)",
+                }))}
+                valueLabel="Entries"
+                format={(value) => value.toLocaleString()}
+              />
+            </Detail>
+          ) : null}
           <Detail label={`Files · ${details.urls} URL${details.urls === 1 ? "" : "s"}`}>
             <ul className="divide-y divide-border/70 rounded-xl border border-border/70 text-xs">
               {details.files.map((file) => (

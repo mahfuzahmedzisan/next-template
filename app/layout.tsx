@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { AnimationProvider } from "@/components/animations/providers/animation-provider";
 import { AppToaster } from "@/components/app-toaster";
@@ -18,6 +18,15 @@ const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
 });
+
+/** Browser chrome follows the light and dark backgrounds in globals.css. */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+  colorScheme: "light dark",
+};
 
 /** Site-wide parts only; each public page sets its own title, description, canonical and OG. */
 export async function generateMetadata(): Promise<Metadata> {

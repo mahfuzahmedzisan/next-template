@@ -14,6 +14,14 @@ export function scoreBar(score: number | null) {
   return "[&_[data-slot=progress-indicator]]:bg-destructive";
 }
 
+/** Chart fill matching `scoreTone`; the tokens switch with the theme. */
+export function scoreFill(score: number | null) {
+  if (score === null) return "var(--muted-foreground)";
+  if (score >= 90) return "var(--score-good)";
+  if (score >= 70) return "var(--score-warn)";
+  return "var(--score-bad)";
+}
+
 export const PRIORITY_LABELS: Record<SeoCheckPriority, string> = {
   high: "High",
   medium: "Medium",

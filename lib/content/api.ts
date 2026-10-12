@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { formatMediaUrl } from "@/lib/media/media-url";
 import { SeoFetchError, seoFetch } from "@/lib/seo/api";
 import type { ResolvedSeo } from "@/lib/seo/types";
@@ -80,10 +82,11 @@ export async function fetchProjects(options: { featured?: boolean; perPage?: num
   }
 }
 
-export async function fetchProject(slug: string): Promise<ProjectDetail | null> {
+/** Memoized per request: `generateMetadata` and the page both read it. */
+export const fetchProject = cache(async (slug: string): Promise<ProjectDetail | null> => {
   const data = await get<{ project: ProjectDetail }>(`/projects/${encodeURIComponent(slug)}`);
   return data?.project ? withCover(data.project) : null;
-}
+});
 
 export async function fetchPosts(options: { perPage?: number } = {}): Promise<PostCard[]> {
   const query = new URLSearchParams({ per_page: String(options.perPage ?? 50) });
@@ -96,7 +99,8 @@ export async function fetchPosts(options: { perPage?: number } = {}): Promise<Po
   }
 }
 
-export async function fetchPost(slug: string): Promise<PostDetail | null> {
+/** Memoized per request: `generateMetadata` and the page both read it. */
+export const fetchPost = cache(async (slug: string): Promise<PostDetail | null> => {
   const data = await get<{ post: PostDetail }>(`/posts/${encodeURIComponent(slug)}`);
   return data?.post ? withCover(data.post) : null;
-}
+});

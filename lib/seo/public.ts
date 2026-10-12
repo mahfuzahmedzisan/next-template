@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { site, siteDescription } from "@/content/site";
 import { SeoFetchError, seoFetch, seoPrimaryOrigin } from "@/lib/seo/api";
 import type { ResolvedSeo, SeoIdentity } from "@/lib/seo/types";
@@ -12,11 +14,12 @@ type PageSeoBody = { data?: { seo?: ResolvedSeo } };
 /**
  * Backend-resolved SEO for a site path. Successful responses are cached under
  * the `seo` tag; the backend revalidates the tag whenever SEO data changes.
+ * Memoized per request: the root layout, its metadata and the page all ask for it.
  */
-export async function fetchPageSeo(path: string, tags: string[] = []): Promise<ResolvedSeo> {
+export const fetchPageSeo = cache(async (path: string): Promise<ResolvedSeo> => {
   try {
     const response = await seoFetch(`/seo/page?path=${encodeURIComponent(path)}`, {
-      next: { tags: [SEO_TAG, ...tags], revalidate: SEO_REVALIDATE_SECONDS },
+      next: { tags: [SEO_TAG], revalidate: SEO_REVALIDATE_SECONDS },
     });
     const body = (await response.json()) as PageSeoBody;
     if (body.data?.seo) return body.data.seo;
@@ -27,7 +30,7 @@ export async function fetchPageSeo(path: string, tags: string[] = []): Promise<R
   }
 
   return fallbackSeo(path);
-}
+});
 
 export async function fetchSiteIdentity(): Promise<SeoIdentity> {
   return (await fetchPageSeo("/")).identity;

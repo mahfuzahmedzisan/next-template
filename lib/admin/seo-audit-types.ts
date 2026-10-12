@@ -19,6 +19,8 @@ export type SeoAuditRow = {
   checks_passed: number;
   checks_failed: number;
   error: string | null;
+  /** Null for sections a scoped run skipped. */
+  sections?: { key: SeoAuditSection; score: number | null }[];
   created_at: string | null;
   started_at: string | null;
   finished_at: string | null;
@@ -134,4 +136,5 @@ export type SeoAuditLatest = {
     robots: SeoSectionReport<SeoRobotsDetails> | null;
   };
   categories: Record<SeoCheckCategory, string>;
+  limits?: { ttfb_ms: number; max_html_kb: number };
 };

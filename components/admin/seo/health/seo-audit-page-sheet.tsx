@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { useEffect, useState } from "react";
 
 import { loadSeoAuditPageAction } from "@/app/(admin)/admin/application/seo-health/actions";
+import { CategoryRadar, categoryScoresFromChecks } from "@/components/admin/seo/health/charts/category-radar";
 import { scoreTone } from "@/components/admin/seo/health/health-meta";
 import { CheckList } from "@/components/admin/seo/health/seo-check-row";
 import { SideSheet } from "@/components/overlay/side-sheet";
@@ -90,6 +91,13 @@ export function SeoAuditPageSheet({
         ) : null}
 
         {state.status === "error" ? <p className="text-sm text-destructive">{state.message}</p> : null}
+
+        {state.status === "ready" && page?.indexable ? (
+          <section className="space-y-2 rounded-xl border border-border/70 p-4">
+            <h4 className="text-sm font-semibold">Score by category</h4>
+            <CategoryRadar categories={categoryScoresFromChecks(state.page.checks, categories)} className="max-w-64" />
+          </section>
+        ) : null}
 
         {state.status === "ready"
           ? (Object.keys(categories) as SeoCheckCategory[]).map((category) => {
