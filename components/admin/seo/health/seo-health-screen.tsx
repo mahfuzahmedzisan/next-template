@@ -204,7 +204,7 @@ function Breakdown({ latest }: { latest: SeoAuditLatest }) {
     <div className="grid gap-4 md:grid-cols-2">
       <ChartPanel title="By category" description="Weighted share of checks passed in each category.">
         <div className="flex flex-1 items-center">
-          <CategoryRadar categories={summary.categories} className="aspect-auto h-52 max-w-none" />
+          <CategoryRadar categories={summary.categories} className="aspect-auto h-56 max-w-none" />
         </div>
         <ul className="flex flex-wrap justify-center gap-2">
           {summary.categories.map((category) => (
