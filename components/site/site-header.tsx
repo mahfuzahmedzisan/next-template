@@ -4,14 +4,15 @@ import { logoutAction } from "@/app/(admin)/actions"
 import { ModeToggle } from "@/components/mode-toggle"
 import { SiteHeaderAccount } from "@/components/site/site-header-account"
 import { Button } from "@/components/ui/button"
-import { site, siteNav } from "@/content/site"
+import { siteNav } from "@/content/site"
 import { getSession } from "@/lib/auth/auth-cookies"
+import { fetchSiteIdentity } from "@/lib/seo/public"
 
 import { NavLinks } from "./nav-links"
 
 export async function SiteHeader() {
   const items = siteNav()
-  const session = await getSession()
+  const [session, identity] = await Promise.all([getSession(), fetchSiteIdentity()])
 
   return (
     <header
@@ -29,7 +30,7 @@ export async function SiteHeader() {
           href="/"
           className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold tracking-tight text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          {site.name}
+          {identity.name}
         </Link>
         <div className="flex items-center gap-2">
           {items.length > 0 ? (

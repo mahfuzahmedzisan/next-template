@@ -1,0 +1,93 @@
+import "server-only";
+
+import { site, siteDescription } from "@/content/site";
+import { SeoFetchError, seoFetch, seoPrimaryOrigin } from "@/lib/seo/api";
+import type { ResolvedSeo, SeoIdentity } from "@/lib/seo/types";
+
+const SEO_TAG = "seo";
+const SEO_REVALIDATE_SECONDS = 3600;
+
+type PageSeoBody = { data?: { seo?: ResolvedSeo } };
+
+/**
+ * Backend-resolved SEO for a site path. Successful responses are cached under
+ * the `seo` tag; the backend revalidates the tag whenever SEO data changes.
+ */
+export async function fetchPageSeo(path: string, tags: string[] = []): Promise<ResolvedSeo> {
+  try {
+    const response = await seoFetch(`/seo/page?path=${encodeURIComponent(path)}`, {
+      next: { tags: [SEO_TAG, ...tags], revalidate: SEO_REVALIDATE_SECONDS },
+    });
+    const body = (await response.json()) as PageSeoBody;
+    if (body.data?.seo) return body.data.seo;
+  } catch (error) {
+    if (!(error instanceof SeoFetchError) && process.env.NODE_ENV !== "production") {
+      console.warn("[seo] page lookup failed", error);
+    }
+  }
+
+  return fallbackSeo(path);
+}
+
+export async function fetchSiteIdentity(): Promise<SeoIdentity> {
+  return (await fetchPageSeo("/")).identity;
+}
+
+/** Used only while the API is unreachable; it is never cached. */
+function fallbackSeo(path: string): ResolvedSeo {
+  const origin = seoPrimaryOrigin();
+  const url = new URL(path, origin).toString();
+  const description = siteDescription();
+  const title = path === "/" ? site.name : `${headline(path)} - ${site.name}`;
+  const image = `${origin}/og`;
+
+  return {
+    kind: "page",
+    type: null,
+    id: null,
+    path,
+    page_type: "other",
+    registered: false,
+    title,
+    raw_title: title,
+    description,
+    keywords: [],
+    author: null,
+    canonical: url,
+    canonical_base: url,
+    self_canonical: true,
+    robots: { index: true, follow: true, max_image_preview: "large" },
+    open_graph: {
+      title,
+      description,
+      image,
+      image_alt: site.name,
+      type: "website",
+      locale: "en_US",
+      site_name: site.name,
+      url,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      image,
+      site: null,
+      creator: null,
+    },
+    published_time: null,
+    modified_time: null,
+    schema: {
+      type: "WebPage",
+      json_ld: { "@context": "https://schema.org", "@type": "WebPage", name: title, url },
+    },
+    sitemap: { include: false, priority: 0.5, changefreq: "monthly", lastmod: null },
+    identity: { name: site.name, short_name: site.name, site_url: origin, logo_url: null, locale: "en" },
+    fallback: true,
+  };
+}
+
+function headline(path: string): string {
+  const segment = path.split("/").filter(Boolean).pop() ?? "";
+  return segment.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) || site.name;
+}

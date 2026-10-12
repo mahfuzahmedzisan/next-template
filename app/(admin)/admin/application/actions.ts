@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { ApiError } from "@/lib/auth/api-error";
 import { SessionExpiredError } from "@/lib/auth/session-expired";
@@ -42,6 +42,7 @@ export async function saveGeneralAction(input: {
 }): Promise<SettingsActionResult> {
   try {
     const settings = await saveGeneralSettings(input);
+    updateTag("seo");
     refresh();
     return { ok: true, message: "General settings saved.", settings };
   } catch (error) {

@@ -6,7 +6,7 @@ import { KeyRound, ShieldCheck } from "lucide-react";
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { getSession } from "@/lib/auth/auth-cookies";
-import { site } from "@/content/site";
+import { fetchSiteIdentity } from "@/lib/seo/public";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -28,7 +28,7 @@ export default async function AuthLayout({
 }: {
   children: ReactNode;
 }) {
-  const session = await getSession();
+  const [session, identity] = await Promise.all([getSession(), fetchSiteIdentity()]);
 
   if (session) {
     redirect("/admin");
@@ -43,7 +43,7 @@ export default async function AuthLayout({
       <aside className="hidden flex-col justify-between border-r border-border/70 bg-card/50 px-10 py-12 lg:flex">
         <div>
           <Link href="/" className="text-sm font-semibold tracking-tight">
-            {site.name}
+            {identity.name}
           </Link>
           <p className="mt-8 max-w-sm text-3xl font-semibold tracking-tight">
             Sign in to your workspace.
@@ -71,7 +71,7 @@ export default async function AuthLayout({
             href="/"
             className="mb-6 inline-flex text-sm font-semibold tracking-tight lg:hidden"
           >
-            {site.name}
+            {identity.name}
           </Link>
           <div className="**:data-[slot=card]:rounded-2xl **:data-[slot=card]:border-border/70 **:data-[slot=card]:bg-card/85 **:data-[slot=card]:shadow-sm **:data-[slot=card]:backdrop-blur-md">
             {children}

@@ -27,6 +27,14 @@ const sections = {
     title: "SMTP",
     description: "Mail sent by the app. Empty settings keep the server environment.",
   },
+  seo: {
+    title: "SEO",
+    description: "Titles, descriptions and social cards for every public page, plus the sitemap and robots.txt.",
+  },
+  "seo-health": {
+    title: "SEO health",
+    description: "A real scan of the rendered pages: meta tags, headings, links, images and speed.",
+  },
   backup: {
     title: "Database backup",
     description: "A database backup every night, kept for 14 days. Back up, restore, or download on demand.",

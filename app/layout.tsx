@@ -15,8 +15,7 @@ import { TransitionProvider } from "@/components/transitions/transition-provider
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { fetchPublicSettings } from "@/lib/settings/public";
-import { site, siteDescription } from "@/content/site";
-import { siteOrigin } from "@/lib/site-url";
+import { fetchPageSeo } from "@/lib/seo/public";
 import { siteStructuredData } from "@/lib/structured-data";
 import { Analytics } from "@vercel/analytics/next"
 
@@ -27,62 +26,34 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const description = siteDescription();
-const origin = siteOrigin();
-
+/** Site-wide parts only; each public page sets its own title, description, canonical and OG. */
 export async function generateMetadata(): Promise<Metadata> {
+  const { identity } = await fetchPageSeo("/");
+
   return {
-  metadataBase: origin ? new URL(origin) : undefined,
-  title: {
-    default: site.name,
-    template: `%s · ${site.name}`,
-  },
-  description,
-  applicationName: site.name,
-  authors: [{ name: site.name }],
-  creator: site.name,
-  ...(site.skills.length > 0 ? { keywords: [...site.skills] } : {}),
-  alternates: origin ? { canonical: "/" } : undefined,
-  formatDetection: { telephone: false, address: false, email: false },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
+    metadataBase: new URL(identity.site_url),
+    title: {
+      default: identity.name,
+      template: `%s · ${identity.name}`,
     },
-  },
-  openGraph: {
-    title: site.name,
-    description,
-    type: "website",
-    locale: "en_US",
-    siteName: site.name,
-    ...(origin ? { url: "/" } : {}),
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: site.name,
-    description,
-  },
+    applicationName: identity.name,
+    creator: identity.name,
+    formatDetection: { telephone: false, address: false, email: false },
   };
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const settings = await fetchPublicSettings();
+  const [settings, home] = await Promise.all([fetchPublicSettings(), fetchPageSeo("/")]);
 
   return (
     <html
-      lang="en"
+      lang={home.identity.locale.replace("_", "-") || "en"}
       suppressHydrationWarning
       className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-svh flex-col">
         <DocumentIcon href={settings.favicon_url} />
-        <JsonLd data={siteStructuredData()} />
+        <JsonLd data={siteStructuredData(home.identity, home.description)} />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

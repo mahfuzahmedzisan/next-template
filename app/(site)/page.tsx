@@ -1,13 +1,21 @@
+import type { Metadata } from "next"
 import { KeyRound, ShieldCheck, LayoutDashboard } from "lucide-react"
 import { TransitionLink as Link } from "@/components/transitions/transition-link"
 import { RouteReady } from "@/components/transitions/route-ready"
 
+import { SeoJsonLd } from "@/components/seo/json-ld"
 import { ContactForm } from "@/components/site/contact-form"
 import { ContactLinks } from "@/components/site/contact-links"
 import { ProjectList } from "@/components/site/project-list"
 import { Reveal } from "@/components/site/reveal"
 import { Button } from "@/components/ui/button"
 import { hasContact, site } from "@/content/site"
+import { toMetadata } from "@/lib/seo/metadata"
+import { fetchPageSeo } from "@/lib/seo/public"
+
+export async function generateMetadata(): Promise<Metadata> {
+  return toMetadata(await fetchPageSeo("/"))
+}
 
 const features = [
   {
@@ -27,7 +35,8 @@ const features = [
   },
 ]
 
-export default function Home() {
+export default async function Home() {
+  const seo = await fetchPageSeo("/")
   const showAbout = site.about.length > 0 || site.skills.length > 0
   const showWork = site.projects.length > 0
   const showContact = hasContact()
@@ -39,6 +48,7 @@ export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-20 px-6 py-16 md:py-24">
       <RouteReady />
+      <SeoJsonLd seo={seo} />
       <Reveal>
         <section aria-labelledby="home-heading" className="max-w-2xl">
           <p className="text-sm font-medium text-muted-foreground">{lead}</p>
@@ -46,7 +56,7 @@ export default function Home() {
             id="home-heading"
             className="mt-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
           >
-            {site.name}
+            {seo.identity.name}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">
             {summary}

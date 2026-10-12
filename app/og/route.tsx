@@ -1,17 +1,12 @@
 import { ImageResponse } from "next/og"
 
 import { site } from "@/content/site"
+import { fetchSiteIdentity } from "@/lib/seo/public"
 
-export const alt = site.name
+/** Last-resort OG image; pages use their own or the global default image first. */
+export async function GET() {
+  const identity = await fetchSiteIdentity()
 
-export const size = {
-  width: 1200,
-  height: 630,
-}
-
-export const contentType = "image/png"
-
-export default function OpenGraphImage() {
   return new ImageResponse(
     (
       <div
@@ -27,7 +22,7 @@ export default function OpenGraphImage() {
         }}
       >
         <div style={{ display: "flex", fontSize: 72, fontWeight: 600 }}>
-          {site.name}
+          {identity.name}
         </div>
         {site.role ? (
           <div
@@ -43,6 +38,10 @@ export default function OpenGraphImage() {
         ) : null}
       </div>
     ),
-    size,
+    {
+      width: 1200,
+      height: 630,
+      headers: { "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400" },
+    },
   )
 }
