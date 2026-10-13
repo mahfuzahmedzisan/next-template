@@ -1,5 +1,12 @@
 import type { SeoFieldValues, SeoGlobalSettings, SeoPageEntry } from "@/lib/admin/seo-types";
 
+export const SEO_TABS = ["pages", "defaults", "types", "files"] as const;
+export type SeoTab = (typeof SEO_TABS)[number];
+
+export function parseSeoTab(value: unknown): SeoTab {
+  return SEO_TABS.find((tab) => tab === value) ?? "pages";
+}
+
 export const PAGE_TYPE_LABELS: Record<string, string> = {
   home: "Home",
   about: "About",
@@ -71,6 +78,12 @@ export function statusInfo(status: SeoPageEntry["status"]): { label: string; ton
   }
   if (code === 404 || code === 410) return { label: `${code} Not found`, tone: "bad", hint: "The page does not exist. Left out of the sitemap." };
   return { label: `${code}`, tone: "warn", hint: "Unexpected response from the site." };
+}
+
+/** A broken or redirecting status, or meta that is less than 80% complete. */
+export function needsAttention(page: SeoPageEntry) {
+  const tone = statusInfo(page.status).tone;
+  return tone === "warn" || tone === "bad" || page.completeness.score < 80;
 }
 
 export function keywordsToText(keywords: string[] | null | undefined) {

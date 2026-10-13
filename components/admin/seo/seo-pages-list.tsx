@@ -1,7 +1,7 @@
 "use client";
 
-import { ExternalLink, FileText, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { ExternalLink, FileText, MoreHorizontal, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
@@ -10,7 +10,7 @@ import {
   probeSeoPageAction,
 } from "@/app/(admin)/admin/application/seo/actions";
 import { formatDateTime } from "@/components/admin/devices/device-meta";
-import { PAGE_TYPE_LABELS, statusInfo, type StatusTone } from "@/components/admin/seo/seo-meta";
+import { needsAttention, PAGE_TYPE_LABELS, statusInfo, type StatusTone } from "@/components/admin/seo/seo-meta";
 import { SeoPageEditor } from "@/components/admin/seo/seo-page-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SeoOverview, SeoPageEntry } from "@/lib/admin/seo-types";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,19 @@ function scoreTone(score: number) {
   if (score >= 80) return "text-emerald-600 dark:text-emerald-400";
   if (score >= 50) return "text-amber-600 dark:text-amber-400";
   return "text-destructive";
+}
+
+type Filter = "all" | "attention" | "hidden";
+
+const FILTERS: { value: Filter; label: string; match: (page: SeoPageEntry) => boolean }[] = [
+  { value: "all", label: "All", match: () => true },
+  { value: "attention", label: "Needs attention", match: needsAttention },
+  { value: "hidden", label: "Hidden from search", match: (page) => !page.resolved.robots.index || !page.resolved.in_sitemap },
+];
+
+function matchesQuery(page: SeoPageEntry, query: string) {
+  if (!query) return true;
+  return [page.label, page.path, page.resolved.title].some((value) => value.toLowerCase().includes(query));
 }
 
 type Watch = { since: string | null; startedAt: number };
@@ -123,11 +137,19 @@ export function SeoPagesList({
   });
 
   useEffect(() => {
-    if (openPageId !== null) window.history.replaceState(null, "", window.location.pathname);
+    if (openPageId === null) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("page");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }, [openPageId]);
   const [removing, setRemoving] = useState<SeoPageEntry | null>(null);
   const [pending, startTransition] = useTransition();
   const recheck = useRecheckWatch(onOverview);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const needle = useDeferredValue(query.trim().toLowerCase());
+  const activeFilter = FILTERS.find((entry) => entry.value === filter) ?? FILTERS[0];
+  const visible = overview.pages.filter((page) => activeFilter.match(page) && matchesQuery(page, needle));
 
   function probe(page: SeoPageEntry) {
     startTransition(async () => {
@@ -161,7 +183,7 @@ export function SeoPagesList({
         <div>
           <h3 className="text-base font-semibold">Pages</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Static and listing pages. Detail pages (posts, products) take their SEO from their own edit form.
+            Title, description and sharing image for each page. Posts and projects set theirs in their own edit form.
           </p>
         </div>
         <Button type="button" size="sm" onClick={() => setEditing({ page: null, key: Date.now() })}>
@@ -170,15 +192,65 @@ export function SeoPagesList({
         </Button>
       </div>
 
+      {overview.pages.length > 0 ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <InputGroup className="h-9 sm:max-w-xs">
+            <InputGroupAddon>
+              <Search aria-hidden />
+            </InputGroupAddon>
+            <InputGroupInput
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search name, path or title"
+              aria-label="Search pages"
+              maxLength={120}
+            />
+          </InputGroup>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter pages">
+            {FILTERS.map((entry) => {
+              const count = overview.pages.filter(entry.match).length;
+              return (
+                <Button
+                  key={entry.value}
+                  type="button"
+                  size="sm"
+                  variant={filter === entry.value ? "secondary" : "ghost"}
+                  aria-pressed={filter === entry.value}
+                  onClick={() => setFilter(entry.value)}
+                >
+                  {entry.label}
+                  <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {overview.pages.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-10 text-center">
           <FileText className="size-5 text-muted-foreground" aria-hidden />
           <p className="text-sm font-medium">No pages yet</p>
           <p className="max-w-sm text-xs text-muted-foreground">Add the public paths you want search engines to see.</p>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-8 text-center">
+          <p className="text-sm font-medium">No pages match</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setQuery("");
+              setFilter("all");
+            }}
+          >
+            Clear search and filter
+          </Button>
+        </div>
       ) : (
         <ul className="divide-y divide-border/70 rounded-xl border border-border/70">
-          {overview.pages.map((page) => {
+          {visible.map((page) => {
             const status = statusInfo(page.status);
             const checking = recheck.isWatching(page.id);
 
@@ -234,17 +306,24 @@ export function SeoPagesList({
                   </TooltipContent>
                 </Tooltip>
 
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditing({ page, key: Date.now() })}
+                  aria-label={`Edit SEO for ${page.path}`}
+                >
+                  <Pencil data-icon="inline-start" aria-hidden />
+                  Edit
+                </Button>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon-sm" aria-label={`Actions for ${page.path}`}>
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label={`More actions for ${page.path}`}>
                       <MoreHorizontal aria-hidden />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => setEditing({ page, key: Date.now() })}>
-                      <Pencil aria-hidden />
-                      Edit SEO
-                    </DropdownMenuItem>
                     <DropdownMenuItem disabled={pending || checking} onSelect={() => probe(page)}>
                       <RefreshCw aria-hidden />
                       Re-check status

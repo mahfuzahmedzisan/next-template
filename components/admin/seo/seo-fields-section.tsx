@@ -3,6 +3,7 @@
 import { useId, type ReactNode } from "react";
 
 import { keywordsToText, previewTitle, textToKeywords } from "@/components/admin/seo/seo-meta";
+import { SeoDisclosure } from "@/components/admin/seo/seo-disclosure";
 import { CharCount, SearchPreview, SocialPreview } from "@/components/admin/seo/seo-previews";
 import { MediaChoiceField } from "@/components/media/media-choice";
 import { Input } from "@/components/ui/input";
@@ -156,6 +157,20 @@ export function SeoFieldsSection({
   const ogDescription = value.og_description?.trim() || description;
   const ogImage = value.og_image || context.fallbackImage || settings.default_og_image || `${settings.site_url}/og`;
   const placeholders = options.placeholders.join(" ");
+  const hasError = (...names: string[]) => names.some((name) => Boolean(errors?.[name]?.[0]));
+  const searchCustomized =
+    value.title_affix_mode !== "inherit" || Boolean(value.keywords?.length) || Boolean(value.author) || Boolean(value.canonical_url);
+  const socialCustomized =
+    Boolean(value.og_type) ||
+    Boolean(value.twitter_card) ||
+    Boolean(value.twitter_title) ||
+    Boolean(value.twitter_description) ||
+    Boolean(value.twitter_image);
+  const indexingCustomized =
+    value.sitemap_priority !== null ||
+    Boolean(value.sitemap_changefreq) ||
+    value.max_image_preview !== "large" ||
+    Boolean(value.schema_type);
 
   return (
     <Tabs defaultValue="search" className="gap-5">
@@ -184,47 +199,6 @@ export function SeoFieldsSection({
           <FieldError errors={errors} name="meta_title" />
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,12rem)_1fr]">
-          <Field label="Title affix" htmlFor={`${id}-affix`}>
-            <OptionSelect
-              id={`${id}-affix`}
-              value={value.title_affix_mode}
-              options={options.affix_modes}
-              disabled={disabled}
-              onChange={(mode) => onChange({ title_affix_mode: (mode ?? "inherit") as SeoFieldValues["title_affix_mode"] })}
-              format={(mode) => (mode === "inherit" ? "Site default" : mode === "custom" ? "Custom" : "None")}
-            />
-          </Field>
-          {value.title_affix_mode === "custom" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Prefix" htmlFor={`${id}-prefix`}>
-                <Input
-                  id={`${id}-prefix`}
-                  value={value.title_prefix ?? ""}
-                  onChange={(event) => onChange({ title_prefix: text(event.target.value) })}
-                  maxLength={120}
-                  disabled={disabled}
-                />
-              </Field>
-              <Field label="Suffix" htmlFor={`${id}-suffix`}>
-                <Input
-                  id={`${id}-suffix`}
-                  value={value.title_suffix ?? ""}
-                  onChange={(event) => onChange({ title_suffix: text(event.target.value) })}
-                  maxLength={120}
-                  disabled={disabled}
-                />
-              </Field>
-            </div>
-          ) : (
-            <p className="self-end pb-2 text-xs leading-5 text-muted-foreground">
-              {value.title_affix_mode === "none"
-                ? "The title is used exactly as written."
-                : "Uses the site prefix and suffix from the global settings."}
-            </p>
-          )}
-        </div>
-
         <Field
           label="Meta description"
           htmlFor={`${id}-description`}
@@ -242,70 +216,106 @@ export function SeoFieldsSection({
           <FieldError errors={errors} name="meta_description" />
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Keywords" htmlFor={`${id}-keywords`} hint="Comma separated. Search engines mostly ignore them.">
-            <Input
-              id={`${id}-keywords`}
-              defaultValue={keywordsToText(value.keywords)}
-              onBlur={(event) => onChange({ keywords: textToKeywords(event.target.value) })}
-              disabled={disabled}
-            />
-          </Field>
-          <Field label="Author" htmlFor={`${id}-author`}>
-            <Input
-              id={`${id}-author`}
-              value={value.author ?? ""}
-              placeholder={settings.default_author || undefined}
-              onChange={(event) => onChange({ author: text(event.target.value) })}
-              maxLength={120}
-              disabled={disabled}
-            />
-          </Field>
-        </div>
-
-        <Field
-          label="Canonical URL"
-          htmlFor={`${id}-canonical`}
-          hint="Leave empty to point at this page. Set it only when another URL holds the same content."
+        <SeoDisclosure
+          title="Advanced"
+          description="Title prefix and suffix, keywords, author and canonical URL."
+          defaultOpen={searchCustomized}
+          forceOpen={hasError("canonical_url", "title_prefix", "title_suffix")}
         >
-          <Input
-            id={`${id}-canonical`}
-            value={value.canonical_url ?? ""}
-            placeholder={context.url}
-            onChange={(event) => onChange({ canonical_url: text(event.target.value) })}
-            maxLength={2048}
-            disabled={disabled}
-          />
-          <FieldError errors={errors} name="canonical_url" />
-        </Field>
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,12rem)_1fr]">
+            <Field label="Title affix" htmlFor={`${id}-affix`}>
+              <OptionSelect
+                id={`${id}-affix`}
+                value={value.title_affix_mode}
+                options={options.affix_modes}
+                disabled={disabled}
+                onChange={(mode) => onChange({ title_affix_mode: (mode ?? "inherit") as SeoFieldValues["title_affix_mode"] })}
+                format={(mode) => (mode === "inherit" ? "Site default" : mode === "custom" ? "Custom" : "None")}
+              />
+            </Field>
+            {value.title_affix_mode === "custom" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Prefix" htmlFor={`${id}-prefix`}>
+                  <Input
+                    id={`${id}-prefix`}
+                    value={value.title_prefix ?? ""}
+                    onChange={(event) => onChange({ title_prefix: text(event.target.value) })}
+                    maxLength={120}
+                    disabled={disabled}
+                  />
+                </Field>
+                <Field label="Suffix" htmlFor={`${id}-suffix`}>
+                  <Input
+                    id={`${id}-suffix`}
+                    value={value.title_suffix ?? ""}
+                    onChange={(event) => onChange({ title_suffix: text(event.target.value) })}
+                    maxLength={120}
+                    disabled={disabled}
+                  />
+                </Field>
+              </div>
+            ) : (
+              <p className="self-end pb-2 text-xs leading-5 text-muted-foreground">
+                {value.title_affix_mode === "none"
+                  ? "The title is used exactly as written."
+                  : "Uses the site prefix and suffix from the global settings."}
+              </p>
+            )}
+          </div>
 
-        <p className="text-xs leading-5 text-muted-foreground">Placeholders: {placeholders}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Keywords" htmlFor={`${id}-keywords`} hint="Comma separated. Search engines mostly ignore them.">
+              <Input
+                id={`${id}-keywords`}
+                defaultValue={keywordsToText(value.keywords)}
+                onBlur={(event) => onChange({ keywords: textToKeywords(event.target.value) })}
+                disabled={disabled}
+              />
+            </Field>
+            <Field label="Author" htmlFor={`${id}-author`}>
+              <Input
+                id={`${id}-author`}
+                value={value.author ?? ""}
+                placeholder={settings.default_author || undefined}
+                onChange={(event) => onChange({ author: text(event.target.value) })}
+                maxLength={120}
+                disabled={disabled}
+              />
+            </Field>
+          </div>
+
+          <Field
+            label="Canonical URL"
+            htmlFor={`${id}-canonical`}
+            hint="Leave empty to point at this page. Set it only when another URL holds the same content."
+          >
+            <Input
+              id={`${id}-canonical`}
+              value={value.canonical_url ?? ""}
+              placeholder={context.url}
+              onChange={(event) => onChange({ canonical_url: text(event.target.value) })}
+              maxLength={2048}
+              disabled={disabled}
+            />
+            <FieldError errors={errors} name="canonical_url" />
+          </Field>
+
+          <p className="text-xs leading-5 text-muted-foreground">Placeholders: {placeholders}</p>
+        </SeoDisclosure>
       </TabsContent>
 
       <TabsContent value="social" className="flex flex-col gap-5">
         <SocialPreview title={ogTitle} description={ogDescription} image={ogImage} url={context.url} />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Social title" htmlFor={`${id}-og-title`} hint="Empty uses the meta title.">
-            <Input
-              id={`${id}-og-title`}
-              value={value.og_title ?? ""}
-              onChange={(event) => onChange({ og_title: text(event.target.value) })}
-              maxLength={255}
-              disabled={disabled}
-            />
-          </Field>
-          <Field label="Content type" htmlFor={`${id}-og-type`}>
-            <OptionSelect
-              id={`${id}-og-type`}
-              value={value.og_type}
-              options={options.og_types}
-              defaultLabel="Default"
-              disabled={disabled}
-              onChange={(next) => onChange({ og_type: next })}
-            />
-          </Field>
-        </div>
+        <Field label="Social title" htmlFor={`${id}-og-title`} hint="Empty uses the meta title.">
+          <Input
+            id={`${id}-og-title`}
+            value={value.og_title ?? ""}
+            onChange={(event) => onChange({ og_title: text(event.target.value) })}
+            maxLength={255}
+            disabled={disabled}
+          />
+        </Field>
 
         <Field label="Social description" htmlFor={`${id}-og-description`} hint="Empty uses the meta description.">
           <Textarea
@@ -341,48 +351,66 @@ export function SeoFieldsSection({
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="X (Twitter) card" htmlFor={`${id}-twitter-card`}>
+        <SeoDisclosure
+          title="Advanced"
+          description="Content type, and a separate title, description or image for X (Twitter)."
+          defaultOpen={socialCustomized}
+          forceOpen={hasError("twitter_image")}
+        >
+          <Field label="Content type" htmlFor={`${id}-og-type`}>
             <OptionSelect
-              id={`${id}-twitter-card`}
-              value={value.twitter_card}
-              options={options.twitter_cards}
-              defaultLabel="Default (large image)"
+              id={`${id}-og-type`}
+              value={value.og_type}
+              options={options.og_types}
+              defaultLabel="Default"
               disabled={disabled}
-              onChange={(next) => onChange({ twitter_card: next })}
-              format={(card) => (card === "summary" ? "Small image" : "Large image")}
+              onChange={(next) => onChange({ og_type: next })}
             />
           </Field>
-          <Field label="X title" htmlFor={`${id}-twitter-title`} hint="Empty uses the social title.">
-            <Input
-              id={`${id}-twitter-title`}
-              value={value.twitter_title ?? ""}
-              onChange={(event) => onChange({ twitter_title: text(event.target.value) })}
-              maxLength={255}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="X (Twitter) card" htmlFor={`${id}-twitter-card`}>
+              <OptionSelect
+                id={`${id}-twitter-card`}
+                value={value.twitter_card}
+                options={options.twitter_cards}
+                defaultLabel="Default (large image)"
+                disabled={disabled}
+                onChange={(next) => onChange({ twitter_card: next })}
+                format={(card) => (card === "summary" ? "Small image" : "Large image")}
+              />
+            </Field>
+            <Field label="X title" htmlFor={`${id}-twitter-title`} hint="Empty uses the social title.">
+              <Input
+                id={`${id}-twitter-title`}
+                value={value.twitter_title ?? ""}
+                onChange={(event) => onChange({ twitter_title: text(event.target.value) })}
+                maxLength={255}
+                disabled={disabled}
+              />
+            </Field>
+          </div>
+          <Field label="X description" htmlFor={`${id}-twitter-description`} hint="Empty uses the social description.">
+            <Textarea
+              id={`${id}-twitter-description`}
+              value={value.twitter_description ?? ""}
+              onChange={(event) => onChange({ twitter_description: text(event.target.value) })}
+              maxLength={500}
+              rows={2}
               disabled={disabled}
             />
           </Field>
-        </div>
-        <Field label="X description" htmlFor={`${id}-twitter-description`} hint="Empty uses the social description.">
-          <Textarea
-            id={`${id}-twitter-description`}
-            value={value.twitter_description ?? ""}
-            onChange={(event) => onChange({ twitter_description: text(event.target.value) })}
-            maxLength={500}
-            rows={2}
-            disabled={disabled}
-          />
-        </Field>
-        <div className="space-y-2">
-          <MediaChoiceField
-            label="X image"
-            url={value.twitter_image}
-            accept={["image"]}
-            disabled={disabled}
-            onChange={(url) => onChange({ twitter_image: url })}
-          />
-          <FieldError errors={errors} name="twitter_image" />
-        </div>
+          <div className="space-y-2">
+            <MediaChoiceField
+              label="X image"
+              url={value.twitter_image}
+              accept={["image"]}
+              disabled={disabled}
+              onChange={(url) => onChange({ twitter_image: url })}
+            />
+            <FieldError errors={errors} name="twitter_image" />
+          </div>
+        </SeoDisclosure>
       </TabsContent>
 
       <TabsContent value="indexing" className="flex flex-col gap-4">
@@ -408,48 +436,54 @@ export function SeoFieldsSection({
           onChange={(checked) => onChange({ in_sitemap: checked })}
         />
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Sitemap priority" htmlFor={`${id}-priority`}>
-            <OptionSelect
-              id={`${id}-priority`}
-              value={value.sitemap_priority === null ? null : value.sitemap_priority.toFixed(1)}
-              options={["1.0", "0.9", "0.8", "0.7", "0.6", "0.5", "0.4", "0.3", "0.2", "0.1"]}
-              defaultLabel="Default"
-              disabled={disabled}
-              onChange={(next) => onChange({ sitemap_priority: next === null ? null : Number(next) })}
-            />
-          </Field>
-          <Field label="Change frequency" htmlFor={`${id}-changefreq`}>
-            <OptionSelect
-              id={`${id}-changefreq`}
-              value={value.sitemap_changefreq}
-              options={options.change_frequencies}
-              defaultLabel="Default"
-              disabled={disabled}
-              onChange={(next) => onChange({ sitemap_changefreq: next })}
-            />
-          </Field>
-          <Field label="Image preview" htmlFor={`${id}-image-preview`}>
-            <OptionSelect
-              id={`${id}-image-preview`}
-              value={value.max_image_preview}
-              options={options.image_previews}
-              disabled={disabled}
-              onChange={(next) => onChange({ max_image_preview: (next ?? "large") as SeoFieldValues["max_image_preview"] })}
-            />
-          </Field>
-        </div>
+        <SeoDisclosure
+          title="Advanced"
+          description="Sitemap priority and frequency, image preview size and structured data type."
+          defaultOpen={indexingCustomized}
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Sitemap priority" htmlFor={`${id}-priority`}>
+              <OptionSelect
+                id={`${id}-priority`}
+                value={value.sitemap_priority === null ? null : value.sitemap_priority.toFixed(1)}
+                options={["1.0", "0.9", "0.8", "0.7", "0.6", "0.5", "0.4", "0.3", "0.2", "0.1"]}
+                defaultLabel="Default"
+                disabled={disabled}
+                onChange={(next) => onChange({ sitemap_priority: next === null ? null : Number(next) })}
+              />
+            </Field>
+            <Field label="Change frequency" htmlFor={`${id}-changefreq`}>
+              <OptionSelect
+                id={`${id}-changefreq`}
+                value={value.sitemap_changefreq}
+                options={options.change_frequencies}
+                defaultLabel="Default"
+                disabled={disabled}
+                onChange={(next) => onChange({ sitemap_changefreq: next })}
+              />
+            </Field>
+            <Field label="Image preview" htmlFor={`${id}-image-preview`}>
+              <OptionSelect
+                id={`${id}-image-preview`}
+                value={value.max_image_preview}
+                options={options.image_previews}
+                disabled={disabled}
+                onChange={(next) => onChange({ max_image_preview: (next ?? "large") as SeoFieldValues["max_image_preview"] })}
+              />
+            </Field>
+          </div>
 
-        <Field label="Structured data type" htmlFor={`${id}-schema`} hint="The JSON-LD type search engines read for this page.">
-          <OptionSelect
-            id={`${id}-schema`}
-            value={value.schema_type}
-            options={options.schema_types}
-            defaultLabel="Default for the page type"
-            disabled={disabled}
-            onChange={(next) => onChange({ schema_type: next })}
-          />
-        </Field>
+          <Field label="Structured data type" htmlFor={`${id}-schema`} hint="The JSON-LD type search engines read for this page.">
+            <OptionSelect
+              id={`${id}-schema`}
+              value={value.schema_type}
+              options={options.schema_types}
+              defaultLabel="Default for the page type"
+              disabled={disabled}
+              onChange={(next) => onChange({ schema_type: next })}
+            />
+          </Field>
+        </SeoDisclosure>
       </TabsContent>
     </Tabs>
   );
