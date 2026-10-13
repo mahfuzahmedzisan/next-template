@@ -36,7 +36,7 @@ export class SectionErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-16">
+        <main id="content" tabIndex={-1} className="mx-auto outline-none flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-16">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Something went wrong
           </h1>

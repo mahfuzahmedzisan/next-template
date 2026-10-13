@@ -10,7 +10,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { fetchBrandIcons } from "@/lib/brand/icons";
 import { fetchPageSeo } from "@/lib/seo/public";
 import { siteStructuredData } from "@/lib/structured-data";
-import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css";
 
@@ -72,11 +71,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <AnimationProvider>
             <TransitionProvider>
               <TooltipProvider>
-                <div
-                  id="content"
-                  tabIndex={-1}
-                  className="flex min-h-svh flex-1 flex-col outline-none"
-                >
+                <div className="flex min-h-svh flex-1 flex-col">
                   <SectionErrorBoundary>{children}</SectionErrorBoundary>
                 </div>
                 <AppToaster />

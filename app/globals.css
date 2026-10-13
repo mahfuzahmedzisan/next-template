@@ -625,7 +625,7 @@ html[data-navigation-progress-active] .route-fallback__track {
  */
 @layer components {
   .site-main {
-    @apply mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-6 py-12 md:py-16;
+    @apply mx-auto flex w-full max-w-6xl flex-1 flex-col gap-16 px-6 py-12 outline-none md:py-16;
   }
   .site-h1 {
     @apply text-4xl font-semibold tracking-tight text-foreground md:text-5xl;

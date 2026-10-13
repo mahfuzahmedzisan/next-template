@@ -46,13 +46,23 @@ laravelHttp.interceptors.request.use(async (config) => {
   return config;
 });
 
-/** Laravel labels sign-ins in the device history with these. */
+/**
+ * Laravel keys its rate limiters and device history on this IP. The left-most
+ * X-Forwarded-For entry is whatever the client typed, so the proxy-set headers
+ * win and XFF falls back to its right-most (last proxy appended) entry.
+ */
 async function browserClient(): Promise<{ ip: string | null; userAgent: string | null }> {
   try {
     const headerStore = await headers();
+    const forwarded = headerStore
+      .get("x-forwarded-for")
+      ?.split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
     const ip =
-      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       headerStore.get("x-real-ip")?.trim() ||
+      headerStore.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+      forwarded?.at(-1) ||
       null;
     return { ip, userAgent: headerStore.get("user-agent") };
   } catch {

@@ -20,7 +20,7 @@ export default async function BlogPage() {
   const [seo, posts] = await Promise.all([fetchPageSeo(PATH), fetchPosts()])
 
   return (
-    <main className="site-main">
+    <main id="content" tabIndex={-1} className="site-main">
       <RouteReady />
       <SeoJsonLd seo={seo} />
 

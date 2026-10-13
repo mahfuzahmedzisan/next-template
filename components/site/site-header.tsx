@@ -5,6 +5,7 @@ import { HeaderSession } from "@/components/site/header-session"
 import { primaryNav } from "@/content/site"
 import { fetchSiteIdentity } from "@/lib/seo/public"
 
+import { MobileMenu } from "./mobile-menu"
 import { NavLinks } from "./nav-links"
 
 export async function SiteHeader() {
@@ -26,12 +27,11 @@ export async function SiteHeader() {
               <nav aria-label="Primary" className="hidden sm:block">
                 <NavLinks />
               </nav>
-              <details className="relative sm:hidden">
-                <summary className="site-nav site-menu">Menu</summary>
+              <MobileMenu>
                 <nav aria-label="Primary" className="site-menu-panel">
                   <NavLinks listClassName="flex-col" />
                 </nav>
-              </details>
+              </MobileMenu>
             </>
           ) : null}
           <ModeToggle />

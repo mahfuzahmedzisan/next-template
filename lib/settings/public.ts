@@ -1,7 +1,7 @@
 import "server-only";
 
 import { formatMediaUrl } from "@/lib/media/media-url";
-import { laravelHttp, unwrapOrThrow } from "@/lib/auth/http";
+import { seoFetch } from "@/lib/seo/api";
 
 export type PublicSettings = {
   name: string;
@@ -21,9 +21,13 @@ const fallback: PublicSettings = {
 
 export async function fetchPublicSettings(): Promise<PublicSettings> {
   try {
-    const response = await laravelHttp.get("/settings/public", { timeout: 8000 });
-    const data = unwrapOrThrow<{ settings: PublicSettings }>(response);
-    const settings = data.settings;
+    // Saving general settings calls updateTag("seo"), which drops this entry.
+    const response = await seoFetch("/settings/public", {
+      next: { revalidate: 300, tags: ["seo"] },
+    });
+    const body = (await response.json()) as { data?: { settings?: PublicSettings } };
+    const settings = body.data?.settings;
+    if (!settings) return fallback;
 
     return {
       name: settings.name || fallback.name,

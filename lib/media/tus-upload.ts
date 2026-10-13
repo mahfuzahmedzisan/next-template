@@ -64,8 +64,13 @@ export function createMediaUpload(options: {
     },
   });
 
+  // start() looks up previous uploads asynchronously; a pause or unmount in
+  // that window must stop the upload from starting once the lookup returns.
+  let aborted = false;
+
   return {
     start() {
+      aborted = false;
       void upload
         .findPreviousUploads()
         .then((previous) => {
@@ -80,12 +85,16 @@ export function createMediaUpload(options: {
           }
         })
         .catch(() => undefined)
-        .finally(() => upload.start());
+        .finally(() => {
+          if (!aborted) upload.start();
+        });
     },
     pause() {
+      aborted = true;
       void upload.abort(false);
     },
     resume() {
+      aborted = false;
       upload.start();
     },
   };

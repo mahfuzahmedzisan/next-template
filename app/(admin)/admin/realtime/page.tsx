@@ -7,6 +7,7 @@ import { RouteReady } from "@/components/transitions/route-ready";
 export default async function RealtimePage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (session.user.role !== "admin") redirect("/admin");
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">

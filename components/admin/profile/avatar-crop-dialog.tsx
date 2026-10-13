@@ -26,7 +26,7 @@ export function AvatarCropDialog({
   onClose: () => void;
   onUploaded: () => void;
 }) {
-  const [imageUrl] = useState(() => URL.createObjectURL(file));
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<Area | null>(null);
@@ -36,9 +36,13 @@ export function AvatarCropDialog({
   const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Created and revoked together, so a Strict Mode remount gets a live URL.
   useEffect(() => {
-    return () => URL.revokeObjectURL(imageUrl);
-  }, [imageUrl]);
+    const url = URL.createObjectURL(file);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the URL must be created where it is revoked
+    setImageUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   const busy = phase !== "idle";
 
@@ -49,7 +53,7 @@ export function AvatarCropDialog({
   }
 
   async function save() {
-    if (!area) return;
+    if (!area || !imageUrl) return;
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -130,7 +134,7 @@ export function AvatarCropDialog({
 
         <div className="relative h-72 overflow-hidden rounded-xl bg-muted">
           <Cropper
-            image={imageUrl}
+            image={imageUrl ?? undefined}
             crop={crop}
             zoom={zoom}
             rotation={0}

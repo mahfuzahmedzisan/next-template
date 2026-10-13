@@ -8,7 +8,7 @@ import {
   useState,
   type ComponentPropsWithoutRef,
 } from "react"
-import { motion } from "motion/react"
+import { m } from "motion/react"
 
 import { usePrefersReducedMotion } from "@/hooks/animations/use-prefers-reduced-motion"
 import { cn } from "@/lib/utils"
@@ -167,7 +167,7 @@ export function AnimatedGridPattern({
       <svg x={x} y={y} className="overflow-visible">
         {!reduceMotion &&
           squares.map(({ pos: [squareX, squareY], id, iteration }, index) => (
-          <motion.rect
+          <m.rect
             initial={{ opacity: 0 }}
             animate={{ opacity: maxOpacity }}
             transition={{

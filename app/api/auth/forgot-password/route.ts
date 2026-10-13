@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { ApiError } from "@/lib/auth/api-error";
+import { authErrorResponse } from "@/lib/auth/route-error";
 import { requestForgotPassword } from "@/lib/auth/laravel-auth";
 
 const schema = z.object({ email: z.string().email() });
@@ -21,15 +21,6 @@ export async function POST(request: Request) {
     const result = await requestForgotPassword(parsed.data);
     return NextResponse.json({ message: result.message });
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { message: error.message },
-        { status: error.status },
-      );
-    }
-    return NextResponse.json(
-      { message: "Unable to send password reset link" },
-      { status: 500 },
-    );
+    return authErrorResponse(error, "Unable to send password reset link");
   }
 }

@@ -20,7 +20,7 @@ export default async function ContactPage() {
   const seo = await fetchPageSeo(PATH)
 
   return (
-    <main className="site-main">
+    <main id="content" tabIndex={-1} className="site-main">
       <RouteReady />
       <SeoJsonLd seo={seo} />
 

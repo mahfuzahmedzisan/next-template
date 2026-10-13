@@ -27,6 +27,8 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/admin/se
     upstream = await laravelHttp.get<string>(`/admin/seo/files/${file}/download`, {
       headers: { Authorization: `Bearer ${session.accessToken}`, Accept: "*/*" },
       responseType: "text",
+      timeout: 30_000,
+      signal: request.signal,
     });
   } catch {
     return NextResponse.json({ message: "The SEO service is unavailable." }, { status: 502 });

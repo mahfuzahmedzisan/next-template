@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 import { revokeLaravelToken } from "@/lib/auth/api";
 import { deleteSession, getSession } from "@/lib/auth/auth-cookies";
+import { safeRedirectPath } from "@/lib/auth/redirect";
 import { SESSION_COOKIE } from "@/lib/auth/session";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
 
@@ -16,28 +17,35 @@ import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
  * for a live session and bounce back to /admin.
  */
 export async function GET(request: NextRequest) {
-  const session = await getSession().catch(() => null);
+  // Server redirects land here same-origin. A cross-site link or <img> must
+  // not be able to sign the visitor out, so it only gets the login redirect.
+  const crossSite = request.headers.get("sec-fetch-site") === "cross-site";
 
-  if (session?.accessToken) {
-    // Best effort. When the token is already dead - the usual reason for
-    // landing here - this simply fails and is ignored.
-    await revokeLaravelToken(session.accessToken);
+  if (!crossSite) {
+    const session = await getSession().catch(() => null);
+
+    if (session?.accessToken) {
+      // Best effort. When the token is already dead - the usual reason for
+      // landing here - this simply fails and is ignored.
+      await revokeLaravelToken(session.accessToken);
+    }
+
+    await deleteSession();
   }
-
-  await deleteSession();
 
   const loginUrl = request.nextUrl.clone();
   loginUrl.pathname = "/login";
   loginUrl.search = "";
   const next = request.nextUrl.searchParams.get("next");
   const reason = request.nextUrl.searchParams.get("reason");
+  const safeNext = next ? safeRedirectPath(next, "") : "";
 
-  if (next?.startsWith("/")) loginUrl.searchParams.set("next", next);
+  if (safeNext) loginUrl.searchParams.set("next", safeNext);
   if (reason === SESSION_EXPIRED_REASON) {
     loginUrl.searchParams.set("reason", SESSION_EXPIRED_REASON);
   }
 
   const response = NextResponse.redirect(loginUrl);
-  response.cookies.delete(SESSION_COOKIE);
+  if (!crossSite) response.cookies.delete(SESSION_COOKIE);
   return response;
 }

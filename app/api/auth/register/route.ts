@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { ApiError } from "@/lib/auth/api-error";
+import { authErrorResponse } from "@/lib/auth/route-error";
 import { requestRegister } from "@/lib/auth/laravel-auth";
 import { createSession } from "@/lib/auth/auth-cookies";
 
@@ -42,15 +42,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ user: result.user }, { status: 201 });
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { message: error.message, details: error.body },
-        { status: error.status },
-      );
-    }
-
-    const message =
-      error instanceof Error ? error.message : "Registration failed";
-    return NextResponse.json({ message }, { status: 500 });
+    return authErrorResponse(error, "Registration failed");
   }
 }

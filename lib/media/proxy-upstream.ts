@@ -38,7 +38,12 @@ export async function proxyTus(request: Request, slug: string[] | undefined): Pr
     return Response.json({ message: "Invalid upload path." }, { status: 400 });
   }
 
-  const target = `${getApiBaseUrl()}/tus/${path}${new URL(request.url).search}`;
+  const base = upstreamUrl("tus", path);
+  if (base === null) {
+    return Response.json({ message: "Invalid upload path." }, { status: 400 });
+  }
+
+  const target = `${base}${new URL(request.url).search}`;
   const headers = new Headers();
   for (const name of TUS_REQUEST_HEADERS) {
     const value = request.headers.get(name);
@@ -53,6 +58,7 @@ export async function proxyTus(request: Request, slug: string[] | undefined): Pr
       headers,
       body: hasBody ? request.body : undefined,
       redirect: "manual",
+      signal: upstreamSignal(request),
       ...(hasBody ? { duplex: "half" } : {}),
     } as RequestInit);
   } catch {
@@ -75,17 +81,24 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
     return Response.json({ message: "Invalid media path." }, { status: 400 });
   }
 
-  const origin = getApiBaseUrl();
+  const target = upstreamUrl("storage", path);
+  if (target === null) {
+    return Response.json({ message: "Invalid media path." }, { status: 400 });
+  }
+
   const headers = new Headers();
-  const range = request.headers.get("range");
-  if (range) headers.set("range", range);
+  for (const name of ["range", "if-none-match", "if-modified-since"]) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
 
   let upstream: Response;
   try {
-    upstream = await fetch(`${origin}/storage/${path}`, {
+    upstream = await fetch(target, {
       method: request.method,
       headers,
       redirect: "manual",
+      signal: upstreamSignal(request),
     });
   } catch {
     return Response.json({ message: "Media is unavailable." }, { status: 502 });
@@ -103,7 +116,15 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
   }
 
   const responseHeaders = new Headers();
-  for (const name of ["content-type", "content-length", "content-range", "accept-ranges", "cache-control"]) {
+  for (const name of [
+    "content-type",
+    "content-length",
+    "content-range",
+    "accept-ranges",
+    "cache-control",
+    "etag",
+    "last-modified",
+  ]) {
     const value = upstream.headers.get(name);
     if (value) responseHeaders.set(name, value);
   }
@@ -116,6 +137,13 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
     status: upstream.status,
     headers: responseHeaders,
   });
+}
+
+/** Matches nginx's 120s proxy timeouts; a client that disconnects aborts the upstream call too. */
+const UPSTREAM_TIMEOUT_MS = 120_000;
+
+function upstreamSignal(request: Request): AbortSignal {
+  return AbortSignal.any([request.signal, AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)]);
 }
 
 function tusResponseHeaders(upstream: Headers): Headers {
@@ -151,10 +179,37 @@ function rewritePlaylist(playlist: string): string {
   return playlist.replace(/https?:\/\/[^/\s"'\\]+\/storage\//g, "/api/storage/");
 }
 
-function safePath(slug: string[] | undefined): string | null {
+/**
+ * Next decodes each catch-all segment, so `%2F`, `%5C` or `%2e%2e` arrive here
+ * as real separators or dots. Any separator, leftover `%`, or control
+ * character inside a segment is rejected rather than normalised.
+ */
+export function safePath(slug: string[] | undefined): string | null {
   const parts = slug ?? [];
-  if (parts.some((part) => part === "" || part === "." || part === ".." || part.includes("\\"))) {
+  const unsafe = (part: string) =>
+    part === "" || part === "." || part === ".." || /[/\\%]/.test(part) || /[\u0000-\u001f\u007f]/.test(part);
+
+  if (parts.some(unsafe)) {
     return null;
   }
   return parts.join("/");
+}
+
+/** Resolves the upstream URL and confirms it is still under `/<prefix>/` on the API origin. */
+function upstreamUrl(prefix: "storage" | "tus", path: string): string | null {
+  const origin = getApiBaseUrl();
+  const root = new URL(`${origin}/${prefix}/`);
+
+  let resolved: URL;
+  try {
+    resolved = new URL(path.split("/").map(encodeURIComponent).join("/"), root);
+  } catch {
+    return null;
+  }
+
+  if (resolved.origin !== root.origin || !resolved.pathname.startsWith(root.pathname)) {
+    return null;
+  }
+
+  return resolved.toString().replace(/\?.*$/, "");
 }

@@ -20,7 +20,7 @@ export default async function ProjectsPage() {
   const [seo, projects] = await Promise.all([fetchPageSeo(PATH), fetchProjects()])
 
   return (
-    <main className="site-main">
+    <main id="content" tabIndex={-1} className="site-main">
       <RouteReady />
       <SeoJsonLd seo={seo} />
 

@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  motion,
+  m,
   useReducedMotion,
   type HTMLMotionProps,
   type Variants,
@@ -48,7 +48,7 @@ export function MotionRevealBase({
   }
 
   return (
-    <motion.div
+    <m.div
       className={cn(className)}
       variants={variants}
       initial="hidden"
@@ -58,6 +58,6 @@ export function MotionRevealBase({
       {...props}
     >
       {children}
-    </motion.div>
+    </m.div>
   )
 }

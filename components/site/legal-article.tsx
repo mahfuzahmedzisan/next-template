@@ -8,7 +8,7 @@ import type { ResolvedSeo } from "@/lib/seo/types"
 
 export function LegalArticle({ page, path, seo }: { page: LegalPage; path: string; seo: ResolvedSeo }) {
   return (
-    <main className="site-main max-w-3xl gap-10">
+    <main id="content" tabIndex={-1} className="site-main max-w-3xl gap-10">
       <RouteReady />
       <SeoJsonLd seo={seo} />
 

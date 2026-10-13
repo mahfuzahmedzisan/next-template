@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClipboardPaste, ImageOff, Search, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -101,6 +101,16 @@ export function MediaPicker({
   const [urlText, setUrlText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [wasOpen, setWasOpen] = useState(open);
+  const uploadAbort = useRef<AbortController | null>(null);
+
+  // Closing the sheet or leaving the page stops the transfer and the conversion poll.
+  useEffect(() => {
+    if (open) return;
+    uploadAbort.current?.abort();
+    uploadAbort.current = null;
+  }, [open]);
+
+  useEffect(() => () => uploadAbort.current?.abort(), []);
 
   if (open !== wasOpen) {
     setWasOpen(open);
@@ -200,15 +210,21 @@ export function MediaPicker({
     setError(null);
     const ready: MediaChoice[] = [];
     setJobs(files.map((file) => ({ name: file.name, phase: "waiting", percent: 0 })));
+    const controller = new AbortController();
+    uploadAbort.current = controller;
 
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
       try {
-        const media = await uploadMediaFile(file, (phase, percent) => {
-          setJobs((current) =>
-            current.map((job, jobIndex) => (jobIndex === index ? { ...job, phase, percent } : job)),
-          );
-        });
+        const media = await uploadMediaFile(
+          file,
+          (phase, percent) => {
+            setJobs((current) =>
+              current.map((job, jobIndex) => (jobIndex === index ? { ...job, phase, percent } : job)),
+            );
+          },
+          { signal: controller.signal },
+        );
         const choice = choiceFromRecord(media);
         if (!choice || !allowedMediaUrl(choice.url, kinds)) {
           throw new Error("Uploaded file has no usable URL.");
@@ -220,6 +236,7 @@ export function MediaPicker({
           ),
         );
       } catch (reason) {
+        if (controller.signal.aborted) return;
         const message = reason instanceof Error ? reason.message : "Upload failed.";
         setJobs((current) =>
           current.map((job, jobIndex) =>

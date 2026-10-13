@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { ApiError } from "@/lib/auth/api-error";
+import { authErrorResponse } from "@/lib/auth/route-error";
 import { requestResetPassword } from "@/lib/auth/laravel-auth";
 
 const schema = z
@@ -31,15 +31,6 @@ export async function POST(request: Request) {
     const result = await requestResetPassword(parsed.data);
     return NextResponse.json({ message: result.message });
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { message: error.message, details: error.body },
-        { status: error.status },
-      );
-    }
-    return NextResponse.json(
-      { message: "Unable to reset password" },
-      { status: 500 },
-    );
+    return authErrorResponse(error, "Unable to reset password");
   }
 }

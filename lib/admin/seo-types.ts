@@ -43,6 +43,8 @@ export type SeoGlobalSettings = {
   site_url: string;
   site_url_setting: string;
   site_url_fallback: string;
+  /** Set in production when canonical links would still be local or the revalidate hook is missing. */
+  site_url_warning?: string | null;
   title_prefix: string;
   title_suffix: string;
   default_description: string;
@@ -136,7 +138,7 @@ export type SeoOverview = {
 };
 
 export type SeoSettingsInput = Partial<
-  Omit<SeoGlobalSettings, "site_url" | "site_url_fallback" | "default_og_image_url" | "identity" | "site_url_setting">
+  Omit<SeoGlobalSettings, "site_url" | "site_url_fallback" | "site_url_warning" | "default_og_image_url" | "identity" | "site_url_setting">
 > & { site_url?: string | null };
 
 export type SeoPageInput = Partial<SeoFieldValues> & {

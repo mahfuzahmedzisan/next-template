@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { formatMediaUrl } from "@/lib/media/media-url";
 import { SeoFetchError, seoFetch } from "@/lib/seo/api";
+import { withPublicOrigin } from "@/lib/seo/public";
 import type { ResolvedSeo } from "@/lib/seo/types";
 
 const CONTENT_TAG = "seo";
@@ -85,7 +86,7 @@ export async function fetchProjects(options: { featured?: boolean; perPage?: num
 /** Memoized per request: `generateMetadata` and the page both read it. */
 export const fetchProject = cache(async (slug: string): Promise<ProjectDetail | null> => {
   const data = await get<{ project: ProjectDetail }>(`/projects/${encodeURIComponent(slug)}`);
-  return data?.project ? withCover(data.project) : null;
+  return data?.project ? withCover({ ...data.project, seo: withPublicOrigin(data.project.seo) }) : null;
 });
 
 export async function fetchPosts(options: { perPage?: number } = {}): Promise<PostCard[]> {
@@ -102,5 +103,5 @@ export async function fetchPosts(options: { perPage?: number } = {}): Promise<Po
 /** Memoized per request: `generateMetadata` and the page both read it. */
 export const fetchPost = cache(async (slug: string): Promise<PostDetail | null> => {
   const data = await get<{ post: PostDetail }>(`/posts/${encodeURIComponent(slug)}`);
-  return data?.post ? withCover(data.post) : null;
+  return data?.post ? withCover({ ...data.post, seo: withPublicOrigin(data.post.seo) }) : null;
 });

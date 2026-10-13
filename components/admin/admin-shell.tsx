@@ -126,7 +126,12 @@ export function AdminShell({
 
   const groups = user.role === "admin"
     ? adminNav
-    : adminNav.filter((group) => group.label !== "Application");
+    : adminNav
+        .filter((group) => group.label !== "Application")
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => item.href !== "/admin/realtime"),
+        }));
 
   return (
     <AppShell defaultOpen={defaultOpen}>

@@ -35,7 +35,10 @@ export function ProfileForm({ user }: { user: User }) {
   const [removing, startRemove] = useTransition();
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [email, setEmail] = useState(user.email);
   const fileRef = useRef<HTMLInputElement>(null);
+  const emailChanged =
+    email.trim().toLowerCase() !== user.email.trim().toLowerCase();
 
   useActionToast(state);
 
@@ -156,11 +159,28 @@ export function ProfileForm({ user }: { user: User }) {
             id="email"
             name="email"
             type="email"
-            defaultValue={user.email}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             required
             className="min-h-10"
           />
         </div>
+        {emailChanged ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="profile-current-password">Current password</Label>
+            <Input
+              id="profile-current-password"
+              name="current_password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="min-h-10 sm:max-w-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Confirm your password to change the sign-in email.
+            </p>
+          </div>
+        ) : null}
         <div className="sm:col-span-2">
           <Button type="submit" disabled={pending} className="min-h-10">
             {pending ? "Saving…" : "Save profile"}

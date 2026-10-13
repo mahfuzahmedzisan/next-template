@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
+import { safeRedirectPath } from "@/lib/auth/redirect";
 import { SESSION_EXPIRED_REASON } from "@/lib/auth/session-expired";
 import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";
 import type { User } from "@/types/auth";
@@ -45,18 +46,11 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-/** Only ever follow our own paths, never an absolute URL from the query. */
-function safeNext(value: string | null): Route {
-  return (
-    value?.startsWith("/") && !value.startsWith("//") ? value : "/admin"
-  ) as Route;
-}
-
 function LoginForm() {
   const router = useTransitionRouter();
   const searchParams = useSearchParams();
   const sessionExpired = searchParams.get("reason") === SESSION_EXPIRED_REASON;
-  const next = safeNext(searchParams.get("next"));
+  const next = safeRedirectPath(searchParams.get("next")) as Route;
   const sessionToastShown = useRef(false);
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
 

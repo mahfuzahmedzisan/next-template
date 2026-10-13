@@ -66,10 +66,15 @@ function useRecheckWatch(onOverview: (overview: SeoOverview) => void) {
   useEffect(() => {
     if (!active) return;
 
+    let inFlight = false;
+    let cancelled = false;
     const timer = window.setInterval(async () => {
-      if (document.hidden) return;
-      const result = await loadSeoOverviewAction();
-      if (!result.ok) return;
+      if (document.hidden || inFlight) return;
+      inFlight = true;
+      const result = await loadSeoOverviewAction().finally(() => {
+        inFlight = false;
+      });
+      if (cancelled || !result.ok) return;
       onOverviewRef.current(result.overview);
 
       const next: Record<number, Watch> = {};
@@ -85,7 +90,10 @@ function useRecheckWatch(onOverview: (overview: SeoOverview) => void) {
       setWatching(next);
     }, POLL_MS);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [active]);
 
   return {

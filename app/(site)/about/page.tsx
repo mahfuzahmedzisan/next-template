@@ -20,7 +20,7 @@ export default async function AboutPage() {
   const seo = await fetchPageSeo(PATH)
 
   return (
-    <main className="site-main gap-20">
+    <main id="content" tabIndex={-1} className="site-main gap-20">
       <RouteReady />
       <SeoJsonLd seo={seo} />
 

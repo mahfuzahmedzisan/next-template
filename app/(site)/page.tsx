@@ -52,7 +52,7 @@ export default async function Home() {
   ])
 
   return (
-    <main className="site-main gap-24 md:py-24">
+    <main id="content" tabIndex={-1} className="site-main gap-24 md:py-24">
       <RouteReady />
       <SeoJsonLd seo={seo} />
 

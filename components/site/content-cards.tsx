@@ -21,7 +21,7 @@ function Cover({ src, alt, priority }: { src: string | null; alt: string; priori
       alt={alt}
       width={COVER.width}
       height={COVER.height}
-      sizes="(min-width: 640px) 50vw, 100vw"
+      sizes="(min-width: 1152px) 576px, (min-width: 640px) 50vw, 100vw"
       priority={priority}
       className="site-cover"
     />

@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { site, siteDescription } from "@/content/site";
-import { SeoFetchError, seoFetch, seoPrimaryOrigin } from "@/lib/seo/api";
+import { SeoFetchError, isLocalOrigin, seoFetch, seoPrimaryOrigin } from "@/lib/seo/api";
 import type { ResolvedSeo, SeoIdentity } from "@/lib/seo/types";
 
 const SEO_TAG = "seo";
@@ -22,7 +22,7 @@ export const fetchPageSeo = cache(async (path: string): Promise<ResolvedSeo> => 
       next: { tags: [SEO_TAG], revalidate: SEO_REVALIDATE_SECONDS },
     });
     const body = (await response.json()) as PageSeoBody;
-    if (body.data?.seo) return body.data.seo;
+    if (body.data?.seo) return withPublicOrigin(body.data.seo);
   } catch (error) {
     if (!(error instanceof SeoFetchError) && process.env.NODE_ENV !== "production") {
       console.warn("[seo] page lookup failed", error);
@@ -34,6 +34,20 @@ export const fetchPageSeo = cache(async (path: string): Promise<ResolvedSeo> => 
 
 export async function fetchSiteIdentity(): Promise<SeoIdentity> {
   return (await fetchPageSeo("/")).identity;
+}
+
+/**
+ * A production build must never publish localhost canonical, OG or JSON-LD
+ * URLs, even when the backend's Site URL is still misconfigured.
+ */
+export function withPublicOrigin(seo: ResolvedSeo): ResolvedSeo {
+  const local = seo.identity.site_url.replace(/\/+$/, "");
+  const primary = seoPrimaryOrigin();
+  if (process.env.NODE_ENV !== "production" || !isLocalOrigin(local) || isLocalOrigin(primary)) {
+    return seo;
+  }
+
+  return JSON.parse(JSON.stringify(seo).replaceAll(local, primary)) as ResolvedSeo;
 }
 
 /** Used only while the API is unreachable; it is never cached. */

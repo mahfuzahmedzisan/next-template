@@ -41,8 +41,13 @@ export async function updateProfileAction(
   try {
     const name = String(formData.get("name") ?? "");
     const email = String(formData.get("email") ?? "");
+    const currentPassword = String(formData.get("current_password") ?? "");
 
-    const result = await updateProfile({ name, email });
+    const result = await updateProfile({
+      name,
+      email,
+      ...(currentPassword ? { current_password: currentPassword } : {}),
+    });
     await syncSessionUser(result.user);
 
     revalidatePath("/admin", "layout");

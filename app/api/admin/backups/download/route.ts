@@ -35,7 +35,9 @@ export async function GET(request: NextRequest) {
         Accept: "application/zip, application/json",
       },
       responseType: "stream",
-      timeout: 0,
+      // Socket-idle timeout: a long archive keeps streaming, a stalled API gives up.
+      timeout: 120_000,
+      signal: request.signal,
     });
   } catch {
     return backToPage(request, "The backup service is unavailable.");

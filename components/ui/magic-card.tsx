@@ -8,7 +8,7 @@ import React, {
   useSyncExternalStore,
 } from "react"
 import {
-  motion,
+  m,
   useMotionTemplate,
   useMotionValue,
   useSpring,
@@ -196,7 +196,7 @@ export function MagicCard(props: MagicCardProps) {
   }, [reset, disableFollow])
 
   return (
-    <motion.div
+    <m.div
       className={cn(
         "group relative isolate overflow-hidden rounded-[inherit] border border-transparent",
         className
@@ -218,7 +218,7 @@ export function MagicCard(props: MagicCardProps) {
       <div className="bg-background absolute inset-px z-20 rounded-[inherit]" />
 
       {mode === "gradient" && !disableFollow && (
-        <motion.div
+        <m.div
           suppressHydrationWarning
           aria-hidden="true"
           className="pointer-events-none absolute inset-px z-30 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-coarse:hidden"
@@ -235,7 +235,7 @@ export function MagicCard(props: MagicCardProps) {
       )}
 
       {mode === "orb" && !disableFollow && (
-        <motion.div
+        <m.div
           suppressHydrationWarning
           aria-hidden="true"
           className="pointer-events-none absolute z-30 pointer-coarse:hidden"
@@ -256,6 +256,6 @@ export function MagicCard(props: MagicCardProps) {
         />
       )}
       <div className="relative z-40">{children}</div>
-    </motion.div>
+    </m.div>
   )
 }

@@ -156,6 +156,8 @@ export function MediaLibrary({
   const [meta, setMeta] = useState(initialMeta);
   const [listLoading, setListLoading] = useState(false);
   const uploads = useRef(new Map<number, TusUploadHandle>());
+  /** When the last Echo update for a row arrived, so an older poll response can't overwrite it. */
+  const echoAt = useRef(new Map<number, number>());
   const listRequest = useRef(0);
   const rowsRef = useRef(rows);
   const toasted = useRef(new Set<string>());
@@ -170,6 +172,14 @@ export function MediaLibrary({
   useEffect(() => {
     rowsRef.current = rows;
   }, [rows]);
+
+  useEffect(() => {
+    const handles = uploads.current;
+    return () => {
+      for (const handle of handles.values()) handle.pause();
+      handles.clear();
+    };
+  }, []);
 
   async function loadList(
     nextKind: MediaTypeFilter,
@@ -226,6 +236,7 @@ export function MediaLibrary({
       const data = (payload ?? {}) as ProcessingPayload;
       if (!data.video_id || !data.status) return;
       const status = data.status;
+      echoAt.current.set(data.video_id, Date.now());
       setRows((current) =>
         current.map((row) =>
           row.id === data.video_id
@@ -241,14 +252,19 @@ export function MediaLibrary({
         ),
       );
     });
+    // The user channel is shared with the notification bell; leaving it would cut that off too.
     return () => {
-      echo.leave(`private-App.Models.User.${userId}`);
+      channel.stopListening(".video.processing");
     };
   }, [userId]);
 
   useEffect(() => {
     if (!needsPoll) return;
+    let inFlight = false;
     const timer = window.setInterval(() => {
+      if (inFlight) return;
+      inFlight = true;
+      const startedAt = Date.now();
       const params = new URLSearchParams();
       if (q) params.set("q", q);
       if (kind !== "all") params.set("kind", kind);
@@ -262,26 +278,32 @@ export function MediaLibrary({
           setRows((current) =>
             current.map((row) => {
               const item = media.find((entry) => entry.id === row.id);
-              return item
-                ? { ...row, ...item, uploadPercent: item.status === "awaiting_upload" ? row.uploadPercent : null }
-                : row;
+              if (!item || (echoAt.current.get(row.id) ?? 0) > startedAt) return row;
+              return { ...row, ...item, uploadPercent: item.status === "awaiting_upload" ? row.uploadPercent : null };
             }),
           );
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => {
+          inFlight = false;
+        });
     }, 4000);
     return () => window.clearInterval(timer);
   }, [needsPoll, q, kind, page, view]);
 
   useEffect(() => {
     if (watchId === null || needsPoll) return;
+    let inFlight = false;
     const timer = window.setInterval(() => {
+      if (inFlight) return;
+      inFlight = true;
+      const startedAt = Date.now();
       void fetch(`/api/admin/media/${watchId}`, { credentials: "include" })
         .then(async (response) => {
           if (!response.ok) return;
           const body = await readJson<{ data?: { media?: MediaRecord } }>(response);
           const media = body.data?.media;
-          if (!media) return;
+          if (!media || (echoAt.current.get(media.id) ?? 0) > startedAt) return;
           setRows((current) =>
             current.map((row) =>
               row.id === media.id
@@ -290,7 +312,10 @@ export function MediaLibrary({
             ),
           );
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => {
+          inFlight = false;
+        });
     }, 4000);
     return () => window.clearInterval(timer);
   }, [watchId, needsPoll]);

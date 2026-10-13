@@ -6,13 +6,13 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
   type ReactNode,
 } from "react";
 
-import { ScrollTrigger } from "@/components/animations/gsap";
 import {
   initialTransitionState,
   transitionReducer,
@@ -148,22 +148,30 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     [pathname, router],
   );
 
+  // markReady reads the latest state through a ref so its identity never
+  // changes; otherwise every phase change re-renders every context consumer.
+  const latest = useRef({ state, pathname });
+  useLayoutEffect(() => {
+    latest.current = { state, pathname };
+  }, [state, pathname]);
+
   const markReady = useCallback(
     (key: string, _registration: string, outcome: Outcome = "ready") => {
       readyRoutes.current.set(key, outcome);
-      const current =
-        state.actualRouteKey ?? routeKey(state.target ?? pathname);
-      if (state.phase === "routeWaiting" && current === key) {
+      const { state: current, pathname: currentPath } = latest.current;
+      const currentKey =
+        current.actualRouteKey ?? routeKey(current.target ?? currentPath);
+      if (current.phase === "routeWaiting" && currentKey === key) {
         if (outcome === "ready")
           dispatch({
             type: "DESTINATION_READY",
-            requestId: state.requestId,
+            requestId: current.requestId,
             routeKey: key,
           });
         else
           dispatch({
             type: "DESTINATION_TERMINAL",
-            requestId: state.requestId,
+            requestId: current.requestId,
             routeKey: key,
             outcome,
           });
@@ -173,13 +181,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
           readyRoutes.current.delete(key);
       };
     },
-    [
-      pathname,
-      state.actualRouteKey,
-      state.phase,
-      state.requestId,
-      state.target,
-    ],
+    [],
   );
 
   const onProgressFinished = useCallback(() => {
@@ -195,7 +197,6 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "REVEAL_COMPLETED", requestId: state.requestId });
     requestAnimationFrame(() => {
       document.getElementById("content")?.focus({ preventScroll: true });
-      ScrollTrigger.refresh();
     });
   }, [state.requestId]);
 

@@ -130,18 +130,26 @@ function useAuditPolling(latest: SeoAuditLatest, onLatest: (latest: SeoAuditLate
     if (runningId === undefined) return;
     const startedAt = Date.now();
 
+    let inFlight = false;
+    let cancelled = false;
     const timer = window.setInterval(async () => {
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || inFlight) return;
       if (Date.now() - startedAt > POLL_LIMIT_MS) {
         window.clearInterval(timer);
         toast.warning("The audit is taking a long time. Is the SEO queue worker running?");
         return;
       }
-      const result = await loadSeoAuditLatestAction();
-      if (result.ok) onLatestRef.current(result.latest);
+      inFlight = true;
+      const result = await loadSeoAuditLatestAction().finally(() => {
+        inFlight = false;
+      });
+      if (!cancelled && result.ok) onLatestRef.current(result.latest);
     }, POLL_MS);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [runningId]);
 }
 

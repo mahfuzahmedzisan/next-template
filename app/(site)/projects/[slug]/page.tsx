@@ -33,7 +33,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   ].filter((fact): fact is { label: string; value: string } => Boolean(fact.value))
 
   return (
-    <main className="site-main max-w-4xl gap-12">
+    <main id="content" tabIndex={-1} className="site-main max-w-4xl gap-12">
       <RouteReady />
       <SeoJsonLd seo={project.seo} />
 

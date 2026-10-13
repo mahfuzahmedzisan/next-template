@@ -62,7 +62,7 @@ export async function saveSmtpAction(input: {
 }): Promise<SettingsActionResult> {
   try {
     const settings = await saveSmtpSettings(input);
-    refresh();
+    revalidatePath("/admin/application", "layout");
     return { ok: true, message: "Mail settings saved.", settings };
   } catch (error) {
     return toResult(error, "Unable to save mail settings.");

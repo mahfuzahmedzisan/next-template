@@ -12,12 +12,5 @@ export {
   MotionRevealBase,
 } from "./motion"
 
-export {
-  gsap,
-  ScrollTrigger,
-  useGSAP,
-  registerGsapPlugins,
-} from "./gsap"
-
 export { SplitText } from "./text"
 export { scrollToTarget, useScrollTo } from "./scroll"

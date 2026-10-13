@@ -1,5 +1,6 @@
 import "server-only";
 
+import { primaryNav } from "@/content/site";
 import { SeoFetchError, seoFetch, seoPrimaryOrigin } from "@/lib/seo/api";
 
 const PUBLIC_CACHE = "public, max-age=300";
@@ -44,6 +45,36 @@ export async function proxySeoFile(file: string, { contentType, fallback }: Prox
       headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "300" },
     });
   }
+}
+
+const FALLBACK_PAGES = [{ href: "/", label: "Home" }, ...primaryNav];
+
+/** Sitemap for API outages: only the fixed top-level pages, so crawlers never see an error body. */
+export function fallbackSitemap(): string {
+  const origin = seoPrimaryOrigin();
+  const urls = FALLBACK_PAGES.map(({ href }) => `  <url><loc>${origin}${href}</loc></url>`);
+
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...urls,
+    "</urlset>",
+    "",
+  ].join("\n");
+}
+
+/** llms.txt for API outages: a plain list of the fixed top-level pages. */
+export function fallbackLlms(): string {
+  const origin = seoPrimaryOrigin();
+
+  return [
+    `# ${new URL(origin).host}`,
+    "",
+    "## Pages",
+    "",
+    ...FALLBACK_PAGES.map(({ href, label }) => `- [${label}](${origin}${href})`),
+    "",
+  ].join("\n");
 }
 
 /** Safe robots.txt for API outages: keeps private areas out without blocking the site. */

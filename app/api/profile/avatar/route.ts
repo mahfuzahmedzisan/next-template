@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/auth/api-error";
 import { getSession, updateSession } from "@/lib/auth/auth-cookies";
 import { deleteAvatar, uploadAvatar } from "@/lib/auth/profile";
+import { rejectOversizedBody } from "@/lib/http/body-limit";
+
+/** Matches AllowedAvatar::MAX_KILOBYTES on the API. */
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
 async function requireSession() {
   const session = await getSession();
@@ -21,11 +25,8 @@ async function requireSession() {
 }
 
 function errorResponse(error: unknown, fallback: string) {
-  if (error instanceof ApiError) {
-    return NextResponse.json(
-      { message: error.message },
-      { status: error.status || 500 },
-    );
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return NextResponse.json({ message: error.message }, { status: error.status });
   }
 
   return NextResponse.json({ message: fallback }, { status: 500 });
@@ -34,6 +35,9 @@ function errorResponse(error: unknown, fallback: string) {
 export async function POST(request: Request) {
   const { session, response } = await requireSession();
   if (!session || response) return response;
+
+  const oversized = rejectOversizedBody(request, AVATAR_MAX_BYTES);
+  if (oversized) return oversized;
 
   const incoming = await request.formData();
   const file = incoming.get("avatar");

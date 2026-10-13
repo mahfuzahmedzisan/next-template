@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "maktech_laravel/**",
+    "maktech-laravel/**",
+    "API/**",
   ]),
 ]);
 

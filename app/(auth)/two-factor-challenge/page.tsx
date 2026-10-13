@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
+import { safeRedirectPath } from "@/lib/auth/redirect";
 import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";
 import type { User } from "@/types/auth";
 
@@ -88,7 +89,7 @@ export default function TwoFactorChallengePage() {
       return;
     }
 
-    const next = (challengeNext ?? "/admin") as Route;
+    const next = safeRedirectPath(challengeNext) as Route;
     sessionStorage.removeItem("challenge_next");
 
     await syncStoredThemeToAccount(result.data.user.theme);

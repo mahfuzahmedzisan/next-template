@@ -32,7 +32,7 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
     .join(" · ")
 
   return (
-    <main className="site-main max-w-3xl gap-10">
+    <main id="content" tabIndex={-1} className="site-main max-w-3xl gap-10">
       <RouteReady />
       <SeoJsonLd seo={post.seo} />
 

@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  motion,
+  m,
   useReducedMotion,
   type HTMLMotionProps,
 } from "motion/react"
@@ -44,7 +44,7 @@ export function StaggerContainer({
   }
 
   return (
-    <motion.div
+    <m.div
       className={cn(className)}
       variants={{
         ...staggerContainerVariants,
@@ -64,7 +64,7 @@ export function StaggerContainer({
       {...props}
     >
       {children}
-    </motion.div>
+    </m.div>
   )
 }
 
@@ -94,13 +94,13 @@ export function StaggerItem({
   }
 
   return (
-    <motion.div
+    <m.div
       className={cn(className)}
       variants={staggerItemVariants}
       transition={getTransition(false, delay)}
       {...props}
     >
       {children}
-    </motion.div>
+    </m.div>
   )
 }

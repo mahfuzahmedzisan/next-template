@@ -8,7 +8,11 @@ import type {
   UserDevice,
 } from "@/types/auth";
 
-export function updateProfile(input: { name: string; email: string }) {
+export function updateProfile(input: {
+  name: string;
+  email: string;
+  current_password?: string;
+}) {
   return authedRequest<{ user: User }>("put", "/profile", input);
 }
 

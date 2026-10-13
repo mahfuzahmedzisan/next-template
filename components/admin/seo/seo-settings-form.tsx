@@ -132,6 +132,11 @@ export function SeoSettingsForm({
         <p className="text-xs leading-5 text-muted-foreground">
           The origin used in canonical links, the sitemap and social cards. Empty uses {settings.site_url_fallback}.
         </p>
+        {settings.site_url_warning ? (
+          <p role="alert" className="text-xs leading-5 text-amber-600 dark:text-amber-400">
+            {settings.site_url_warning}
+          </p>
+        ) : null}
         {error("site_url")}
       </div>
 

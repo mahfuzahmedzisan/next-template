@@ -40,17 +40,33 @@ async function readJson<T>(response: Response): Promise<T> {
   return JSON.parse(text) as T;
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
+function abortError() {
+  return new DOMException("The upload was cancelled.", "AbortError");
+}
+
+function wait(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(abortError());
+    const timer = window.setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    function onAbort() {
+      window.clearTimeout(timer);
+      reject(abortError());
+    }
+    signal?.addEventListener("abort", onAbort, { once: true });
   });
 }
 
-async function waitUntilReady(id: number): Promise<MediaRecord> {
+/** Video conversion can take far longer than an image; callers pick the wait. */
+const DEFAULT_READY_TIMEOUT_MS = 120_000;
+
+async function waitUntilReady(id: number, timeoutMs: number, signal?: AbortSignal): Promise<MediaRecord> {
   const started = Date.now();
 
-  while (Date.now() - started < 120_000) {
-    const response = await fetch(`/api/admin/media/${id}`, { credentials: "include" });
+  while (Date.now() - started < timeoutMs) {
+    const response = await fetch(`/api/admin/media/${id}`, { credentials: "include", signal });
     const body = await readJson<{ data?: { media?: MediaRecord }; message?: string }>(response);
     const media = body.data?.media;
     if (!response.ok || !media) {
@@ -60,7 +76,7 @@ async function waitUntilReady(id: number): Promise<MediaRecord> {
     if (media.status === "failed") {
       throw new Error(media.error_message ?? "Conversion failed.");
     }
-    await wait(1500);
+    await wait(1500, signal);
   }
 
   throw new Error("Conversion is taking too long.");
@@ -69,14 +85,18 @@ async function waitUntilReady(id: number): Promise<MediaRecord> {
 export async function uploadMediaFile(
   file: File,
   onProgress: (phase: UploadPhase, percent: number) => void,
+  options: { signal?: AbortSignal; readyTimeoutMs?: number } = {},
 ): Promise<MediaRecord> {
+  const { signal, readyTimeoutMs = DEFAULT_READY_TIMEOUT_MS } = options;
   const mime = mimeFor(file);
   if (!mime) throw new Error("This file type is not allowed.");
+  if (signal?.aborted) throw abortError();
 
   onProgress("uploading", 0);
   const response = await fetch("/api/admin/media", {
     method: "POST",
     credentials: "include",
+    signal,
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({
       title: file.name.replace(/\.[^.]+$/, "") || file.name,
@@ -95,6 +115,10 @@ export async function uploadMediaFile(
 
   const created = body.data;
   await new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      handle.pause();
+      reject(abortError());
+    };
     const handle = createMediaUpload({
       file,
       endpoint: created.tus_endpoint,
@@ -104,15 +128,18 @@ export async function uploadMediaFile(
         onProgress("uploading", percent);
       },
       onSuccess() {
+        signal?.removeEventListener("abort", onAbort);
         resolve();
       },
       onError(error) {
+        signal?.removeEventListener("abort", onAbort);
         reject(error);
       },
     });
+    signal?.addEventListener("abort", onAbort, { once: true });
     handle.start();
   });
 
   onProgress("converting", 100);
-  return waitUntilReady(created.media_id);
+  return waitUntilReady(created.media_id, readyTimeoutMs, signal);
 }
