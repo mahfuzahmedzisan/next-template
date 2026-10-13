@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 export type MediaChoice = {
   url: string;
   title?: string;
+  alt?: string;
   mediaId?: number;
   mime?: string;
 };
@@ -38,6 +39,7 @@ function choiceFromRecord(record: MediaRecord): MediaChoice | null {
   return {
     url,
     title: record.title,
+    alt: record.alt ?? undefined,
     mediaId: record.id,
     mime: record.mime ?? undefined,
   };

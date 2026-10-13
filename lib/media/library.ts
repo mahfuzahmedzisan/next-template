@@ -15,11 +15,12 @@ export async function listAdminMedia(
   return toBrowserMedia(data);
 }
 
-export async function previewAdminMediaSlugs(title: string, count: number) {
+export async function previewAdminMediaSlugs(title: string, count: number, except?: number) {
   const params = new URLSearchParams({
     title,
     count: String(count),
   });
+  if (except) params.set("except", String(except));
   const data = await authedRequest<{ slugs: string[] }>(
     "get",
     `/admin/media/slug-preview?${params.toString()}`,

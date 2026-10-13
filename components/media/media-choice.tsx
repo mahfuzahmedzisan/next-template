@@ -20,7 +20,7 @@ export function MediaChoiceField({
   accept: MediaKind[];
   max?: number;
   disabled?: boolean;
-  onChange: (url: string | null) => void;
+  onChange: (url: string | null, choice?: MediaChoice) => void;
 }) {
   const [open, setOpen] = useState(false);
   const value: MediaChoice[] = url ? [{ url, title: label }] : [];
@@ -75,7 +75,7 @@ export function MediaChoiceField({
         accept={accept}
         max={max}
         value={value}
-        onConfirm={(choices) => onChange(choices[0]?.url ?? null)}
+        onConfirm={(choices) => onChange(choices[0]?.url ?? null, choices[0])}
       />
     </div>
   );

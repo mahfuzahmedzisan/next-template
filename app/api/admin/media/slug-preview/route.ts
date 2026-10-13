@@ -14,13 +14,18 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const title = url.searchParams.get("title")?.trim() ?? "";
   const count = Number(url.searchParams.get("count") ?? "1");
+  const except = Number(url.searchParams.get("except") ?? "");
 
   if (title === "") {
     return NextResponse.json({ data: { slugs: [] } });
   }
 
   try {
-    const slugs = await previewAdminMediaSlugs(title, Number.isFinite(count) ? count : 1);
+    const slugs = await previewAdminMediaSlugs(
+      title,
+      Number.isFinite(count) ? count : 1,
+      Number.isInteger(except) && except > 0 ? except : undefined,
+    );
     return NextResponse.json({ data: { slugs } });
   } catch (error) {
     if (error instanceof SessionExpiredError) {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Copy, Expand } from "lucide-react";
+import { Check, Copy, Expand, WandSparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { RecordHistory } from "@/components/admin/audit/record-history";
 import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
@@ -9,6 +10,7 @@ import { VideoPlayer } from "@/components/media/video-player";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -145,10 +147,38 @@ function MediaDetailForm({
   const [retrying, setRetrying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [thumbBusy, setThumbBusy] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const thumbInput = useRef<HTMLInputElement>(null);
   const reuploadInput = useRef<HTMLInputElement>(null);
   const uploadMissing = item.status === "awaiting_upload";
   const streamable = item.kind === "video" || item.kind === "audio";
+
+  async function generateSlug() {
+    const name = title.trim();
+    if (!name) return;
+    setGenerating(true);
+    try {
+      const params = new URLSearchParams({ title: name, count: "1", except: String(item.id) });
+      const response = await fetch(`/api/admin/media/slug-preview?${params.toString()}`, {
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        message?: string;
+        data?: { slugs?: string[] };
+      } | null;
+      const next = payload?.data?.slugs?.[0];
+      if (!response.ok || !next) {
+        toast.error(payload?.message ?? "Unable to generate a slug.");
+        return;
+      }
+      setSlug(next);
+    } catch {
+      toast.error("Unable to generate a slug.");
+    } finally {
+      setGenerating(false);
+    }
+  }
   const converting = item.status === "uploaded" || item.status === "processing";
   const canPreview = item.kind === "image" && Boolean(url);
 
@@ -290,7 +320,24 @@ function MediaDetailForm({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="detail-slug">Slug</Label>
-          <Input id="detail-slug" value={slug} onChange={(event) => setSlug(event.target.value)} />
+          <InputGroup>
+            <InputGroupInput id="detail-slug" value={slug} onChange={(event) => setSlug(event.target.value)} />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                variant="secondary"
+                disabled={generating || !title.trim()}
+                onClick={() => void generateSlug()}
+              >
+                <WandSparkles aria-hidden />
+                {generating ? "Generating" : "Generate"}
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
+          {!streamable ? (
+            <p className="text-xs text-muted-foreground">
+              Saving renames the file to match the slug. Links to the old URL keep working.
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="detail-url">URL</Label>

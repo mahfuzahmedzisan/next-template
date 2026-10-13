@@ -6,6 +6,7 @@ import { keywordsToText, previewTitle, textToKeywords } from "@/components/admin
 import { SeoDisclosure } from "@/components/admin/seo/seo-disclosure";
 import { CharCount, SearchPreview, SocialPreview } from "@/components/admin/seo/seo-previews";
 import { MediaChoiceField } from "@/components/media/media-choice";
+import type { MediaChoice } from "@/components/media/media-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -127,6 +128,12 @@ function SwitchRow({
 
 function text(value: string) {
   return value === "" ? null : value;
+}
+
+/** Library images bring their alt text, or their title when the alt is empty. */
+function imageAlt(url: string | null, choice: MediaChoice | undefined) {
+  if (!url || !choice?.mediaId) return null;
+  return text((choice.alt || choice.title || "").trim());
 }
 
 /**
@@ -328,28 +335,32 @@ export function SeoFieldsSection({
           />
         </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <MediaChoiceField
-              label="Social image"
-              url={value.og_image}
-              accept={["image"]}
-              disabled={disabled}
-              onChange={(url) => onChange({ og_image: url })}
-            />
-            <p className="text-xs leading-5 text-muted-foreground">1200 × 630 works everywhere. Empty uses the site default.</p>
-            <FieldError errors={errors} name="og_image" />
-          </div>
-          <Field label="Image alt text" htmlFor={`${id}-og-alt`}>
-            <Input
-              id={`${id}-og-alt`}
-              value={value.og_image_alt ?? ""}
-              onChange={(event) => onChange({ og_image_alt: text(event.target.value) })}
-              maxLength={255}
-              disabled={disabled}
-            />
-          </Field>
+        <div className="space-y-2">
+          <MediaChoiceField
+            label="Social image"
+            url={value.og_image}
+            accept={["image"]}
+            disabled={disabled}
+            onChange={(url, choice) =>
+              onChange({ og_image: url, og_image_alt: url === value.og_image ? value.og_image_alt : imageAlt(url, choice) })
+            }
+          />
+          <p className="text-xs leading-5 text-muted-foreground">1200 × 630 works everywhere. Empty uses the site default.</p>
+          <FieldError errors={errors} name="og_image" />
         </div>
+        <Field
+          label="Image alt text"
+          htmlFor={`${id}-og-alt`}
+          hint="Filled from the chosen image's alt text. Describe what the image shows."
+        >
+          <Input
+            id={`${id}-og-alt`}
+            value={value.og_image_alt ?? ""}
+            onChange={(event) => onChange({ og_image_alt: text(event.target.value) })}
+            maxLength={255}
+            disabled={disabled}
+          />
+        </Field>
 
         <SeoDisclosure
           title="Advanced"

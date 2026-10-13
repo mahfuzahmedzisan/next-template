@@ -104,6 +104,16 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
     return Response.json({ message: "Media is unavailable." }, { status: 502 });
   }
 
+  if (upstream.status === 404) {
+    const moved = await renamedStoragePath(path, request);
+    if (moved) {
+      return new Response(null, {
+        status: 308,
+        headers: { location: `/api/storage/${moved.split("/").map(encodeURIComponent).join("/")}` },
+      });
+    }
+  }
+
   if (path.endsWith(".m3u8") && upstream.ok && request.method !== "HEAD") {
     const text = rewritePlaylist(await upstream.text());
     return new Response(text, {
@@ -137,6 +147,29 @@ export async function proxyStorage(request: Request, slug: string[] | undefined)
     status: upstream.status,
     headers: responseHeaders,
   });
+}
+
+/**
+ * A library file renamed after its slug changed: `<media id>/<old name>` now
+ * lives at `<media id>/<new name>`. Returns the new path, or null.
+ */
+async function renamedStoragePath(path: string, request: Request): Promise<string | null> {
+  const match = /^(\d+)\/[^/]+$/.exec(path);
+  if (!match) return null;
+
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/api/v1/media/files/${match[1]}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+    });
+    if (!response.ok) return null;
+    const body = (await response.json()) as { data?: { path?: unknown } };
+    const next = body.data?.path;
+    if (typeof next !== "string" || next === path || !next.startsWith(`${match[1]}/`)) return null;
+    return safePath(next.split("/"));
+  } catch {
+    return null;
+  }
 }
 
 /** Matches nginx's 120s proxy timeouts; a client that disconnects aborts the upstream call too. */
