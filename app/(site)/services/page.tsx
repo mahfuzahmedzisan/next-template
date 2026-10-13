@@ -89,7 +89,7 @@ export default async function ServicesPage() {
 
       <CtaSection
         heading="Not sure which service fits?"
-        body="Describe the problem in a few sentences and I will suggest the smallest engagement that could solve it, with an honest estimate and no obligation."
+        body="Describe the problem in a few sentences and we will suggest the smallest engagement that could solve it, with an honest estimate and no obligation."
       />
     </main>
   )

@@ -14,7 +14,8 @@ export async function SiteFooter() {
         <div>
           <p className="text-sm font-semibold">{identity.name}</p>
           <p className="site-small mt-3 max-w-sm">
-            {site.summary} Based in {site.location}. {site.availability}
+            {site.summary} {site.location ? `${site.location}. ` : null}
+            {site.availability}
           </p>
         </div>
         <nav aria-label="Site">

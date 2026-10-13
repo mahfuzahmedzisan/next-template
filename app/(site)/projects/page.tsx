@@ -28,7 +28,7 @@ export default async function ProjectsPage() {
         <Breadcrumbs identity={seo.identity} items={[{ name: "Projects", path: PATH }]} />
         <h1 className="site-h1">Projects and case studies</h1>
         <p className="site-lead">
-          A selection of web applications, portals and integrations I have designed and built. Each case study explains the problem, the approach, the technical decisions and the results measured after launch, so you can judge whether my way of working fits your team.
+          A selection of web applications, portals and integrations we have designed and built. Each case study explains the problem, the approach, the technical decisions and the results measured after launch, so you can judge whether our way of working fits your team.
         </p>
       </header>
 
@@ -72,7 +72,7 @@ export default async function ProjectsPage() {
 
       <CtaSection
         heading="Want results like these?"
-        body="Tell me about the workflow that slows your team down. I will reply with questions and an honest view on what a first release could look like."
+        body="Tell us about the workflow that slows your team down. We will reply with questions and an honest view on what a first release could look like."
       />
     </main>
   )

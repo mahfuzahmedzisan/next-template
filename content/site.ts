@@ -13,17 +13,17 @@ export type NavItem = {
 }
 
 export const site = {
-  name: "Mahfuz Ahmed",
-  role: "Full-stack developer" as string | undefined,
+  name: "Next Template",
+  role: "Next.js and Laravel web studio" as string | undefined,
   summary:
-    "Full-stack developer building fast, accessible web apps with Next.js and Laravel, from first sketch to production support." as
+    "A small web studio building fast, accessible web apps with Next.js and Laravel, from first sketch to production support." as
       | string
       | undefined,
-  location: "Dhaka, Bangladesh",
+  location: "Remote-first team" as string | undefined,
   availability: "Taking on new projects for the next quarter.",
   about: [
-    "I design and build web applications for small teams that need software to remove friction from their day: dashboards that replace spreadsheets, booking systems that cut phone calls, and portals that make information easy to find.",
-    "Most of my work pairs a Next.js front end with a Laravel API. I care about the parts users never notice until they go wrong: fast first loads, clear errors, accessible controls and data that is never lost.",
+    "We design and build web applications for small teams that need software to remove friction from their day: dashboards that replace spreadsheets, booking systems that cut phone calls, and portals that make information easy to find.",
+    "Most of our work pairs a Next.js front end with a Laravel API. We care about the parts users never notice until they go wrong: fast first loads, clear errors, accessible controls and data that is never lost.",
   ] as readonly string[],
   skills: [
     "Next.js",
@@ -38,7 +38,7 @@ export const site = {
     "Accessibility",
     "Technical SEO",
   ] as readonly string[],
-  email: "hello@mahfuz-ahmed.example" as string | undefined,
+  email: "hello@example.com" as string | undefined,
   profiles: [
     { label: "GitHub", href: "https://github.com/" },
     { label: "LinkedIn", href: "https://www.linkedin.com/" },

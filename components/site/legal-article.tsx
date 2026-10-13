@@ -43,7 +43,7 @@ export function LegalArticle({ page, path, seo }: { page: LegalPage; path: strin
         <Link href="/contact" className="site-a">
           Get in touch
         </Link>{" "}
-        and I will answer as soon as I can.
+        and we will answer as soon as we can.
       </p>
     </main>
   )

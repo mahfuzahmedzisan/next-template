@@ -22,18 +22,18 @@ export const privacyPolicy: LegalPage = {
     "This policy explains what personal information this website collects, why it is collected, how long it is kept and the choices you have. It applies to the public website and to the private workspace available to signed-in users.",
   sections: [
     {
-      heading: "Information I collect",
+      heading: "Information we collect",
       paragraphs: [
-        "I collect as little personal information as possible. Most visitors can read every public page without sharing anything about themselves.",
+        "We collect as little personal information as possible. Most visitors can read every public page without sharing anything about themselves.",
       ],
       items: [
         {
           title: "Messages you send",
-          body: "When you write through the contact page or by email, I receive your name, email address and the content of your message. I use this only to reply and to discuss a possible project.",
+          body: "When you write through the contact page or by email, we receive your name, email address and the content of your message. We use this only to reply and to discuss a possible project.",
         },
         {
           title: "Account information",
-          body: "If you create an account, I store your name, email address, a securely hashed password, your preferences and, if you enable it, two-factor authentication settings.",
+          body: "If you create an account, we store your name, email address, a securely hashed password, your preferences and, if you enable it, two-factor authentication settings.",
         },
         {
           title: "Technical data",
@@ -44,7 +44,7 @@ export const privacyPolicy: LegalPage = {
     {
       heading: "How information is used",
       paragraphs: [
-        "Information is used to answer messages, provide and secure the private workspace, understand which pages are useful and keep the website working properly. I never sell personal information and I do not use it for advertising profiles.",
+        "Information is used to answer messages, provide and secure the private workspace, understand which pages are useful and keep the website working properly. We never sell personal information and we do not use it for advertising profiles.",
         "Privacy-friendly, aggregated analytics may be used to count page views. These statistics do not identify individual visitors.",
       ],
     },
@@ -57,7 +57,7 @@ export const privacyPolicy: LegalPage = {
     {
       heading: "Sharing and storage",
       paragraphs: [
-        "Personal information is stored with reputable hosting and email providers that process it on my behalf under appropriate agreements. Information is only shared with others when the law requires it.",
+        "Personal information is stored with reputable hosting and email providers that process it on our behalf under appropriate agreements. Information is only shared with others when the law requires it.",
         "Contact messages are kept for up to two years after the last conversation. Account data is kept while your account is active and deleted within thirty days after you close it, except where the law requires a longer period.",
       ],
     },
@@ -70,13 +70,13 @@ export const privacyPolicy: LegalPage = {
     {
       heading: "Children's privacy",
       paragraphs: [
-        "The website is meant for businesses and adults. I do not knowingly collect personal information from children under sixteen. If you believe a child has shared information through the website, please get in touch and it will be deleted.",
+        "The website is meant for businesses and adults. We do not knowingly collect personal information from children under sixteen. If you believe a child has shared information through the website, please get in touch and it will be deleted.",
       ],
     },
     {
       heading: "Your rights",
       paragraphs: [
-        "You can ask for a copy of the personal information I hold about you, ask me to correct or delete it, or object to how it is used. Signed-in users can update most details directly in their account settings. To make a request, use the contact page and I will respond within thirty days.",
+        "You can ask for a copy of the personal information we hold about you, ask us to correct or delete it, or object to how it is used. Signed-in users can update most details directly in their account settings. To make a request, use the contact page and we will respond within thirty days.",
       ],
     },
     {
@@ -119,7 +119,7 @@ export const termsOfService: LegalPage = {
     {
       heading: "Content and intellectual property",
       paragraphs: [
-        "Unless stated otherwise, the text, images, code samples and design of this website belong to Mahfuz Ahmed. Client names and project details are shown with permission or have been changed to protect confidentiality.",
+        "Unless stated otherwise, the text, images, code samples and design of this website belong to Next Template. Client names and project details are shown with permission or have been changed to protect confidentiality.",
         "Code samples in blog posts may be used in your own projects without attribution, but they are provided as they are, without any warranty.",
       ],
     },
@@ -132,13 +132,13 @@ export const termsOfService: LegalPage = {
     {
       heading: "Links to other websites",
       paragraphs: [
-        "Some pages link to other websites, such as documentation, open-source projects or former clients. Those websites are run by other people, and I am not responsible for their content, availability or privacy practices. A link is not an endorsement of everything on the linked website.",
+        "Some pages link to other websites, such as documentation, open-source projects or former clients. Those websites are run by other people, and we are not responsible for their content, availability or privacy practices. A link is not an endorsement of everything on the linked website.",
       ],
     },
     {
       heading: "Disclaimer and liability",
       paragraphs: [
-        "The website is provided as it is. I work hard to keep it accurate and available, but I cannot promise that it will always be error-free or online. To the extent allowed by law, I am not liable for indirect losses arising from the use of the website.",
+        "The website is provided as it is. We work hard to keep it accurate and available, but we cannot promise that it will always be error-free or online. To the extent allowed by law, we are not liable for indirect losses arising from the use of the website.",
       ],
     },
     {
@@ -156,7 +156,7 @@ export const termsOfService: LegalPage = {
     {
       heading: "Governing law",
       paragraphs: [
-        "These terms are governed by the laws of Bangladesh. If a dispute arises, we will first try to resolve it informally through a conversation. If any part of these terms is found to be unenforceable, the remaining parts stay in full effect.",
+        "These terms are governed by the laws of the country where Next Template is registered. If a dispute arises, we will first try to resolve it informally through a conversation. If any part of these terms is found to be unenforceable, the remaining parts stay in full effect.",
       ],
     },
     {

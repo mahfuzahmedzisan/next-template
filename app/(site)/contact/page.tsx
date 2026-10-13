@@ -86,7 +86,7 @@ export default async function ContactPage() {
         <p className="site-small">
           Before you write, you might want to look at the{" "}
           <Link href="/services" className="site-a">
-            services I offer
+            services we offer
           </Link>{" "}
           or a few{" "}
           <Link href="/projects" className="site-a">

@@ -75,11 +75,11 @@ export default async function AboutPage() {
         </h2>
         <p className="site-copy max-w-2xl">
           <span>
-            These are the tools I reach for most often. I pick the stack for each project based on your team&apos;s skills and long-term maintenance, not on what is fashionable. See them in action in my{" "}
+            These are the tools we reach for most often. We pick the stack for each project based on your team&apos;s skills and long-term maintenance, not on what is fashionable. See them in action in our{" "}
             <Link href="/projects" className="site-a">
               project case studies
             </Link>{" "}
-            or read how I use them on the{" "}
+            or read how we use them on the{" "}
             <Link href="/blog" className="site-a">
               blog
             </Link>
@@ -102,7 +102,7 @@ export default async function AboutPage() {
 
       <CtaSection
         heading="Let's work together"
-        body="If my way of working sounds right for your team, tell me about your project. I reply within two working days with questions and a suggested first step."
+        body="If our way of working sounds right for your team, tell us about your project. We reply within two working days with questions and a suggested first step."
       />
     </main>
   )

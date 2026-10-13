@@ -49,7 +49,7 @@ export default async function BlogPage() {
 
       <section aria-labelledby="topics-heading" className="site-split">
         <h2 id="topics-heading" className="site-h2s">
-          What I write about
+          What we write about
         </h2>
         <div className="site-copy site-prose">
           <h3>Engineering</h3>
@@ -58,7 +58,7 @@ export default async function BlogPage() {
           </p>
           <h3>Performance and SEO</h3>
           <p>
-            How to keep pages fast, measure Core Web Vitals and make sure search engines understand your content. I follow the guidance in{" "}
+            How to keep pages fast, measure Core Web Vitals and make sure search engines understand your content. We follow the guidance in{" "}
             <a href="https://developers.google.com/search/docs" className="site-a">
               Google Search Central
             </a>{" "}

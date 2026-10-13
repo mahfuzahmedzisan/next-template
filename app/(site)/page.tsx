@@ -67,7 +67,7 @@ export default async function Home() {
             Start a project
           </Link>
           <Link href="/projects" className="site-btn-outline">
-            See my work
+            See our work
           </Link>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default async function Home() {
           <p>
             Want the longer version? Read more{" "}
             <Link href="/about" className="site-a">
-              about me and how I work
+              about the studio and how we work
             </Link>
             .
           </p>
@@ -93,8 +93,8 @@ export default async function Home() {
       <Section id="services-heading">
         <SectionHead
           id="services-heading"
-          title="What I can help with"
-          intro="Four kinds of work make up most of my projects. Many clients start with one and add another once the first release is live."
+          title="What we can help with"
+          intro="Four kinds of work make up most of our projects. Many clients start with one and add another once the first release is live."
           more={{ href: "/services", label: "All services" }}
         />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -160,7 +160,7 @@ export default async function Home() {
             <span>
               Something else on your mind?{" "}
               <Link href="/contact" className="site-a">
-                Ask me directly
+                Ask us directly
               </Link>
               .
             </span>
@@ -178,7 +178,7 @@ export default async function Home() {
 
       <section aria-labelledby="skills-heading" className="flex flex-col gap-4">
         <h2 id="skills-heading" className="site-h2s">
-          Tools I use every day
+          Tools we use every day
         </h2>
         <ul className="site-chips">
           {site.skills.map((skill) => (
@@ -186,7 +186,7 @@ export default async function Home() {
           ))}
         </ul>
         <p className="site-small max-w-2xl">
-          I follow the official{" "}
+          We follow the official{" "}
           <a href="https://nextjs.org/docs" className="site-a">
             Next.js documentation
           </a>{" "}

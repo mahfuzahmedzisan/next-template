@@ -2,7 +2,7 @@ import { TransitionLink as Link } from "@/components/transitions/transition-link
 
 export function CtaSection({
   heading = "Have a project in mind?",
-  body = "Tell me about the problem you want to solve. I reply within two working days with honest feedback and a sensible first step.",
+  body = "Tell us about the problem you want to solve. We reply within two working days with honest feedback and a sensible first step.",
 }: {
   heading?: string
   body?: string

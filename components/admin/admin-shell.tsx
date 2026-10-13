@@ -82,7 +82,7 @@ export function AdminShell({
   user,
   onLogout,
   defaultOpen = true,
-  brandLabel = "Mahfuz Ahmed",
+  brandLabel = "Next Template",
   logoUrl = null,
   children,
 }: {

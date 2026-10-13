@@ -14,7 +14,7 @@ export const services: readonly Service[] = [
     short:
       "Dashboards, portals and internal tools built with Next.js and Laravel, designed around the way your team already works.",
     description: [
-      "Most of the applications I build replace a spreadsheet, a shared inbox or a process that lives in someone's head. I start by watching how the work happens today, then design the smallest application that removes the most friction.",
+      "Most of the applications we build replace a spreadsheet, a shared inbox or a process that lives in someone's head. We start by watching how the work happens today, then design the smallest application that removes the most friction.",
       "The front end uses Next.js with server rendering for fast first loads, and the back end uses Laravel for authentication, queues, notifications and the business rules that need to stay in one trusted place.",
     ],
     deliverables: [
@@ -29,8 +29,8 @@ export const services: readonly Service[] = [
     short:
       "Clean, documented APIs and reliable integrations with payment, accounting, email and search providers.",
     description: [
-      "Good integrations are boring: they retry failed calls, never charge a card twice and tell a person when something needs attention. I build them on queues with idempotent jobs and clear logs, so a slow provider never takes your application down with it.",
-      "When other teams or mobile apps need your data, I design versioned APIs with consistent errors, pagination and documentation that new developers can follow without a meeting.",
+      "Good integrations are boring: they retry failed calls, never charge a card twice and tell a person when something needs attention. We build them on queues with idempotent jobs and clear logs, so a slow provider never takes your application down with it.",
+      "When other teams or mobile apps need your data, we design versioned APIs with consistent errors, pagination and documentation that new developers can follow without a meeting.",
     ],
     deliverables: [
       "Stripe, accounting, email, SMS and search integrations",
@@ -44,7 +44,7 @@ export const services: readonly Service[] = [
     short:
       "Faster pages, healthier Core Web Vitals and the technical SEO details that crawlers and social networks check.",
     description: [
-      "Speed and search visibility usually fail for the same reasons: pages that render on every request, oversized images, scripts nobody needs and metadata that crawlers never see. I audit the site, fix the causes and add checks so the problems do not return.",
+      "Speed and search visibility usually fail for the same reasons: pages that render on every request, oversized images, scripts nobody needs and metadata that crawlers never see. We audit the site, fix the causes and add checks so the problems do not return.",
       "Typical work includes static and incremental rendering, image and font optimization, structured data, sitemaps, robots rules, canonical URLs, social images and redirects that preserve existing rankings.",
     ],
     deliverables: [
@@ -59,8 +59,8 @@ export const services: readonly Service[] = [
     short:
       "Upgrades, monitoring, fixes and small improvements for applications that need to keep running smoothly.",
     description: [
-      "Software needs care after launch. I keep frameworks and dependencies current, watch error reports and queue health, and fix issues before they reach your customers. Small improvements are planned in short monthly cycles.",
-      "If you inherited an application without documentation, I start with a written review of its architecture, risks and quick wins, so you know exactly what you have before any changes are made.",
+      "Software needs care after launch. We keep frameworks and dependencies current, watch error reports and queue health, and fix issues before they reach your customers. Small improvements are planned in short monthly cycles.",
+      "If you inherited an application without documentation, we start with a written review of its architecture, risks and quick wins, so you know exactly what you have before any changes are made.",
     ],
     deliverables: [
       "Monthly upgrades and dependency security patches",
@@ -79,7 +79,7 @@ export const servicesFaq = {
     },
     {
       question: "Can you join an existing team?",
-      answer: "Yes. I regularly work alongside in-house developers and designers, follow your code review process and tools, and pair with the team on the parts they want to own after the project ends.",
+      answer: "Yes. We regularly work alongside in-house developers and designers, follow your code review process and tools, and pair with the team on the parts they want to own after the project ends.",
     },
     {
       question: "What happens if priorities change?",
@@ -91,7 +91,7 @@ export const servicesFaq = {
 export const servicesPage = {
   title: "Services for teams that need dependable web software",
   intro:
-    "I help small and medium teams plan, build and improve web applications. Every engagement starts with understanding the problem, continues with weekly working releases and ends with a system your team can run and extend without me.",
+    "We help small and medium teams plan, build and improve web applications. Every engagement starts with understanding the problem, continues with weekly working releases and ends with a system your team can run and extend without us.",
   approach: [
     {
       title: "Fixed-scope projects",
