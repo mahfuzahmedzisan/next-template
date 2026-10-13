@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-bots";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
+import { securityHeaders } from "./lib/security/headers";
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   // Setting this replaces Next's default list, so extend it: the SEO health
   // scanner reads metadata from <head>, which streaming would leave empty.
   htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|MahfuzSeoScanner`, "i"),
@@ -17,6 +20,9 @@ const nextConfig: NextConfig = {
       destination: "/",
       statusCode: 301 as const,
     }));
+  },
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders() }];
   },
 };
 
