@@ -71,7 +71,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           height={628}
           sizes="(min-width: 896px) 848px, 100vw"
           priority
-          className="aspect-[1200/628] w-full rounded-2xl border border-border/70 object-cover"
+          className="site-cover rounded-2xl border border-border/70"
         />
       ) : null}
 
@@ -79,7 +79,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <dl className="site-card grid gap-4 sm:grid-cols-3">
           {facts.map((fact) => (
             <div key={fact.label}>
-              <dt className="text-xs font-medium text-muted-foreground uppercase">{fact.label}</dt>
+              <dt className="site-meta">{fact.label}</dt>
               <dd className="mt-1 text-sm">{fact.value}</dd>
             </div>
           ))}

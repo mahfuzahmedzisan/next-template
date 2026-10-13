@@ -65,7 +65,7 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
           height={628}
           sizes="(min-width: 768px) 720px, 100vw"
           priority
-          className="aspect-[1200/628] w-full rounded-2xl border border-border/70 object-cover"
+          className="site-cover rounded-2xl border border-border/70"
         />
       ) : null}
 

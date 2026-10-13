@@ -13,7 +13,7 @@ export function formatDate(value: string | null): string | null {
 }
 
 function Cover({ src, alt, priority }: { src: string | null; alt: string; priority?: boolean }) {
-  if (!src) return <div className="aspect-[1200/628] bg-muted" aria-hidden />
+  if (!src) return <div className="site-cover bg-muted" aria-hidden />
 
   return (
     <Image
@@ -23,7 +23,7 @@ function Cover({ src, alt, priority }: { src: string | null; alt: string; priori
       height={COVER.height}
       sizes="(min-width: 640px) 50vw, 100vw"
       priority={priority}
-      className="aspect-[1200/628] w-full object-cover"
+      className="site-cover"
     />
   )
 }
@@ -44,12 +44,12 @@ function Card({
   children?: ReactNode
 }) {
   return (
-    <article className="site-card flex flex-col overflow-hidden p-0">
+    <article className="site-tile">
       {cover}
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <p className="text-xs font-medium text-muted-foreground uppercase">{meta}</p>
+      <div className="site-tile-body">
+        <p className="site-meta">{meta}</p>
         <h3 className="site-h3">
-          <Link href={href as Route} className="site-focus hover:underline">
+          <Link href={href as Route} className="site-link">
             {title}
           </Link>
         </h3>

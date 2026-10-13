@@ -12,15 +12,12 @@ export async function SiteHeader() {
   const identity = await fetchSiteIdentity()
 
   return (
-    <header
-      id="top"
-      className="sticky top-0 z-40 border-b border-border/70 bg-background/75 backdrop-blur-md"
-    >
+    <header id="top" className="site-header">
       <a href="#content" className="site-skip">
         Skip to content
       </a>
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
-        <Link href="/" className="site-nav px-0 font-semibold tracking-tight hover:text-foreground">
+      <div className="site-bar">
+        <Link href="/" className="site-nav site-brand">
           {identity.name}
         </Link>
         <div className="flex items-center gap-2">
@@ -30,11 +27,8 @@ export async function SiteHeader() {
                 <NavLinks />
               </nav>
               <details className="relative sm:hidden">
-                <summary className="site-nav cursor-pointer list-none px-3 [&::-webkit-details-marker]:hidden">Menu</summary>
-                <nav
-                  aria-label="Primary"
-                  className="absolute right-0 z-50 mt-2 min-w-40 rounded-xl border border-border/70 bg-background/95 p-2 shadow-sm backdrop-blur-md"
-                >
+                <summary className="site-nav site-menu">Menu</summary>
+                <nav aria-label="Primary" className="site-menu-panel">
                   <NavLinks listClassName="flex-col" />
                 </nav>
               </details>

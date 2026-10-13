@@ -5,7 +5,6 @@ import type { ReactNode } from "react"
 import { SeoJsonLd } from "@/components/seo/json-ld"
 import { PostCard, ProjectCard } from "@/components/site/content-cards"
 import { CtaSection } from "@/components/site/cta-section"
-import { Reveal } from "@/components/site/reveal"
 import { RouteReady } from "@/components/transitions/route-ready"
 import { TransitionLink as Link } from "@/components/transitions/transition-link"
 import { homePage } from "@/content/pages/home"
@@ -57,23 +56,21 @@ export default async function Home() {
       <RouteReady />
       <SeoJsonLd seo={seo} />
 
-      <Reveal>
-        <section aria-labelledby="home-heading" className="max-w-3xl">
-          <p className="site-small font-medium">{homePage.eyebrow}</p>
-          <h1 id="home-heading" className="site-h1 mt-3">
-            {homePage.heading}
-          </h1>
-          <p className="site-lead mt-5 max-w-2xl">{homePage.lead}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/contact" className="site-btn">
-              Start a project
-            </Link>
-            <Link href="/projects" className="site-btn-outline">
-              See my work
-            </Link>
-          </div>
-        </section>
-      </Reveal>
+      <section aria-labelledby="home-heading" className="site-reveal max-w-3xl">
+        <p className="site-small font-medium">{homePage.eyebrow}</p>
+        <h1 id="home-heading" className="site-h1 mt-3">
+          {homePage.heading}
+        </h1>
+        <p className="site-lead mt-5 max-w-2xl">{homePage.lead}</p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/contact" className="site-btn">
+            Start a project
+          </Link>
+          <Link href="/projects" className="site-btn-outline">
+            See my work
+          </Link>
+        </div>
+      </section>
 
       <section aria-labelledby="intro-heading" className="site-split">
         <h2 id="intro-heading" className="site-h2">

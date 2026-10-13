@@ -8,10 +8,7 @@ export function CtaSection({
   body?: string
 }) {
   return (
-    <section
-      aria-labelledby="cta-heading"
-      className="site-card flex flex-col items-start gap-4 p-8 md:flex-row md:items-center md:justify-between"
-    >
+    <section aria-labelledby="cta-heading" className="site-card site-cta">
       <div className="max-w-xl">
         <h2 id="cta-heading" className="site-h2s">
           {heading}

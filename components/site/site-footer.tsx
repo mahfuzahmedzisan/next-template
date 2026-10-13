@@ -10,7 +10,7 @@ export async function SiteFooter() {
 
   return (
     <footer className="border-t border-border/70">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+      <div className="site-footer-grid">
         <div>
           <p className="text-sm font-semibold">{identity.name}</p>
           <p className="site-small mt-3 max-w-sm">
@@ -66,7 +66,7 @@ export async function SiteFooter() {
           </ul>
         </div>
       </div>
-      <p className="mx-auto w-full max-w-6xl border-t border-border/70 px-6 py-5 text-xs text-muted-foreground">
+      <p className="site-footer-note">
         © {year} {identity.name}. All rights reserved.
       </p>
     </footer>
