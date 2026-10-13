@@ -6,6 +6,7 @@ import { ReactLenis, type LenisRef } from "lenis/react"
 import {
   useEffect,
   useRef,
+  useState,
   type ReactNode,
 } from "react"
 
@@ -39,6 +40,14 @@ export function AnimationProvider({
 }: AnimationProviderProps) {
   const pathname = usePathname()
   const lenisRef = useRef<LenisRef>(null)
+  const smoothRef = useRef(false)
+  // A stopped Lenis cancels every wheel event, including ones inside an open
+  // dialog, so Lenis ignores dialogs and, with smooth scroll off, everything.
+  const [lenisOptions] = useState(() => ({
+    ...LENIS_OPTIONS,
+    prevent: (node: HTMLElement) =>
+      !smoothRef.current || node.getAttribute("role") === "dialog",
+  }))
   const { ready, prefersReducedMotion } = usePrefersReducedMotion()
 
   const envDisabled = process.env.NEXT_PUBLIC_SMOOTH_SCROLL === "false"
@@ -64,6 +73,7 @@ export function AnimationProvider({
         rafId = window.requestAnimationFrame(apply)
         return
       }
+      smoothRef.current = smoothScroll
       lenis.options.smoothWheel = smoothScroll
       lenis.resize()
     }
@@ -82,7 +92,7 @@ export function AnimationProvider({
         }}
       >
         {mounted ? (
-          <ReactLenis root ref={lenisRef} options={LENIS_OPTIONS}>
+          <ReactLenis root ref={lenisRef} options={lenisOptions}>
             <ScrollLockProvider lenisRef={lenisRef}>{children}</ScrollLockProvider>
           </ReactLenis>
         ) : (
