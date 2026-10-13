@@ -10,7 +10,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { HeaderUser } from "@/components/nav/header-user";
 import { SidebarPromo } from "@/components/nav/sidebar-promo";
-import { ModeToggle } from "@/components/mode-toggle";
 import { adminNav } from "@/lib/admin/nav";
 import { TimezoneProvider } from "@/lib/datetime/timezone";
 import type { BreadcrumbItem, UserMenuGroup, UserSummary } from "@/lib/nav";
@@ -163,12 +162,7 @@ export function AdminShell({
         header={
           <AppHeader
             breadcrumbs={breadcrumbsFor(pathname)}
-            actions={
-              <>
-                <HeaderUser user={user} groups={menu} />
-                <ModeToggle persistAccount />
-              </>
-            }
+            actions={<HeaderUser user={user} groups={menu} />}
           />
         }
       >

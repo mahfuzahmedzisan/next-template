@@ -135,18 +135,26 @@ function CollapsedBranch({ item }: { item: NavItem }) {
           onMouseLeave={closeSoon}
         >
           <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
-          {item.children?.map((child) => (
-            <DropdownMenuItem
-              key={child.href ?? child.title}
-              asChild
-              className="gap-2 px-2 py-1.5"
-            >
-              <Link href={child.href ?? "#"} onClick={closeSidebar}>
-                <NavIcon icon={child.icon} />
-                {child.title}
-              </Link>
-            </DropdownMenuItem>
-          ))}
+          {item.children?.map((child) => {
+            const childActive = isHrefActive(pathname, hash, child.href);
+            return (
+              <DropdownMenuItem
+                key={child.href ?? child.title}
+                asChild
+                data-active={childActive || undefined}
+                className="gap-2 px-2 py-1.5 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground"
+              >
+                <Link
+                  href={child.href ?? "#"}
+                  onClick={closeSidebar}
+                  aria-current={childActive ? "page" : undefined}
+                >
+                  <NavIcon icon={child.icon} />
+                  {child.title}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
     </SidebarMenuItem>
