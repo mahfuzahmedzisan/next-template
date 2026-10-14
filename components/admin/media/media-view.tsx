@@ -38,7 +38,7 @@ export type MediaViewId =
   | "tiles"
   | "content";
 
-const STORAGE_KEY = "mahfuz.media.view";
+const STORAGE_KEY = "admin.media.view";
 
 export const MEDIA_VIEWS: Array<{
   id: MediaViewId;

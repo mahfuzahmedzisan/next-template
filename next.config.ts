@@ -8,7 +8,14 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Setting this replaces Next's default list, so extend it: the SEO health
   // scanner reads metadata from <head>, which streaming would leave empty.
-  htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|MahfuzSeoScanner`, "i"),
+  // The token must match the one baked into the API's SEO_SCANNER_USER_AGENT
+  // (see API/mahfuz-ahmed-api/config/seo.php) - both sides read the same
+  // SEO_SCANNER_UA_TOKEN env var so changing it only needs updating in one
+  // place per app instead of silently breaking SEO health scanning.
+  htmlLimitedBots: new RegExp(
+    `${HTML_LIMITED_BOT_UA_RE.source}|${process.env.SEO_SCANNER_UA_TOKEN || "TemplateSeoScanner"}`,
+    "i",
+  ),
   // Fewer breakpoints keep each srcset short; covers never render wider than 1200 CSS px.
   images: {
     deviceSizes: [640, 828, 1200, 1920],

@@ -1,8 +1,12 @@
 import { Activity, Database, History, Images, LayoutDashboard, Mail, MonitorSmartphone, Radio, ScrollText, Search, Settings, Settings2, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 
-import type { NavGroup } from "@/lib/nav";
+import { modules } from "@/lib/modules";
+import type { NavGroup, NavItem } from "@/lib/nav";
 
-export const adminNav: NavGroup[] = [
+type ToggleableNavItem = NavItem & { enabled?: boolean; children?: ToggleableNavItem[] };
+type ToggleableNavGroup = { label: string; items: ToggleableNavItem[] };
+
+const rawAdminNav: ToggleableNavGroup[] = [
   {
     label: "Workspace",
     items: [
@@ -15,11 +19,13 @@ export const adminNav: NavGroup[] = [
         title: "Realtime",
         href: "/admin/realtime",
         icon: Radio,
+        enabled: modules.realtime,
       },
       {
         title: "Media",
         href: "/admin/media",
         icon: Images,
+        enabled: modules.media,
       },
     ],
   },
@@ -50,18 +56,21 @@ export const adminNav: NavGroup[] = [
             title: "SEO health",
             href: "/admin/application/seo-health",
             icon: Activity,
+            enabled: modules.seoHealth,
           },
           {
             title: "Database backup",
             href: "/admin/application/backup",
             icon: Database,
+            enabled: modules.backups,
           },
           {
             title: "Audit",
             href: "/admin/application/audit",
             icon: ScrollText,
+            enabled: modules.audit,
           },
-        ],
+        ].filter((item) => item.enabled !== false),
       },
     ],
   },
@@ -96,3 +105,17 @@ export const adminNav: NavGroup[] = [
     ],
   },
 ];
+
+function stripDisabled(items: ToggleableNavItem[]): NavItem[] {
+  return items
+    .filter((item) => item.enabled !== false)
+    .map(({ enabled: _enabled, children, ...rest }) => ({
+      ...rest,
+      ...(children ? { children: stripDisabled(children) } : {}),
+    }));
+}
+
+export const adminNav: NavGroup[] = rawAdminNav.map((group) => ({
+  label: group.label,
+  items: stripDisabled(group.items),
+}));
