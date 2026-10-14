@@ -15,7 +15,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AuditEntry } from "@/lib/admin/audit-types";
 import { useDisplayTimeZone } from "@/lib/datetime/timezone";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const CLOCK_MS = 60_000;
 

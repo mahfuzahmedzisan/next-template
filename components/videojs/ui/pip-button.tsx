@@ -9,7 +9,7 @@ import { PipEnterIcon as PipEnterIconPrimitive, PipExitIcon as PipExitIconPrimit
 
 import { Button } from '@/components/videojs/ui/button';
 import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type PiPButtonProps = Omit<PiPButtonPrimitive.Props, 'children'>;
 

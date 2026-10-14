@@ -4,7 +4,7 @@ import { Label, Pie, PieChart } from "recharts";
 
 import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export type DonutSlice = { key: string; label: string; value: number; color: string };
 

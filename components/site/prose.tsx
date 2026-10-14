@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 type Block =
   | { kind: "h2" | "h3" | "p"; text: string }

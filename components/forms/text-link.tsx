@@ -1,6 +1,6 @@
 import { TransitionLink as Link } from "@/components/transitions/transition-link"
 import type { ComponentProps } from "react"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 type Props = ComponentProps<typeof Link>
 

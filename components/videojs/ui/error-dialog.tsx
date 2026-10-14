@@ -7,7 +7,7 @@ import '../styles/video/theme.css';
 import { ErrorDialog as ErrorDialogPrimitive } from '@videojs/react';
 
 import { Button } from '@/components/videojs/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export function ErrorDialog() {
   return (

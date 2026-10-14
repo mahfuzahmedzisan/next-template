@@ -4,7 +4,7 @@ import { useEffect, useRef, type ElementType, type ReactNode } from "react"
 import SplitType from "split-type"
 
 import { usePrefersReducedMotion } from "@/hooks/animations/use-prefers-reduced-motion"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 export type SplitTextType = "lines" | "words" | "chars"
 

@@ -3,7 +3,7 @@
 import { ImageIcon } from "lucide-react";
 
 import { lengthState, type LengthState } from "@/components/admin/seo/seo-meta";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const LENGTH_TONE: Record<LengthState, string> = {
   empty: "text-muted-foreground",

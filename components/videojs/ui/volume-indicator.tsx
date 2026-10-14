@@ -12,7 +12,7 @@ import {
 } from '@videojs/react/icons';
 
 import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type VolumeIndicatorProps = Omit<VolumeIndicatorPrimitive.RootProps, 'children'>;
 

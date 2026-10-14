@@ -32,7 +32,7 @@ import {
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SeoOverview, SeoPageEntry } from "@/lib/admin/seo-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const POLL_MS = 4000;
 const POLL_LIMIT_MS = 2 * 60 * 1000;

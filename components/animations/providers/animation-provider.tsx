@@ -24,6 +24,15 @@ const LENIS_OPTIONS = {
   smoothWheel: false,
 } as const
 
+const OVERLAY_ROLES = new Set(["dialog", "alertdialog", "menu", "listbox"])
+
+function isOverlayNode(node: HTMLElement) {
+  return (
+    OVERLAY_ROLES.has(node.getAttribute("role") ?? "") ||
+    node.hasAttribute("data-radix-popper-content-wrapper")
+  )
+}
+
 // Public components use `m.*`, so the animation features load in their own chunk.
 const loadMotionFeatures = () =>
   import("@/lib/animations/motion-features").then((module) => module.default)
@@ -42,11 +51,11 @@ export function AnimationProvider({
   const lenisRef = useRef<LenisRef>(null)
   const smoothRef = useRef(false)
   // A stopped Lenis cancels every wheel event, including ones inside an open
-  // dialog, so Lenis ignores dialogs and, with smooth scroll off, everything.
+  // modal or popup list, so Lenis ignores overlays and, with smooth scroll
+  // off, everything.
   const [lenisOptions] = useState(() => ({
     ...LENIS_OPTIONS,
-    prevent: (node: HTMLElement) =>
-      !smoothRef.current || node.getAttribute("role") === "dialog",
+    prevent: (node: HTMLElement) => !smoothRef.current || isOverlayNode(node),
   }))
   const { ready, prefersReducedMotion } = usePrefersReducedMotion()
 

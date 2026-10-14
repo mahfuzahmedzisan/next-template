@@ -13,7 +13,7 @@ import {
 import { createElement } from "react";
 
 import type { AuditEntry, AuditOrigin, AuditSeverity } from "@/lib/admin/audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   auth: LogIn,

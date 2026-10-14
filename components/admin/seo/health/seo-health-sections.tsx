@@ -16,7 +16,7 @@ import type {
   SeoSiteDetails,
   SeoSitemapDetails,
 } from "@/lib/admin/seo-audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 function SectionShell<Details>({
   title,

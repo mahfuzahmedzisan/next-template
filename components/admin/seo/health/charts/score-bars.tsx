@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, LabelList, ReferenceLine, XAxis, YAxis } 
 import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
 import { scoreFill } from "@/components/admin/seo/health/health-meta";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export type BarRow = { key: string; label: string; value: number; fill?: string; hint?: string };
 

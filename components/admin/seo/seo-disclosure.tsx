@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 /**
  * Folds rarely changed fields away. It starts open when one of them already

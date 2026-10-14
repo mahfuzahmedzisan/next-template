@@ -16,7 +16,7 @@ import {
 import { usePrefersReducedMotion } from "@/hooks/animations/use-prefers-reduced-motion"
 import { useFileSelection } from "@/hooks/use-file-selection"
 import { fileProgressKey, formatBytes, resolveExtLabel, resolveFileType } from "@/lib/file-upload"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 import type { FileUploadClassNames, FileUploadHandle, FileUploadProps } from "@/types/file-upload"
 
 import { AggregateProgressRow } from "./aggregate-progress"

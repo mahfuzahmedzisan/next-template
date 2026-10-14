@@ -23,7 +23,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/forms/form";
 import { Input } from "@/components/ui/input";
 import { postAuthApi } from "@/lib/auth/client";
 

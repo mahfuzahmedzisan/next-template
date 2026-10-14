@@ -42,7 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import { createMediaUpload, type TusUploadHandle } from "@/lib/media/tus-upload";
 import type { MediaListResult, MediaRecord, MediaStatus, MediaTypeFilter } from "@/lib/media/types";

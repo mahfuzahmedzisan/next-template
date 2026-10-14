@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { UserMenuGroup, UserSummary } from "@/lib/nav";
 
 const iconFit =

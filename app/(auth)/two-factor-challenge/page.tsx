@@ -25,7 +25,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/forms/form";
 import {
   InputOTP,
   InputOTPGroup,

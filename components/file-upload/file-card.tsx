@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/attachment"
 import { Badge } from "@/components/ui/badge"
 import { VideoPlayer } from "@/components/media/video-player"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 import { formatBytes, resolveExtLabel, resolveIcon } from "@/lib/file-upload"
 import type { FileUploadClassNames } from "@/types/file-upload"

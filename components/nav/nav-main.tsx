@@ -33,7 +33,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { NavGroup, NavItem } from "@/lib/nav";
 
 const iconFit =

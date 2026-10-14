@@ -25,7 +25,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/forms/form";
 import { Input } from "@/components/ui/input";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
 import { syncStoredThemeToAccount } from "@/lib/theme/persist-theme";

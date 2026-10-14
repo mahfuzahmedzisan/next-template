@@ -57,6 +57,27 @@ export function ScrollLockProvider({ children, lenisRef }: { children: ReactNode
     return () => document.removeEventListener("visibilitychange", onVisibility)
   }, [apply, clear])
 
+  // Radix modals (dialog, sheet, select, dropdown) mark <body> with
+  // data-scroll-locked while open; Lenis must stay stopped for that span.
+  useEffect(() => {
+    let release: (() => void) | null = null
+    const sync = () => {
+      const locked = document.body.hasAttribute("data-scroll-locked")
+      if (locked && !release) release = acquireScrollLock("radix-modal")
+      else if (!locked && release) {
+        release()
+        release = null
+      }
+    }
+    sync()
+    const observer = new MutationObserver(sync)
+    observer.observe(document.body, { attributes: true, attributeFilter: ["data-scroll-locked"] })
+    return () => {
+      observer.disconnect()
+      release?.()
+    }
+  }, [acquireScrollLock])
+
   useEffect(() => () => clear(), [clear])
   const value = useMemo(() => ({ acquireScrollLock }), [acquireScrollLock])
   return <ScrollLockContext.Provider value={value}>{children}</ScrollLockContext.Provider>

@@ -1,7 +1,7 @@
 "use client"
 
 import { revealVariants } from "@/lib/animations/variants"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 import {
   MotionRevealBase,

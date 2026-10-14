@@ -5,7 +5,7 @@ import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } fro
 import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
 import { scoreFill } from "@/components/admin/seo/health/health-meta";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const SIZES = {
   lg: { box: "size-44", outer: 84, inner: 70, value: "text-4xl", caption: 22 },

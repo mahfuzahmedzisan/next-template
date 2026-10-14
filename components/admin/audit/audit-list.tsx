@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AuditEntry, AuditListMeta } from "@/lib/admin/audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export function AuditList({
   entries,

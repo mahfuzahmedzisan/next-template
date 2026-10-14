@@ -54,7 +54,7 @@ import type {
   SeoCheckPriority,
 } from "@/lib/admin/seo-audit-types";
 import { useDisplayTimeZone } from "@/lib/datetime/timezone";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const POLL_MS = 4000;
 const POLL_LIMIT_MS = 20 * 60 * 1000;

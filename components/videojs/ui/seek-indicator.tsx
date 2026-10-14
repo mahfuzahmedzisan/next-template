@@ -8,7 +8,7 @@ import { SeekIndicator as SeekIndicatorPrimitive } from '@videojs/react';
 import { ChevronIcon as ChevronIconPrimitive } from '@videojs/react/icons';
 
 import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type SeekIndicatorProps = Omit<SeekIndicatorPrimitive.RootProps, 'children'>;
 

@@ -10,7 +10,7 @@ import {
 import { menuPanelMotion } from "@/components/nav/menu-motion";
 import { UserInfo } from "@/components/user-info";
 import { UserMenuContent } from "@/components/user-menu-content";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { UserMenuGroup, UserSummary } from "@/lib/nav";
 
 function initials(name: string): string {

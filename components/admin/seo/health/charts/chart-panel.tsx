@@ -3,7 +3,7 @@
 import { useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 /** Recharts animates on mount; skip it for people who asked for less motion. */
 export function useChartAnimation() {

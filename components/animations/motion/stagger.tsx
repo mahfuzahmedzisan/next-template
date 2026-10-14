@@ -12,7 +12,7 @@ import {
   staggerContainerVariants,
   staggerItemVariants,
 } from "@/lib/animations/variants"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 type StaggerContainerProps = {
   children: React.ReactNode

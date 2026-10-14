@@ -3,7 +3,7 @@ import { CheckCircle2, CircleSlash, XCircle } from "lucide-react";
 import { PRIORITY_LABELS } from "@/components/admin/seo/health/health-meta";
 import { Badge } from "@/components/ui/badge";
 import type { SeoAuditCheck } from "@/lib/admin/seo-audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export function checkRowId(key: string) {
   return `seo-check-${key}`;

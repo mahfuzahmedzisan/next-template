@@ -4,7 +4,7 @@ import { TransitionLink as Link } from "@/components/transitions/transition-link
 import type { ReactNode } from "react";
 
 import { accountTabs, type AccountTab } from "@/lib/admin/account";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export function AccountNav({ active }: { active: AccountTab }) {
   return (

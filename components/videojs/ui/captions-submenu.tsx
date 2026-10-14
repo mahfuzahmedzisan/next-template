@@ -12,7 +12,7 @@ import { CaptionsRadioGroup } from '@videojs/react/ui/captions-radio-group';
 
 import { MenuChevron } from '@/components/videojs/ui/menu-chevron';
 import { RadioItem } from '@/components/videojs/ui/radio-item';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type CaptionsSubmenuProps = Omit<Menu.RootProps, 'children'>;
 

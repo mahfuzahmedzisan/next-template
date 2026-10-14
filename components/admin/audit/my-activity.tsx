@@ -6,7 +6,7 @@ import { ActivityTimeline } from "@/components/admin/audit/activity-timeline";
 import { TransitionLink as Link } from "@/components/transitions/transition-link";
 import { Button } from "@/components/ui/button";
 import type { AuditListResult } from "@/lib/admin/audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const FILTERS = [
   { value: "", label: "All" },

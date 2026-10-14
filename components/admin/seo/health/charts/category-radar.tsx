@@ -6,7 +6,7 @@ import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-pa
 import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import type { SeoAuditCheck, SeoCheckCategory } from "@/lib/admin/seo-audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export type CategoryScore = { key: string; label: string; score: number };
 

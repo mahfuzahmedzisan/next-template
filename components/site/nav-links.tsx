@@ -2,7 +2,7 @@ import type { Route } from "next"
 
 import { TransitionLink as Link } from "@/components/transitions/transition-link"
 import { primaryNav, type NavItem } from "@/content/site"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 export function NavLinks({
   items = primaryNav,

@@ -7,7 +7,7 @@ import '../styles/video/theme.css';
 import { Tooltip } from '@videojs/react';
 import type { ReactElement, ReactNode } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export interface ButtonTooltipProps extends Omit<Tooltip.RootProps, 'children'> {
   children: ReactElement;

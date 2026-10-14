@@ -9,7 +9,7 @@ import {
 
 import { animationConfig } from "@/lib/animations/config"
 import { getTransition } from "@/lib/animations/reduced-motion"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 export type MotionRevealBaseProps = {
   children: React.ReactNode

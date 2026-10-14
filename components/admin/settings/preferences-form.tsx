@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { timeZoneOptions, useDetectedTimeZone } from "@/lib/datetime/timezone";
 import { applyThemePreference } from "@/lib/theme/persist-theme";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import type { ThemePreference, User } from "@/types/auth";
 
 const themes = [

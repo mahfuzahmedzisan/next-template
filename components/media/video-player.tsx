@@ -6,7 +6,7 @@ import { Video, VideoPlayer as VideoJsPlayer } from "@videojs/react/video"
 
 import { VideoSkin } from "@/components/videojs/video/skin"
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 type VideoPlayerProps = {
   src: string

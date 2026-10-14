@@ -12,7 +12,7 @@ import {
 
 import { Button } from '@/components/videojs/ui/button';
 import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type FullscreenButtonProps = Omit<FullscreenButtonPrimitive.Props, 'children'>;
 

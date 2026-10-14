@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransitionLink as Link } from "@/components/transitions/transition-link";
 import type { SeoAuditCheck, SeoAuditPageRow, SeoCheckCategory } from "@/lib/admin/seo-audit-types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 type Detail = SeoAuditPageRow & { checks: SeoAuditCheck[] };
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; page: Detail };

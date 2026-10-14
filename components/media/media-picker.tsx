@@ -15,7 +15,7 @@ import { matchesAccept, namePastedFile } from "@/lib/file-upload";
 import { acceptFor, allowedMediaUrl, clampMediaMax, extensionOf } from "@/lib/media/accept";
 import { uploadMediaFile, type UploadPhase } from "@/lib/media/upload-client";
 import type { MediaKind, MediaListResult, MediaRecord } from "@/lib/media/types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export type MediaChoice = {
   url: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSidebarOptional } from "@/components/ui/sidebar";
+import { useSidebarOptional } from "@/components/layout/shell-sidebar";
 
 /** Close the mobile drawer after a navigation. No-op on desktop or outside the shell. */
 export function useCloseSidebar() {

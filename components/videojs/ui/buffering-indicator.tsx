@@ -8,7 +8,7 @@ import { BufferingIndicator as BufferingIndicatorPrimitive } from '@videojs/reac
 import { SpinnerIcon as SpinnerIconPrimitive } from '@videojs/react/icons';
 
 import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type BufferingIndicatorProps = Omit<BufferingIndicatorPrimitive.Props, 'children'>;
 

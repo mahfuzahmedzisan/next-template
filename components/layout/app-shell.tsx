@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { ShellSidebarBridge } from "@/components/layout/shell-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export function AppShell({
@@ -16,7 +17,7 @@ export function AppShell({
       defaultOpen={defaultOpen}
       className="h-svh min-h-0 overflow-hidden bg-muted/50"
     >
-      {children}
+      <ShellSidebarBridge>{children}</ShellSidebarBridge>
     </SidebarProvider>
   );
 }

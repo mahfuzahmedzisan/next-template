@@ -9,7 +9,7 @@ import { CastEnterIcon as CastEnterIconPrimitive, CastExitIcon as CastExitIconPr
 
 import { Button } from '@/components/videojs/ui/button';
 import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 
 export type CastButtonProps = Omit<CastButtonPrimitive.Props, 'children'>;
 

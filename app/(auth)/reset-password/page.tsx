@@ -26,7 +26,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/forms/form";
 import { firstAuthErrorMessage, postAuthApi } from "@/lib/auth/client";
 
 const schema = z

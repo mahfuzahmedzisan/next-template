@@ -4,7 +4,7 @@ import { CheckCircle2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 interface AggregateProgressRowProps {
   value: number

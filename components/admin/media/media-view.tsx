@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatInZone, useDisplayTimeZone } from "@/lib/datetime/timezone";
 import { toSameOriginStorageUrl } from "@/lib/media/same-origin-media";
 import type { MediaKind, MediaRecord, MediaStatus } from "@/lib/media/types";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 export type MediaViewId =
   | "extra-large"

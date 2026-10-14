@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 const themes = [
   { value: "light", label: "Light", icon: Sun },
