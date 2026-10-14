@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { MediaPreviewLightbox } from "@/components/admin/media/media-preview-lightbox";
+import { VideoPlayer } from "@/components/media/video-player";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -598,7 +599,11 @@ function PreviewStage({ preview }: { preview: Preview }) {
   }
   if (preview.kind === "video") {
     return (
-      <video src={preview.url} controls autoPlay className="max-h-[90vh] max-w-[min(96vw,1100px)]" />
+      <VideoPlayer
+        src={preview.url}
+        autoplay
+        className="max-h-[90vh] w-[min(96vw,1100px)]"
+      />
     );
   }
   return null;

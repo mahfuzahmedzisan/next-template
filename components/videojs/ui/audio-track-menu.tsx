@@ -12,7 +12,7 @@ import { AudioTrackRadioGroup } from '@videojs/react/ui/audio-track-radio-group'
 
 import { MenuChevron } from '@/components/videojs/ui/menu-chevron';
 import { RadioItem } from '@/components/videojs/ui/radio-item';
-import { cn } from 'cn';
+import { cn } from '@/lib/resolve-class-name';
 
 export type AudioTrackMenuProps = Omit<Menu.RootProps, 'children'>;
 

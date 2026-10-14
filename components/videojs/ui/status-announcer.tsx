@@ -6,8 +6,7 @@ import '../styles/video/captions.css';
 import '../styles/video/theme.css';
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@videojs/react';
 
-import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from 'cn';
+import { cn, resolveClassName } from '@/lib/resolve-class-name';
 
 export type StatusAnnouncerProps = Omit<StatusAnnouncerPrimitive.Props, 'children'>;
 

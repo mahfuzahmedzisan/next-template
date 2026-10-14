@@ -90,7 +90,7 @@ export function FileCard({
         muted
         controls
         fluid={false}
-        className="absolute inset-0 [&_.video-js]:!size-full [&_.vjs-tech]:object-cover"
+        className="absolute inset-0"
       />
     ) : (
       <div className="pointer-events-none flex flex-col items-center gap-1">

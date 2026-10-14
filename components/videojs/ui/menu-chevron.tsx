@@ -1,7 +1,7 @@
 import { ChevronIcon as ChevronIconPrimitive } from '@videojs/react/icons';
 import type { ClassValue } from 'cn';
 
-import { cn } from 'cn';
+import { cn } from '@/lib/resolve-class-name';
 
 export interface MenuChevronProps {
   back?: boolean;

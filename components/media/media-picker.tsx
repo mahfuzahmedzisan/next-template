@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ClipboardPaste, ImageOff, Search, SearchX, X } from "lucide-react";
+import { ClipboardPaste, ImageOff, Music, Search, SearchX, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { AudioPlayer } from "@/components/media/audio-player";
 import { SideSheet } from "@/components/overlay/side-sheet";
 import FileUpload from "@/components/file-upload";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,8 @@ function MediaPreview({ url, label }: { url: string; label: string }) {
     return <video src={url} className="size-full object-contain" muted />;
   }
   if (kind === "audio") {
-    return <audio src={url} controls className="w-full" aria-label={label} />;
+    // Tiles sit inside selection buttons, so playback controls live outside them.
+    return <Music className="size-5 text-muted-foreground" aria-label={label} role="img" />;
   }
   return <span className="px-2 text-center text-xs text-muted-foreground">{label}</span>;
 }
@@ -430,23 +432,26 @@ export function MediaPicker({
           <div className="space-y-2">
             {parsedUrls.map((url, index) =>
               url ? (
-                <div key={url} className="flex items-center gap-3 rounded-lg border p-2">
-                  <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
-                    <MediaPreview url={url} label={url} />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-xs">{url}</span>
-                  <button
-                    type="button"
-                    aria-label="Remove URL"
-                    className="text-destructive"
-                    onClick={() => {
-                      const lines = urlText.split(/\s+/).filter(Boolean);
-                      lines.splice(index, 1);
-                      setUrlText(lines.join("\n"));
-                    }}
-                  >
-                    <X className="size-4" />
-                  </button>
+                <div key={url} className="space-y-2 rounded-lg border p-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                      <MediaPreview url={url} label={url} />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-xs">{url}</span>
+                    <button
+                      type="button"
+                      aria-label="Remove URL"
+                      className="text-destructive"
+                      onClick={() => {
+                        const lines = urlText.split(/\s+/).filter(Boolean);
+                        lines.splice(index, 1);
+                        setUrlText(lines.join("\n"));
+                      }}
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                  {previewKind(url) === "audio" ? <AudioPlayer src={url} label={url} /> : null}
                 </div>
               ) : null,
             )}

@@ -6,7 +6,7 @@ import '../styles/video/captions.css';
 import '../styles/video/theme.css';
 import type { ComponentProps } from 'react';
 
-import { cn } from 'cn';
+import { cn } from '@/lib/resolve-class-name';
 
 /** Shared slider track. */
 export type SliderTrackProps = ComponentProps<'div'>;

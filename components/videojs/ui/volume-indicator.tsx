@@ -11,8 +11,7 @@ import {
   VolumeOffIcon as VolumeOffIconPrimitive,
 } from '@videojs/react/icons';
 
-import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from 'cn';
+import { cn, resolveClassName } from '@/lib/resolve-class-name';
 
 export type VolumeIndicatorProps = Omit<VolumeIndicatorPrimitive.RootProps, 'children'>;
 

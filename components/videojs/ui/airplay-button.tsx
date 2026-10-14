@@ -11,8 +11,7 @@ import {
 } from '@videojs/react/icons';
 
 import { Button } from '@/components/videojs/ui/button';
-import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from 'cn';
+import { cn, resolveClassName } from '@/lib/resolve-class-name';
 
 export type AirPlayButtonProps = Omit<AirPlayButtonPrimitive.Props, 'children'>;
 

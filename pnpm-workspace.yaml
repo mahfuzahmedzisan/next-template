@@ -1,3 +1,12 @@
 allowBuilds:
   sharp: false
   unrs-resolver: false
+minimumReleaseAgeExclude:
+  - '@videojs/core@10.1.0'
+  - '@videojs/hlsjs-video@10.1.0'
+  - '@videojs/media@10.1.0'
+  - '@videojs/native-hls-video@10.1.0'
+  - '@videojs/react@10.1.0'
+  - '@videojs/spf@10.1.0'
+  - '@videojs/store@10.1.0'
+  - '@videojs/utils@10.1.0'

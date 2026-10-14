@@ -6,8 +6,7 @@ import '../styles/video/captions.css';
 import '../styles/video/theme.css';
 import { Title as TitlePrimitive } from '@videojs/react';
 
-import { resolveClassName } from '@/lib/resolve-class-name';
-import { cn } from 'cn';
+import { cn, resolveClassName } from '@/lib/resolve-class-name';
 
 export type TitleProps = Omit<TitlePrimitive.Props, 'children'>;
 
@@ -17,8 +16,8 @@ export function Title({ className, ...props }: TitleProps = {}) {
       className={(state) =>
         cn(
           'pointer-events-none absolute inset-x-0 top-0 z-20 isolate',
-          'wrap-anywhere px-6 pt-2.5 text-media font-medium tracking-[-0.0125em] text-media-controls-foreground text-shadow-media',
-          'media-md:text-media-xl media-md:px-6 media-md:pt-4',
+          'wrap-anywhere px-6 pt-2.5 text-[calc(var(--media-spacing)*4)] font-medium tracking-[-0.0125em] text-media-controls-foreground text-shadow-media',
+          'media-md:px-6 media-md:pt-4',
           'origin-top duration-media-controls-enter ease-out',
           'not-data-visible:opacity-0 not-data-visible:-translate-y-media-hidden-offset not-data-visible:duration-media-controls',
           'pointer-fine:not-data-visible:blur-media-hidden',
