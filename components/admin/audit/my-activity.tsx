@@ -3,9 +3,11 @@
 import { Clock } from "lucide-react";
 
 import { ActivityTimeline } from "@/components/admin/audit/activity-timeline";
+import { MyActivityChart } from "@/components/admin/audit/my-activity-chart";
 import { TransitionLink as Link } from "@/components/transitions/transition-link";
 import { Button } from "@/components/ui/button";
 import type { AuditListResult } from "@/lib/admin/audit-types";
+import type { ProfileActivityStats } from "@/lib/admin/stats-types";
 import { cn } from "cn";
 
 const FILTERS = [
@@ -25,10 +27,12 @@ function hrefFor(category: string, page = 1) {
 
 export function MyActivity({
   result,
+  stats,
   category,
   retentionNote,
 }: {
   result: AuditListResult;
+  stats: ProfileActivityStats | null;
   category: string;
   retentionNote: string;
 }) {
@@ -36,6 +40,8 @@ export function MyActivity({
 
   return (
     <div className="flex flex-col gap-5">
+      <MyActivityChart initial={stats} />
+
       <nav aria-label="Activity filter" className="flex flex-wrap gap-2">
         {FILTERS.map((filter) => (
           <Link

@@ -2,8 +2,8 @@
 
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 
-import { ChartEmpty, ChartPanel, useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
-import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
+import { ChartEmpty, ChartPanel, useChartAnimation } from "@/components/admin/charts/chart-panel";
+import { HorizontalBars } from "@/components/admin/charts/horizontal-bars";
 import { scoreFill } from "@/components/admin/seo/health/health-meta";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import type { SeoAuditPageRow } from "@/lib/admin/seo-audit-types";

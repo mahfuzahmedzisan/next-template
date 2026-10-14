@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
 
-import { ChartEmpty, useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
+import { ChartEmpty, useChartAnimation } from "@/components/admin/charts/chart-panel";
 import { formatDateTime } from "@/components/admin/devices/device-meta";
 import {
   ChartContainer,

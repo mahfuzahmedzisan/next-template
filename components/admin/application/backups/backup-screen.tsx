@@ -7,22 +7,27 @@ import { toast } from "sonner";
 
 import { backupNowAction } from "@/app/(admin)/admin/application/backup/actions";
 import { ApplicationSectionHeader } from "@/components/admin/application/application-settings";
+import { BackupCharts } from "@/components/admin/application/backups/backup-charts";
 import { BackupList } from "@/components/admin/application/backups/backup-list";
 import { isRunning } from "@/components/admin/application/backups/backup-meta";
 import { BackupOperationBanner } from "@/components/admin/application/backups/backup-operation-banner";
 import { BackupOverview } from "@/components/admin/application/backups/backup-overview";
+import { useRangeData } from "@/components/admin/charts/use-range-data";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { BackupOverview as Overview } from "@/lib/admin/backups";
+import type { BackupHistory } from "@/lib/admin/stats-types";
 import { useDisplayTimeZone } from "@/lib/datetime/timezone";
 
 const POLL_MS = 4000;
 
 export function BackupScreen({
   overview,
+  history: initialHistory,
   downloadError,
 }: {
   overview: Overview;
+  history: BackupHistory | null;
   downloadError: string | null;
 }) {
   const { backups, summary, status } = overview;
@@ -32,6 +37,8 @@ export function BackupScreen({
   const [now, setNow] = useState(() => Date.now());
   const busy = isRunning(status);
   const previousState = useRef(status?.state);
+  const history = useRangeData("backups", initialHistory);
+  const { reload: reloadHistory } = history;
 
   useEffect(() => {
     if (!busy) return;
@@ -50,7 +57,8 @@ export function BackupScreen({
     const subject = status?.operation === "restore" ? "Restore" : "Backup";
     if (status?.state === "completed") toast.success(`${subject} finished.`);
     if (status?.state === "failed") toast.error(`${subject} failed.`, { duration: 5000 });
-  }, [status?.state, status?.operation]);
+    if (status?.state === "completed" || status?.state === "failed") reloadHistory();
+  }, [status?.state, status?.operation, reloadHistory]);
 
   useEffect(() => {
     if (!downloadError) return;
@@ -98,6 +106,17 @@ export function BackupScreen({
           <AlertDescription>{summary.health_message}</AlertDescription>
         </Alert>
       ) : null}
+
+      <BackupCharts
+        backups={backups}
+        summary={summary}
+        timeZone={timeZone}
+        history={history.data}
+        days={history.days}
+        pending={history.pending}
+        error={history.error}
+        onRange={history.selectRange}
+      />
 
       <section className="flex flex-col gap-4 rounded-xl border border-border/70 bg-card/70 p-6">
         <div>

@@ -7,6 +7,7 @@ import {
 import { MyActivity } from "@/components/admin/audit/my-activity";
 import { RouteReady } from "@/components/transitions/route-ready";
 import { listMyActivity } from "@/lib/admin/audit";
+import { getStatsOrNull } from "@/lib/admin/stats";
 import { getSession } from "@/lib/auth/auth-cookies";
 
 const CATEGORIES = new Set(["auth", "security", "account", "users"]);
@@ -24,7 +25,10 @@ export default async function MyActivityPage({
   const rawCategory = typeof params.category === "string" ? params.category : "";
   const category = CATEGORIES.has(rawCategory) ? rawCategory : "";
 
-  const result = await listMyActivity({ page, perPage: 20, category: category || undefined });
+  const [result, stats] = await Promise.all([
+    listMyActivity({ page, perPage: 20, category: category || undefined }),
+    getStatsOrNull("profile"),
+  ]);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -41,6 +45,7 @@ export default async function MyActivityPage({
       >
         <MyActivity
           result={result}
+          stats={stats}
           category={category}
           retentionNote="Entries are kept for the retention period set by the site administrator, then deleted automatically."
         />

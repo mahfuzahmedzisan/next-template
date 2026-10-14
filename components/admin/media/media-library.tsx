@@ -25,6 +25,7 @@ import {
   type UploadRequest,
 } from "@/components/admin/media/media-upload-dialog";
 import { MediaDetailSheet } from "@/components/admin/media/media-detail-sheet";
+import { MediaOverview } from "@/components/admin/media/media-overview";
 import {
   MEDIA_VIEWS,
   MediaBrowser,
@@ -155,6 +156,7 @@ export function MediaLibrary({
   const [page, setPage] = useState(initialMeta.current_page || 1);
   const [meta, setMeta] = useState(initialMeta);
   const [listLoading, setListLoading] = useState(false);
+  const [statsVersion, setStatsVersion] = useState(0);
   const uploads = useRef(new Map<number, TusUploadHandle>());
   /** When the last Echo update for a row arrived, so an older poll response can't overwrite it. */
   const echoAt = useRef(new Map<number, number>());
@@ -422,6 +424,7 @@ export function MediaLibrary({
           },
           onSuccess() {
             patchJob(key, { percent: 100, state: "done" });
+            setStatsVersion((version) => version + 1);
             void fetch(`/api/admin/media/${created.media_id}`, { credentials: "include" })
               .then(async (result) => {
                 if (!result.ok) return;
@@ -473,6 +476,7 @@ export function MediaLibrary({
     }
     uploads.current.get(id)?.pause();
     uploads.current.delete(id);
+    setStatsVersion((version) => version + 1);
     setRows((current) => current.filter((row) => row.id !== id));
     if (selected?.id === id) setSelected(null);
   }
@@ -554,6 +558,7 @@ export function MediaLibrary({
         );
       },
       onSuccess() {
+        setStatsVersion((version) => version + 1);
         void fetch(`/api/admin/media/${id}`, { credentials: "include" })
           .then(async (result) => {
             if (!result.ok) return;
@@ -613,6 +618,8 @@ export function MediaLibrary({
 
   return (
     <div className="flex flex-col gap-5">
+      <MediaOverview refreshKey={statsVersion} />
+
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div
           role="tablist"

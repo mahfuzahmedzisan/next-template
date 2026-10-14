@@ -6,13 +6,16 @@ import { useCallback, useEffect, useMemo, useState, useTransition, type ReactNod
 import { toast } from "sonner";
 
 import { ApplicationSectionHeader } from "@/components/admin/application/application-settings";
+import { AuditCharts } from "@/components/admin/audit/audit-charts";
 import { AuditDetailSheet } from "@/components/admin/audit/audit-detail-sheet";
 import { AuditFiltersBar, type AuditFilters } from "@/components/admin/audit/audit-filters";
 import { AuditList, AuditPagination } from "@/components/admin/audit/audit-list";
-import { formatAuditTime } from "@/components/admin/audit/audit-meta";
+import { formatAuditTime, zonedDayBoundary } from "@/components/admin/audit/audit-meta";
 import { useAuditLive } from "@/components/admin/audit/use-audit-live";
+import { useRangeData } from "@/components/admin/charts/use-range-data";
 import { Button } from "@/components/ui/button";
 import type { AuditEntry, AuditListResult, AuditOverview } from "@/lib/admin/audit-types";
+import type { AuditTrend } from "@/lib/admin/stats-types";
 import { useDisplayTimeZone } from "@/lib/datetime/timezone";
 
 const AUDIT_PATH = "/admin/application/audit";
@@ -22,11 +25,13 @@ export function AuditScreen({
   overview,
   list,
   filters,
+  trend: initialTrend,
   exportError,
 }: {
   overview: AuditOverview;
   list: AuditListResult;
   filters: AuditFilters;
+  trend: AuditTrend | null;
   exportError: string | null;
 }) {
   const router = useRouter();
@@ -36,6 +41,7 @@ export function AuditScreen({
   const [now, setNow] = useState(() => Date.now());
   const live = useAuditLive();
   const { clear: clearLive } = live;
+  const trend = useRangeData("audit", initialTrend);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -91,7 +97,20 @@ export function AuditScreen({
   function reload() {
     clearLive();
     setNow(Date.now());
+    trend.reload();
     startTransition(() => router.refresh());
+  }
+
+  function filterDay(day: string) {
+    const zone = trend.data?.timezone ?? timeZone;
+    applyFilters({
+      from: zonedDayBoundary(day, zone) ?? undefined,
+      to: zonedDayBoundary(day, zone, true) ?? undefined,
+    });
+  }
+
+  function filterCategory(category: string) {
+    applyFilters({ category: filters.category === category ? undefined : category });
   }
 
   const exportHref = `/api/admin/audit/export${query.size ? `?${query}` : ""}`;
@@ -145,6 +164,19 @@ export function AuditScreen({
           {stats.oldest_at ? `Oldest entry ${formatAuditTime(stats.oldest_at, timeZone)}` : "Nothing stored yet"}
         </Stat>
       </div>
+
+      {trend.data ? (
+        <AuditCharts
+          trend={trend.data}
+          days={trend.days}
+          pending={trend.pending}
+          error={trend.error}
+          selectedCategory={filters.category ?? null}
+          onRange={trend.selectRange}
+          onSelectDay={filterDay}
+          onSelectCategory={filterCategory}
+        />
+      ) : null}
 
       <section className="flex flex-col gap-5 rounded-xl border border-border/70 bg-card/70 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">

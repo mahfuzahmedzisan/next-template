@@ -2,8 +2,8 @@
 
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from "recharts";
 
-import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
-import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
+import { useChartAnimation } from "@/components/admin/charts/chart-panel";
+import { ScoreBars } from "@/components/admin/seo/health/charts/score-bars";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import type { SeoAuditCheck, SeoCheckCategory } from "@/lib/admin/seo-audit-types";
 import { cn } from "cn";
@@ -18,7 +18,7 @@ export function CategoryRadar({ categories, className }: { categories: CategoryS
 
   if (categories.length < 3) {
     return (
-      <HorizontalBars
+      <ScoreBars
         rows={categories.map((category) => ({ key: category.key, label: category.label, value: category.score }))}
         valueLabel="Score"
         max={100}

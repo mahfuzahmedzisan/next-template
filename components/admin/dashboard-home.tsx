@@ -3,6 +3,8 @@
 import { KeyRound, ShieldCheck, UserRound } from "lucide-react";
 import { motion } from "motion/react";
 
+import { AdminDashboardCharts, PersonalDashboardChart } from "@/components/admin/dashboard-charts";
+import type { AuditTrend, MediaStats, ProfileActivityStats } from "@/lib/admin/stats-types";
 import type { User } from "@/types/auth";
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
@@ -26,7 +28,13 @@ const architecture = [
   },
 ];
 
-export function DashboardHome({ user }: { user: User | undefined }) {
+export type DashboardStats = {
+  audit: AuditTrend | null;
+  media: MediaStats | null;
+  personal: ProfileActivityStats | null;
+};
+
+export function DashboardHome({ user, stats }: { user: User | undefined; stats: DashboardStats }) {
   const tiles = [
     {
       label: "Signed in as",
@@ -112,6 +120,12 @@ export function DashboardHome({ user }: { user: User | undefined }) {
           </motion.article>
         ))}
       </div>
+
+      {user?.role === "admin" ? (
+        <AdminDashboardCharts audit={stats.audit} media={stats.media} />
+      ) : (
+        <PersonalDashboardChart stats={stats.personal} />
+      )}
 
       <motion.section
         initial={{ opacity: 0, y: 12 }}

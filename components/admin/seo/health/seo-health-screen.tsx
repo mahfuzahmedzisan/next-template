@@ -11,14 +11,15 @@ import {
   startSeoAuditAction,
 } from "@/app/(admin)/admin/application/seo-health/actions";
 import { ApplicationSectionHeader } from "@/components/admin/application/application-settings";
+import { ChartEmpty, ChartPanel } from "@/components/admin/charts/chart-panel";
+import { DonutChart } from "@/components/admin/charts/donut-chart";
 import { formatDateTime } from "@/components/admin/devices/device-meta";
 import { CategoryRadar } from "@/components/admin/seo/health/charts/category-radar";
-import { ChartEmpty, ChartPanel } from "@/components/admin/seo/health/charts/chart-panel";
-import { ChecksDonut, DonutChart } from "@/components/admin/seo/health/charts/checks-donut";
+import { ChecksDonut } from "@/components/admin/seo/health/charts/checks-donut";
 import { HistoryChart } from "@/components/admin/seo/health/charts/history-chart";
 import { PageCharts } from "@/components/admin/seo/health/charts/page-charts";
 import { ScoreGauge } from "@/components/admin/seo/health/charts/score-gauge";
-import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
+import { ScoreBars } from "@/components/admin/seo/health/charts/score-bars";
 import {
   formatMinutes,
   PRIORITY_LABELS,
@@ -252,7 +253,7 @@ function Breakdown({ latest }: { latest: SeoAuditLatest }) {
           {summary.types.length === 0 ? (
             <ChartEmpty>No scored pages.</ChartEmpty>
           ) : (
-            <HorizontalBars
+            <ScoreBars
               rows={summary.types.map((type) => ({
                 key: type.type,
                 label: type.label,
@@ -327,7 +328,7 @@ function IssueReport({
       </div>
       <div className="space-y-2 rounded-xl border border-border/70 p-4">
         <h4 className="text-sm font-semibold">Estimated fix time by category</h4>
-        <HorizontalBars rows={fixRows} valueLabel="Fix time" format={formatMinutes} />
+        <ScoreBars rows={fixRows} valueLabel="Fix time" format={formatMinutes} />
       </div>
     </div>
   );

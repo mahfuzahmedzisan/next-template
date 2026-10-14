@@ -14,6 +14,8 @@ export type BackupEntry = {
 export type BackupSummary = {
   count: number;
   total_size: number;
+  /** Cleanup prunes the oldest backups above this; null means unlimited. */
+  max_storage_bytes: number | null;
   newest_at: string | null;
   retention_days: number;
   schedule: { time: string; timezone: string; next_run_at: string };

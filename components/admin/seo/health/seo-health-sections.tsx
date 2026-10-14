@@ -4,7 +4,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { type ReactNode, useEffect } from "react";
 
 import { formatDateTime } from "@/components/admin/devices/device-meta";
-import { HorizontalBars } from "@/components/admin/seo/health/charts/score-bars";
+import { ScoreBars } from "@/components/admin/seo/health/charts/score-bars";
 import { scoreBar, scoreTone } from "@/components/admin/seo/health/health-meta";
 import { CheckList, checkRowId } from "@/components/admin/seo/health/seo-check-row";
 import { Badge } from "@/components/ui/badge";
@@ -173,7 +173,7 @@ export function SitemapPanel({
         <>
           {details.files.length > 0 ? (
             <Detail label="URLs per sitemap file">
-              <HorizontalBars
+              <ScoreBars
                 rows={details.files.map((file) => ({
                   key: file.url,
                   label: sitemapName(file.url),

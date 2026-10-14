@@ -2,8 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, LabelList, ReferenceLine, XAxis, YAxis } from "recharts";
 
-import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
-import { scoreFill } from "@/components/admin/seo/health/health-meta";
+import { useChartAnimation } from "@/components/admin/charts/chart-panel";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "cn";
 
@@ -16,29 +15,33 @@ function shorten(text: string) {
   return text.length > LABEL_MAX ? `${text.slice(0, LABEL_MAX - 1)}…` : text;
 }
 
-/**
- * Horizontal bars with the label on the left and the value on the right.
- * Bars default to the score colour, so 0–100 scores need no `fill`.
- */
-export function HorizontalBars({
-  rows,
-  valueLabel,
-  format = (value) => `${value}%`,
-  max,
-  reference,
-  className,
-}: {
+export type HorizontalBarsProps = {
   rows: BarRow[];
   valueLabel: string;
   format?: (value: number) => string;
   /** Fixed axis end, e.g. 100 for scores; defaults to the data. */
   max?: number;
   reference?: { value: number; label: string };
+  /** Colour for rows without their own `fill`. */
+  defaultFill?: (value: number) => string;
   className?: string;
-}) {
+};
+
+const chartFill = () => "var(--chart-1)";
+
+/** Horizontal bars with the label on the left and the value on the right. */
+export function HorizontalBars({
+  rows,
+  valueLabel,
+  format = (value) => `${value}%`,
+  max,
+  reference,
+  defaultFill = chartFill,
+  className,
+}: HorizontalBarsProps) {
   const animate = useChartAnimation();
   const config = { value: { label: valueLabel } } satisfies ChartConfig;
-  const data = rows.map((row) => ({ ...row, fill: row.fill ?? scoreFill(row.value) }));
+  const data = rows.map((row) => ({ ...row, fill: row.fill ?? defaultFill(row.value) }));
   const top = Math.max(max ?? 0, reference?.value ?? 0, ...data.map((row) => row.value));
 
   return (

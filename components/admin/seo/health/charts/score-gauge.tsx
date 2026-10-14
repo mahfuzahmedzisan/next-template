@@ -2,7 +2,7 @@
 
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
-import { useChartAnimation } from "@/components/admin/seo/health/charts/chart-panel";
+import { useChartAnimation } from "@/components/admin/charts/chart-panel";
 import { scoreFill } from "@/components/admin/seo/health/health-meta";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "cn";
