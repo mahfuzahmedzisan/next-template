@@ -12,6 +12,7 @@ import { AuditFiltersBar, type AuditFilters } from "@/components/admin/audit/aud
 import { AuditList, AuditPagination } from "@/components/admin/audit/audit-list";
 import { formatAuditTime, zonedDayBoundary } from "@/components/admin/audit/audit-meta";
 import { useAuditLive } from "@/components/admin/audit/use-audit-live";
+import { retentionLabel } from "@/components/admin/charts/range-toggle";
 import { useRangeData } from "@/components/admin/charts/use-range-data";
 import { Button } from "@/components/ui/button";
 import type { AuditEntry, AuditListResult, AuditOverview } from "@/lib/admin/audit-types";
@@ -232,12 +233,6 @@ export function AuditScreen({
       />
     </div>
   );
-}
-
-function retentionLabel(days: number) {
-  if (days % 365 === 0) return days === 365 ? "1 year" : `${days / 365} years`;
-  if (days % 30 === 0) return days === 30 ? "1 month" : `${days / 30} months`;
-  return `${days} days`;
 }
 
 function Stat({

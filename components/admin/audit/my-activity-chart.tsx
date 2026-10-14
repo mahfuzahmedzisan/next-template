@@ -36,7 +36,12 @@ export function MyActivityChart({ initial }: { initial: ProfileActivityStats | n
           })}
           <span> in the last {stats.data.days} days</span>
         </p>
-        <RangeToggle value={stats.days} onChange={stats.selectRange} pending={stats.pending} />
+        <RangeToggle
+          value={stats.days}
+          onChange={stats.selectRange}
+          pending={stats.pending}
+          maxDays={stats.data.retention_days}
+        />
       </div>
       <TrendChart data={stats.data.daily} config={personalCategoryConfig} legend={false} className="h-40" />
       {stats.error ? <p className="text-xs text-destructive">{stats.error}</p> : null}

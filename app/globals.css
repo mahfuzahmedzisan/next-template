@@ -217,6 +217,27 @@
   }
 }
 
+/*
+ * Tooltips use the popover surface instead of shadcn's inverted foreground.
+ * Unlayered so it outranks the utilities baked into components/ui/tooltip.tsx,
+ * which also covers the sidebar's internal tooltips.
+ */
+[data-slot="tooltip-content"] {
+  border: 1px solid var(--border);
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+[data-slot="tooltip-content"] > span > svg {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--popover);
+  fill: var(--popover);
+}
+
 .navigation-progress {
   position: fixed;
   inset: 0;

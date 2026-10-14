@@ -40,7 +40,7 @@ export function AuditCharts({
         className="lg:col-span-2"
         title="Events per day"
         description="By severity. Select a day to list only its entries."
-        action={<RangeToggle value={days} onChange={onRange} pending={pending} />}
+        action={<RangeToggle value={days} onChange={onRange} pending={pending} maxDays={trend.retention_days} />}
       >
         <TrendChart data={trend.daily} config={severityConfig} onSelectDay={onSelectDay} />
         {error ? <p className="text-xs text-destructive">{error}</p> : null}

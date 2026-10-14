@@ -30,7 +30,10 @@ export type AuditCategoryKey =
 
 export type PersonalCategoryKey = "auth" | "security" | "account" | "users";
 
-export type AuditTrend = StatWindow & {
+/** Audit entries older than this are deleted nightly, so longer ranges would read as empty. */
+type Retention = { retention_days: number };
+
+export type AuditTrend = StatWindow & Retention & {
   daily: DailyPoint<AuditSeverityKey>[];
   daily_categories: DailyPoint<AuditCategoryKey>[];
   by_category: { value: AuditCategoryKey; label: string; count: number }[];
@@ -48,11 +51,11 @@ export type MediaStats = StatWindow & {
   uploads: DailyPoint<MediaKindKey>[];
 };
 
-export type BackupHistory = StatWindow & {
+export type BackupHistory = StatWindow & Retention & {
   daily: DailyPoint<"completed" | "failed">[];
 };
 
-export type ProfileActivityStats = StatWindow & {
+export type ProfileActivityStats = StatWindow & Retention & {
   daily: DailyPoint<PersonalCategoryKey>[];
   severity_totals: Record<AuditSeverityKey, number>;
 };

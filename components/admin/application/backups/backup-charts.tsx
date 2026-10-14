@@ -179,7 +179,7 @@ export function BackupCharts({
         <ChartPanel
           title="Backup runs"
           description="Completed and failed backups per day."
-          action={<RangeToggle value={days} onChange={onRange} pending={pending} />}
+          action={<RangeToggle value={days} onChange={onRange} pending={pending} maxDays={history.retention_days} />}
         >
           <TrendChart data={history.daily} config={backupRunsConfig} empty="No backups ran in this range." />
           {error ? <p className="text-xs text-destructive">{error}</p> : null}

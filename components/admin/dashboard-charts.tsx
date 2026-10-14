@@ -51,7 +51,14 @@ export function AdminDashboardCharts({ audit, media }: { audit: AuditTrend | nul
         <ChartPanel
           title="Activity"
           description={`Audit events per day by category, last ${trend.data.days} days.`}
-          action={<RangeToggle value={trend.days} onChange={trend.selectRange} pending={trend.pending} />}
+          action={
+            <RangeToggle
+              value={trend.days}
+              onChange={trend.selectRange}
+              pending={trend.pending}
+              maxDays={trend.data.retention_days}
+            />
+          }
         >
           <TrendChart data={trend.data.daily_categories} config={categoryConfig} />
           <RangeError message={trend.error} />
@@ -80,7 +87,14 @@ export function PersonalDashboardChart({ stats }: { stats: ProfileActivityStats 
     <ChartPanel
       title="Your activity"
       description={`Your sign-ins, security and account changes, last ${trend.data.days} days.`}
-      action={<RangeToggle value={trend.days} onChange={trend.selectRange} pending={trend.pending} />}
+      action={
+        <RangeToggle
+          value={trend.days}
+          onChange={trend.selectRange}
+          pending={trend.pending}
+          maxDays={trend.data.retention_days}
+        />
+      }
     >
       <TrendChart data={trend.data.daily} config={personalCategoryConfig} />
       <RangeError message={trend.error} />
